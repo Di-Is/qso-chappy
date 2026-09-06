@@ -57,7 +57,7 @@ class AbsorberComponent(ModelComponent):
             oscillator_strength: Oscillator strength
             gamma: Natural broadening in s⁻¹
             component_id: Unique identifier for the component (generated if not provided)
-            group_id: Optional organize-mode group identifier
+            group_id: Optional structure region identifier
         """
         super().__init__(name, component_id)
 
@@ -89,7 +89,7 @@ class AbsorberComponent(ModelComponent):
         self._cached_continuum_flux: NDArray[np.float64] | None = None
         self._cached_continuum_wavelength: NDArray[np.float64] | None = None
 
-        # Organize group association
+        # Structure region association
         self.group_id: str | None = group_id
 
     def calculate(self, wavelength: NDArray[np.float64]) -> NDArray[np.float64]:

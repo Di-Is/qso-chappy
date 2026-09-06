@@ -6,7 +6,7 @@ from collections import defaultdict
 
 
 class UnionFind:
-    """Union-Find data structure for grouping identify candidates."""
+    """Union-Find data structure for grouping identify temporary lines."""
 
     __slots__ = ("_parent",)
 

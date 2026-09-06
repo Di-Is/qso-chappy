@@ -801,9 +801,9 @@ class SpectrumView(QWidget):
         if self.plot_host:
             self.plot_host.set_identify_preview(normalized)
 
-    def toggle_identify_velocity_pending(self) -> None:
-        """Enter or cancel Identify velocity pending input."""
-        self.spectrum_input_adapter.toggle_identify_velocity_pending()
+    def wavelength_under_cursor(self) -> float | None:
+        """Return the spectrum wavelength under the pointer."""
+        return self.spectrum_input_adapter.wavelength_under_cursor()
 
     def set_detection_regions(self, regions: list[DetectionOverlayPayload]) -> None:
         """Forward detection region overlays to the plot host."""

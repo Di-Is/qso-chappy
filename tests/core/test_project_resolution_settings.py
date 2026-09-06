@@ -42,7 +42,7 @@ def test_no_resolution_keys_present_leaves_default_state() -> None:
     """Without canonical or legacy keys, restoration is a no-op."""
     document = _document_with_settings({})
 
-    project = project_from_document(document)
+    project = project_from_document(document).project
 
     assert _resolution_effect_changes_flux(project) is False
 
@@ -51,7 +51,7 @@ def test_legacy_keys_are_honored() -> None:
     """Legacy 'resolution'/'resolution_enabled' keys apply."""
     document = _document_with_settings({"resolution": 45000.0, "resolution_enabled": True})
 
-    project = project_from_document(document)
+    project = project_from_document(document).project
 
     assert _resolution_effect_changes_flux(project) is True
     assert project.resolution_state.value == pytest.approx(45000.0)
@@ -69,7 +69,7 @@ def test_canonical_keys_take_precedence_over_legacy() -> None:
         }
     )
 
-    project = project_from_document(document)
+    project = project_from_document(document).project
 
     assert project.resolution_state.value == pytest.approx(45000.0)
     assert project.resolution_state.enabled is True
@@ -81,7 +81,7 @@ def test_non_numeric_value_is_skipped_and_state_unchanged() -> None:
     """A non-numeric resolution value is skipped without side effects."""
     document = _document_with_settings({SETTINGS_RESOLUTION_VALUE_KEY: "abc"})
 
-    project = project_from_document(document)
+    project = project_from_document(document).project
 
     assert _resolution_effect_changes_flux(project) is False
 

@@ -32,8 +32,8 @@ from chappy.core.components.optimize import (
     FitCancellationToken,
     FitCancelledError,
     FitResult,
+    LineConstraints,
     OptimizeComponent,
-    SystemConstraints,
 )
 from chappy.core.editing_mode import EditingMode
 from chappy.core.optimizer_settings import (
@@ -373,14 +373,13 @@ class OptimizeEditor(QWidget):
             # Determine wavelength range for fitting
             wavelength_range = self._get_fitting_wavelength_range()
 
-            # Collect system constraints for target components
-            system_constraints = []
+            # Collect line constraints for target components
+            line_constraints = []
             if target_component_ids:
-                system_constraints = self._collect_system_constraints(target_component_ids)
-                if system_constraints:
+                line_constraints = self._collect_line_constraints(target_component_ids)
+                if line_constraints:
                     logger.info(
-                        "Collected %d system constraint(s) for optimization",
-                        len(system_constraints),
+                        "Collected %d line constraint(s) for optimization", len(line_constraints)
                     )
 
             logger.info("Starting fit with %d free parameters", free_params)
@@ -406,7 +405,7 @@ class OptimizeEditor(QWidget):
                 wavelength_range=wavelength_range,
                 target_component_ids=target_component_ids,
                 mask_group_id=mask_region_id,
-                system_constraints=system_constraints,
+                line_constraints=line_constraints,
             )
             cancellation = FitCancellationToken()
             thread = QThread(self)
@@ -814,21 +813,19 @@ class OptimizeEditor(QWidget):
 
         return None
 
-    def _collect_system_constraints(
-        self, target_component_ids: set[str]
-    ) -> list[SystemConstraints]:
-        """Collect system constraints for target components.
+    def _collect_line_constraints(self, target_component_ids: set[str]) -> list[LineConstraints]:
+        """Collect line constraints for target components.
 
         Args:
             target_component_ids: Set of component IDs to collect constraints for
 
         Returns:
-            List of SystemConstraints objects
+            List of LineConstraints objects
         """
         if not self.current_project:
             return []
 
-        constraints: list[SystemConstraints] = []
+        constraints: list[LineConstraints] = []
 
         for component_id in target_component_ids:
             # Find the component
@@ -843,9 +840,9 @@ class OptimizeEditor(QWidget):
                 continue
 
             # Create line constraint
-            constraint = SystemConstraints(
+            constraint = LineConstraints(
                 component_id=component_id,
-                system_id=line.line_id,
+                line_id=line.line_id,
                 rest_wavelength=component.wavelength,
                 lambda_range=line.lambda_range,
             )

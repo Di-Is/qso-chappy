@@ -49,10 +49,13 @@ The manual ships with the release package and opens in whichever language the in
 
 ## Getting help
 
-If something does not work, or you are unsure how to proceed, open an issue on
-[Issues](https://github.com/Di-Is/qso-chappy/issues).
+If something does not work, or you are unsure how to proceed, write to our mailing list at
+[chappy-ml@shinshu-u.ac.jp](mailto:chappy-ml@shinshu-u.ac.jp).
 No astronomy or programming background is required — just tell us what you were trying to do and
 what happened instead.
+
+If you are comfortable with GitHub, you are also welcome to file bug reports and feature requests
+on [Issues](https://github.com/Di-Is/qso-chappy/issues).
 
 ## Contributing
 

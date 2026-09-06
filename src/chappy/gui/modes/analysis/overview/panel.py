@@ -1,4 +1,4 @@
-"""Organize mode side panel showing absorption regions and lines."""
+"""Structure mode side panel showing absorption regions and lines."""
 
 from __future__ import annotations
 
@@ -46,9 +46,13 @@ from chappy.gui.theme import (
 from chappy.gui.utils.region_sorting import sort_regions_for_display
 from chappy.gui.visual_tokens import SidePanelMetrics
 from chappy.i18n import get_language_switcher
-from chappy.presentation.organize.tree_presenter import OrganizeGroupEntry as _GroupEntry
-from chappy.presentation.organize.tree_presenter import OrganizeSystemNode as _SystemNode
-from chappy.presentation.organize.tree_presenter import OrganizeTreePresenter
+from chappy.presentation.analysis.structure.tree_presenter import (
+    StructureLinkedLineNode as _LinkedLineNode,
+)
+from chappy.presentation.analysis.structure.tree_presenter import (
+    StructureRegionEntry as _GroupEntry,
+)
+from chappy.presentation.analysis.structure.tree_presenter import StructureTreePresenter
 
 if TYPE_CHECKING:
     from chappy.core.components.base import ModelComponent
@@ -64,7 +68,7 @@ _NEW_GROUP_PLACEHOLDER_ID = "__new_group__"
 _NEW_REGION_DROP_TARGET = ""
 
 
-class _OrganizeTreeWidget(QTreeWidget):
+class _StructureTreeWidget(QTreeWidget):
     """Tree widget with drag-and-drop support for absorption lines."""
 
     move_requested = Signal(str, list)
@@ -189,8 +193,8 @@ class _OrganizeTreeWidget(QTreeWidget):
         return data.get("type") in {"group", "new_group"}
 
 
-class OrganizeSidePanel(QWidget):
-    """Side panel dedicated to organize mode absorber management."""
+class StructureSidePanel(QWidget):
+    """Side panel dedicated to structure mode absorber management."""
 
     selection_changed = Signal(list, list)  # region_ids, line_ids
     group_activated = Signal(str)
@@ -214,17 +218,17 @@ class OrganizeSidePanel(QWidget):
         review: AnalysisOverviewReviewWidget | None = None,
         embed_review: bool = True,
     ) -> None:
-        """Set up UI controls for the organize side panel."""
+        """Set up UI controls for the structure side panel."""
         super().__init__(parent)
-        self.setObjectName("organizeSidePanel")
+        self.setObjectName("structureSidePanel")
 
         self._project: SpectroscopyProject | None = None
         self._model: SpectrumModel | None = None
         self._model_event_adapter: SpectrumModelEventAdapter | None = None
         self._groups: dict[str, _GroupEntry] = {}
         self._group_items: dict[str, QTreeWidgetItem] = {}
-        self._system_nodes: dict[str, _SystemNode] = {}
-        self._system_items: dict[str, QTreeWidgetItem] = {}
+        self._linked_line_nodes: dict[str, _LinkedLineNode] = {}
+        self._linked_line_items: dict[str, QTreeWidgetItem] = {}
         self._new_group_placeholder: QTreeWidgetItem | None = None
         self._language_switcher = get_language_switcher(self)
         self._tree_presenter = self._create_tree_presenter()
@@ -243,7 +247,7 @@ class OrganizeSidePanel(QWidget):
             layout.addWidget(self._review, stretch=2)
 
         self._back_button = QPushButton(BACK_ARROW_PREFIX + self.tr("Back to Overview"), self)
-        self._back_button.setObjectName("organizeSidePanelBackButton")
+        self._back_button.setObjectName("structureSidePanelBackButton")
         self._back_button.setToolTip(self.tr("Return to Analysis Overview (Alt+Left)"))
         apply_button_variant(self._back_button, "text")
         self._back_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -255,13 +259,13 @@ class OrganizeSidePanel(QWidget):
         layout.addLayout(back_row)
 
         self._header_label = QLabel(self.tr("Edit regions"))
-        self._header_label.setObjectName("organizeSidePanelHeader")
+        self._header_label.setObjectName("structureSidePanelHeader")
         self._header_label.setStyleSheet(
             f"color: {Colors.TEXT_PRIMARY}; font-size: {Fonts.SIZE_MEDIUM}; font-weight: 600;"
         )
         layout.addWidget(self._header_label)
 
-        self._tree = _OrganizeTreeWidget(self)
+        self._tree = _StructureTreeWidget(self)
         self._tree.setObjectName("analysisStructureTree")
         self._tree.setColumnCount(1)
         self._tree.header().setVisible(False)
@@ -294,16 +298,16 @@ class OrganizeSidePanel(QWidget):
         self._tree.customContextMenuRequested.connect(self._on_context_menu_requested)
 
         tree_container = QFrame(self)
-        tree_container.setObjectName("organizeSidePanelTreeContainer")
+        tree_container.setObjectName("structureSidePanelTreeContainer")
         tree_layout = QStackedLayout(tree_container)
         tree_layout.setContentsMargins(*SidePanelMetrics.CARD_CONTENT_MARGIN)
         tree_layout.setStackingMode(QStackedLayout.StackingMode.StackAll)
         tree_layout.addWidget(self._tree)
 
-        tree_container.setStyleSheet(card_frame_style("organizeSidePanelTreeContainer"))
+        tree_container.setStyleSheet(card_frame_style("structureSidePanelTreeContainer"))
 
         self._placeholder = QLabel(self.tr("Load absorber data to manage regions and lines here."))
-        self._placeholder.setObjectName("organizeSidePanelEmptyState")
+        self._placeholder.setObjectName("structureSidePanelEmptyState")
         self._placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._placeholder.setWordWrap(True)
         self._placeholder.setStyleSheet(empty_state_label_style())
@@ -332,7 +336,7 @@ class OrganizeSidePanel(QWidget):
         layout.addLayout(structure_actions)
 
         self._unlink_button = QPushButton(self)
-        self._unlink_button.setObjectName("organizeUnlinkSystemButton")
+        self._unlink_button.setObjectName("structureUnlinkLinkedLinesButton")
         self._unlink_button.setEnabled(False)
         apply_button_variant(self._unlink_button, "secondary")
         self._unlink_button.clicked.connect(self.unlink_requested.emit)
@@ -362,9 +366,9 @@ class OrganizeSidePanel(QWidget):
         self._placeholder.setText(self.tr("Load absorber data to manage regions and lines here."))
         self._retranslate_structure_actions()
         self._tree_presenter = self._create_tree_presenter()
-        selected_groups, selected_systems = self.get_selection()
+        selected_groups, selected_linked_lines = self.get_selection()
         self.refresh()
-        self.restore_selection(selected_groups, selected_systems)
+        self.restore_selection(selected_groups, selected_linked_lines)
 
     def _retranslate_structure_actions(self) -> None:
         """Keep structure action labels short; full sentences live in tooltips."""
@@ -374,16 +378,18 @@ class OrganizeSidePanel(QWidget):
         self._split_button.setToolTip(self.tr("Split the selected lines into a new region."))
         self._delete_button.setText(self.tr("Delete"))
         self._delete_button.setToolTip(self.tr("Delete the selected regions and lines."))
-        self._unlink_button.setText(self.tr("Unlink system"))
+        self._unlink_button.setText(self.tr("Unlink linked lines"))
         self._unlink_button.setToolTip(
-            self.tr("Unlink this line system: keep the lines and remove only their system links.")
+            self.tr(
+                "Unlink these linked lines: keep the lines and remove only the links between them."
+            )
         )
 
-    def _create_tree_presenter(self) -> OrganizeTreePresenter:
-        """Create a translated presenter for organize tree rows."""
-        return OrganizeTreePresenter(
+    def _create_tree_presenter(self) -> StructureTreePresenter:
+        """Create a translated presenter for structure tree rows."""
+        return StructureTreePresenter(
             range_tooltip_template=self.tr("Observed range: {minimum:.2f} – {maximum:.2f} Å"),
-            system_header_template=self.tr(
+            linked_line_header_template=self.tr(
                 "{species} {wavelengths} [z={redshift}, ±{window} km/s]"
             ),
             unknown_label=self.tr("Unknown"),
@@ -409,14 +415,16 @@ class OrganizeSidePanel(QWidget):
             )
 
         self.refresh()
+        self._review.restore_navigation_state()
 
     def refresh(self) -> None:
         """Rebuild tree contents from the current project state."""
         self.review_refresh_requested.emit()
+        selected_region_ids, selected_line_ids = self._tree_selection_ids()
         self._groups = {}
         self._group_items = {}
-        self._system_nodes = {}
-        self._system_items = {}
+        self._linked_line_nodes = {}
+        self._linked_line_items = {}
         self._tree.blockSignals(True)
         self._tree.clear()
         self._new_group_placeholder = None
@@ -431,22 +439,23 @@ class OrganizeSidePanel(QWidget):
 
         for group in group_entries:
             top_item = self._create_group_item(group)
-            if group.system_nodes:
-                for system_node in group.system_nodes:
-                    system_item = self._create_system_header_item(
-                        top_item, group.identifier, system_node
+            if group.linked_line_nodes:
+                for linked_line_node in group.linked_line_nodes:
+                    linked_line_item = self._create_linked_line_header_item(
+                        top_item, group.identifier, linked_line_node
                     )
-                    if system_item is None:
+                    if linked_line_item is None:
                         continue
                     # Use primary line_id (first in tuple) as key
-                    primary_id = system_node.line_ids[0]
-                    self._system_nodes[primary_id] = system_node
+                    primary_id = linked_line_node.line_ids[0]
+                    self._linked_line_nodes[primary_id] = linked_line_node
             self._tree.addTopLevelItem(top_item)
             top_item.setExpanded(True)
 
         self._insert_new_group_placeholder()
         self._tree.blockSignals(False)
         self._update_placeholder_visibility()
+        self._select_tree_items(selected_region_ids, selected_line_ids)
 
     def render_review(
         self, rows: Sequence[AnalysisReviewRow], summary: AnalysisReviewSummary
@@ -467,6 +476,10 @@ class OrganizeSidePanel(QWidget):
         if not self._tree_container.isVisible():
             region_id = self._review.selected_region_id()
             return ([region_id] if region_id is not None else []), []
+        return self._tree_selection_ids()
+
+    def _tree_selection_ids(self) -> tuple[list[str], list[str]]:
+        """Return the identities currently selected in the structure tree."""
         region_ids: list[str] = []
         line_ids: list[str] = []
         for item in self._tree.selectedItems():
@@ -490,7 +503,7 @@ class OrganizeSidePanel(QWidget):
         self._tree.clearFocus()
 
     def set_unlink_enabled(self, enabled: bool) -> None:
-        """Set availability of the explicit line-system unlink operation."""
+        """Set availability of the explicit linked-line unlink operation."""
         self._unlink_button.setEnabled(enabled)
 
     def set_structure_actions_enabled(
@@ -508,30 +521,34 @@ class OrganizeSidePanel(QWidget):
         """Reapply selection in the tree without triggering recursive updates."""
         if region_ids:
             self._review.select_region(region_ids[0])
-        targets: list[QTreeWidgetItem] = []
+        targets = self._select_tree_items(region_ids or (), line_ids or ())
 
-        if region_ids:
-            for identifier in region_ids:
-                item = self._group_items.get(identifier)
-                if item is not None:
-                    targets.append(item)
+        if targets:
+            self._tree.scrollToItem(targets[0], QAbstractItemView.ScrollHint.PositionAtCenter)
 
-        if line_ids:
-            for identifier in line_ids:
-                item = self._system_items.get(identifier)
-                if item is not None:
-                    targets.append(item)
+        self._on_selection_changed()
+
+    def _select_tree_items(
+        self, region_ids: Sequence[str], line_ids: Sequence[str]
+    ) -> list[QTreeWidgetItem]:
+        """Select the still-existing identities silently and return their items."""
+        targets = [
+            item
+            for identifier in region_ids
+            if (item := self._group_items.get(identifier)) is not None
+        ]
+        targets.extend(
+            item
+            for identifier in line_ids
+            if (item := self._linked_line_items.get(identifier)) is not None
+        )
 
         self._tree.blockSignals(True)
         self._tree.clearSelection()
         for item in targets:
             item.setSelected(True)
         self._tree.blockSignals(False)
-
-        if targets:
-            self._tree.scrollToItem(targets[0], QAbstractItemView.ScrollHint.PositionAtCenter)
-
-        self._on_selection_changed()
+        return targets
 
     def set_structure_editor_visible(self, visible: bool) -> None:
         """Show or hide the session-only structure editor panel state."""
@@ -606,13 +623,13 @@ class OrganizeSidePanel(QWidget):
                 if range_text:
                     range_label = self.tr("(λ: {range_text} Å)").format(range_text=range_text)
 
-            system_count = self._group_system_count(group)
+            linked_line_count = self._group_linked_line_count(group)
             count_label = ""
-            if system_count:
-                if system_count == 1:
+            if linked_line_count:
+                if linked_line_count == 1:
                     count_label = self.tr("(1 line)")
                 else:
-                    count_label = self.tr("({count} lines)").format(count=system_count)
+                    count_label = self.tr("({count} lines)").format(count=linked_line_count)
 
             if range_label:
                 parts.append(range_label)
@@ -628,32 +645,32 @@ class OrganizeSidePanel(QWidget):
             tooltip_lines.append("⚠️ " + self.tr("This group needs parameter re-optimization."))
         item.setToolTip(0, "\n".join(tooltip_lines))
 
-    def _group_system_count(self, group: _GroupEntry) -> int:
-        if group.system_count:
-            return group.system_count
-        if group.system_nodes:
-            return len(group.system_nodes)
+    def _group_linked_line_count(self, group: _GroupEntry) -> int:
+        if group.linked_line_count:
+            return group.linked_line_count
+        if group.linked_line_nodes:
+            return len(group.linked_line_nodes)
         if group.components:
             return len(group.components)
         return 0
 
-    def _create_system_header_item(
-        self, parent: QTreeWidgetItem, group_id: str, system_node: _SystemNode
+    def _create_linked_line_header_item(
+        self, parent: QTreeWidgetItem, group_id: str, linked_line_node: _LinkedLineNode
     ) -> QTreeWidgetItem | None:
         item = QTreeWidgetItem(parent)
         item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
         # Prepend display ID to header label
-        header_text = system_node.header_label
-        if system_node.display_id is not None:
-            header_text = f"{system_node.display_id}. {header_text}"
+        header_text = linked_line_node.header_label
+        if linked_line_node.display_id is not None:
+            header_text = f"{linked_line_node.display_id}. {header_text}"
 
         item.setText(0, header_text)
-        if system_node.tooltip:
-            item.setToolTip(0, system_node.tooltip)
+        if linked_line_node.tooltip:
+            item.setToolTip(0, linked_line_node.tooltip)
 
         # Use primary line_id for selection/operations (ADR 6.3)
-        primary_id = system_node.line_ids[0]
+        primary_id = linked_line_node.line_ids[0]
         item.setData(
             0,
             Qt.ItemDataRole.UserRole,
@@ -661,10 +678,10 @@ class OrganizeSidePanel(QWidget):
                 "type": "absorption_line",
                 "id": primary_id,
                 "group_id": group_id,
-                "multiplet_ids": system_node.multiplet_ids,
+                "multiplet_ids": linked_line_node.multiplet_ids,
             },
         )
-        self._system_items[primary_id] = item
+        self._linked_line_items[primary_id] = item
         return item
 
     def _update_placeholder_visibility(self) -> None:
@@ -768,13 +785,8 @@ class OrganizeSidePanel(QWidget):
             return
         self.refresh()
 
-    def _on_region_topology_changed(self, event: RegionTopologyChanged) -> None:
+    def _on_region_topology_changed(self, _event: RegionTopologyChanged) -> None:
         """Rebuild Overview projections after one committed topology change."""
-        focused_region_id = (
-            self._navigation.state.focused_region_id if self._navigation is not None else None
-        )
-        if focused_region_id in event.removed_region_ids:
-            return
         self.refresh()
 
     def _group_color_pixmap(self, group: _GroupEntry) -> QPixmap:

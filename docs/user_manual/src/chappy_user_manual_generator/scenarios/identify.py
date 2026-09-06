@@ -202,17 +202,16 @@ def identify_candidate_workflow(context: ScenarioContext) -> OperationFlow:
         _tr(
             QT_TRANSLATE_NOOP(
                 "ManualExporter",
-                "(Identifying on the velocity plot) Hold Shift and place the cursor over"
-                " the intended absorption region, then press V while the preview is"
-                " visible.",
+                "(Identifying on the velocity plot) Place the cursor over the intended"
+                " absorption region and press V. Hold Shift beforehand when you want to"
+                " confirm the all-species preview first.",
             )
         ),
         _tr(
             QT_TRANSLATE_NOOP(
                 "ManualExporter",
-                "The velocity plot opens immediately at the exact cursor wavelength. If"
-                " no valid Shift preview is active, pressing V instead asks you to click"
-                " the intended origin in the spectrum. Dashed boundaries show"
+                "The velocity plot opens immediately at the exact cursor wavelength,"
+                " whether or not the Shift preview is visible. Dashed boundaries show"
                 " New-candidate range. Display range initially includes those"
                 " boundaries with margin; six preset species are shown per page, with"
                 " arrow buttons for later pages.",

@@ -34,7 +34,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     InteractionPhase,
     InteractionStateSnapshot,
     RectZoomContext,
-    VelocityContext,
 )
 from chappy.gui.modes.common import ModeRefreshRequest
 from scripts.i18n_lupdate import run_lupdate
@@ -414,11 +413,12 @@ def test_mode_shell_coordinator_rejects_mismatched_snapshot_context(
         interaction_id=InteractionId("bad-snapshot-context"),
         channel=InteractionChannel.RECT_ZOOM,
         phase=InteractionPhase.ARMED,
-        context=VelocityContext(
-            target_wavelength=5000.0,
-            trigger="keyboard-v",
+        context=AbsorberDragContext(
+            absorber_id="abs-7",
+            start=(5300.0, 0.28),
+            current=(5310.0, 0.3),
+            end=None,
             modifiers=0,
-            confirmed_wavelength=None,
             cancel_reason=None,
         ),
     )
@@ -437,10 +437,10 @@ def test_mode_shell_coordinator_notifies_mode_lifecycles(
     )
     coordinator = ModeShellCoordinator(cast("MainWindow", main_window))
     coordinator.mode_state_store = ModeStateStore()
-    organize_lifecycle = _LifecycleProbe()
+    structure_lifecycle = _LifecycleProbe()
     identify_lifecycle = _LifecycleProbe()
     coordinator._mode_lifecycles = {
-        EditingMode.ANALYSIS: organize_lifecycle,
+        EditingMode.ANALYSIS: structure_lifecycle,
         EditingMode.IDENTIFY: identify_lifecycle,
     }
     coordinator._lifecycle_router = ModeLifecycleRouter(coordinator._mode_lifecycles)
@@ -450,11 +450,11 @@ def test_mode_shell_coordinator_notifies_mode_lifecycles(
     coordinator._on_mode_changed(EditingMode.ANALYSIS)
     coordinator._on_mode_changed(EditingMode.IDENTIFY)
 
-    assert organize_lifecycle.project is project
+    assert structure_lifecycle.project is project
     assert identify_lifecycle.project is project
-    assert organize_lifecycle.activate_count == 1
-    assert organize_lifecycle.deactivate_count == 1
-    assert organize_lifecycle.refreshes == [
+    assert structure_lifecycle.activate_count == 1
+    assert structure_lifecycle.deactivate_count == 1
+    assert structure_lifecycle.refreshes == [
         ModeRefreshRequest(mode=EditingMode.ANALYSIS, reason="mode-changed")
     ]
     assert identify_lifecycle.activate_count == 1
@@ -475,20 +475,20 @@ def test_mode_shell_coordinator_set_project_refreshes_active_lifecycle(
     coordinator = ModeShellCoordinator(cast("MainWindow", main_window))
     coordinator.mode_state_store = ModeStateStore()
     coordinator.mode_state_store.switch_mode(EditingMode.ANALYSIS)
-    organize_lifecycle = _LifecycleProbe()
-    coordinator._mode_lifecycles = {EditingMode.ANALYSIS: organize_lifecycle}
+    structure_lifecycle = _LifecycleProbe()
+    coordinator._mode_lifecycles = {EditingMode.ANALYSIS: structure_lifecycle}
     coordinator._lifecycle_router = ModeLifecycleRouter(
         coordinator._mode_lifecycles, active_mode=EditingMode.ANALYSIS
     )
 
     coordinator.set_project(SpectroscopyProject())
 
-    assert organize_lifecycle.project is not None
-    assert organize_lifecycle.refreshes == []
+    assert structure_lifecycle.project is not None
+    assert structure_lifecycle.refreshes == []
 
     coordinator.enter_project_mode(EditingMode.ANALYSIS)
 
-    assert organize_lifecycle.refreshes[-1] == ModeRefreshRequest(
+    assert structure_lifecycle.refreshes[-1] == ModeRefreshRequest(
         mode=EditingMode.ANALYSIS, reason="project-entry"
     )
 
@@ -803,7 +803,7 @@ def test_lupdate_extracts_mode_shell_coordinator_sources(tmp_path: Path) -> None
         "Analysis",
         "Review and analyze regions",
         "Identify",
-        "Associate detected regions with absorber systems",
+        "Associate detected regions with absorption lines",
         "Continuum Editing",
         "Edit continuum control points",
         "Continuum",

@@ -1,4 +1,4 @@
-"""Interaction coordinator for organize-mode side panel events."""
+"""Interaction coordinator for structure-mode side panel events."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from PySide6.QtCore import QObject, QPoint
 from chappy.application.analysis_artifacts import run_postcommit_actions_isolated
 from chappy.core.absorption_display import format_region_display
 from chappy.core.spectroscopy_project import SpectroscopyProject
-from chappy.gui.modes.analysis.overview.adapters import OrganizeHistoryRecorder
+from chappy.gui.modes.analysis.overview.adapters import StructureHistoryRecorder
 from chappy.gui.theme import create_styled_menu
 
 if TYPE_CHECKING:
@@ -20,20 +20,22 @@ if TYPE_CHECKING:
 
     from chappy.application.structure import StructureImpactPreview
     from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
-    from chappy.gui.modes.analysis.overview.operation_controller import OrganizeOperationController
-    from chappy.gui.modes.analysis.overview.panel import OrganizeSidePanel
-    from chappy.presentation.organize.tree_presenter import OrganizeGroupEntry
+    from chappy.gui.modes.analysis.overview.operation_controller import (
+        StructureOperationController,
+    )
+    from chappy.gui.modes.analysis.overview.panel import StructureSidePanel
+    from chappy.presentation.analysis.structure.tree_presenter import StructureRegionEntry
 
 GROUP_FOCUS_FRACTION = 0.1
 GROUP_MIN_PADDING = 0.5
 ZERO_SPAN_PADDING_BASE = 1.0
 ZERO_SPAN_PADDING_FACTOR = 0.01
-SYSTEM_FOCUS_FRACTION = 0.002
-SYSTEM_FOCUS_MIN_SPAN = 1.0
+LINKED_LINE_FOCUS_FRACTION = 0.002
+LINKED_LINE_FOCUS_MIN_SPAN = 1.0
 
 
-class OrganizeRefreshPanelPort(Protocol):
-    """Panel operations required after organize workflow mutations."""
+class StructureRefreshPanelPort(Protocol):
+    """Panel operations required after structure workflow mutations."""
 
     def clear_selection(self) -> None:
         """Clear the current panel selection."""
@@ -43,12 +45,12 @@ class OrganizeRefreshPanelPort(Protocol):
         """Refresh panel contents outside committed topology publication."""
         ...
 
-    def group_entry(self, identifier: str) -> OrganizeGroupEntry | None:
-        """Return organize group metadata for the identifier."""
+    def group_entry(self, identifier: str) -> StructureRegionEntry | None:
+        """Return structure group metadata for the identifier."""
         ...
 
     def set_unlink_enabled(self, enabled: bool) -> None:
-        """Set availability of the line-system unlink operation."""
+        """Set availability of the linked-line unlink operation."""
         ...
 
     def set_structure_actions_enabled(
@@ -59,7 +61,7 @@ class OrganizeRefreshPanelPort(Protocol):
 
 
 type ProjectProvider = Callable[[], SpectroscopyProject | None]
-type HistoryRecorderProvider = Callable[[], OrganizeHistoryRecorder | None]
+type HistoryRecorderProvider = Callable[[], StructureHistoryRecorder | None]
 type FocusRangeCallback = Callable[[float, float], None]
 type StatusCallback = Callable[[str, int, bool], None]
 type DeleteConfirmation = Callable[[StructureImpactPreview, SpectroscopyProject], bool]
@@ -67,8 +69,8 @@ type UnlinkConfirmation = Callable[[StructureImpactPreview, SpectroscopyProject]
 
 
 @dataclass(frozen=True, slots=True)
-class OrganizeInteractionPorts:
-    """Shell callbacks required by the organize interaction coordinator."""
+class StructureInteractionPorts:
+    """Shell callbacks required by the structure interaction coordinator."""
 
     project_provider: ProjectProvider
     history_recorder_provider: HistoryRecorderProvider
@@ -79,41 +81,41 @@ class OrganizeInteractionPorts:
     context_menu_parent: QWidget
 
 
-class OrganizeInteractionCoordinator(QObject):
-    """Coordinate organize-mode panel events, operation results, and shell ports."""
+class StructureInteractionCoordinator(QObject):
+    """Coordinate structure-mode panel events, operation results, and shell ports."""
 
     def __init__(
         self,
         *,
-        operations: OrganizeOperationController,
-        ports: OrganizeInteractionPorts,
+        operations: StructureOperationController,
+        ports: StructureInteractionPorts,
         parent: QObject | None = None,
     ) -> None:
         """Initialize the coordinator.
 
         Args:
-            operations: Organize operation workflow controller.
+            operations: Structure operation workflow controller.
             ports: Shell callbacks for project, history, status, and UI routing.
             parent: Optional Qt parent.
         """
         super().__init__(parent)
         self._operations = operations
         self._ports = ports
-        self._panel: OrganizeRefreshPanelPort | None = None
+        self._panel: StructureRefreshPanelPort | None = None
         self._selection: tuple[list[str], list[str]] = ([], [])
 
     @property
     def selection(self) -> tuple[list[str], list[str]]:
-        """Return the current organize selection snapshot."""
-        groups, systems = self._selection
-        return list(groups), list(systems)
+        """Return the current structure selection snapshot."""
+        groups, linked_lines = self._selection
+        return list(groups), list(linked_lines)
 
-    def set_panel(self, panel: OrganizeRefreshPanelPort | None) -> None:
+    def set_panel(self, panel: StructureRefreshPanelPort | None) -> None:
         """Set the panel used for refresh and selection updates."""
         self._panel = panel
 
-    def connect_panel(self, panel: OrganizeSidePanel) -> None:
-        """Connect organize panel signals to this coordinator."""
+    def connect_panel(self, panel: StructureSidePanel) -> None:
+        """Connect structure panel signals to this coordinator."""
         self.set_panel(panel)
         panel.selection_changed.connect(self.handle_selection)
         panel.group_activated.connect(self.handle_group_activated)
@@ -138,32 +140,36 @@ class OrganizeInteractionCoordinator(QObject):
         """Refresh the panel and synchronize its current selection."""
         if self._panel is not None:
             self._panel.refresh()
-        groups, systems = self._selection
-        self.handle_selection(groups, systems)
+        groups, linked_lines = self._selection
+        self.handle_selection(groups, linked_lines)
 
-    def handle_selection(self, group_ids: list[str], system_ids: list[str]) -> None:
-        """Update organize selection and dependent shell controls."""
-        previous_groups, previous_systems = self._selection
+    def handle_selection(self, group_ids: list[str], linked_line_ids: list[str]) -> None:
+        """Update structure selection and dependent shell controls."""
+        previous_groups, previous_linked_lines = self._selection
         current_groups = list(group_ids)
-        current_systems = list(system_ids)
-        self._selection = (current_groups, current_systems)
+        current_linked_lines = list(linked_line_ids)
+        self._selection = (current_groups, current_linked_lines)
 
-        if not current_groups and not current_systems and (previous_groups or previous_systems):
+        if (
+            not current_groups
+            and not current_linked_lines
+            and (previous_groups or previous_linked_lines)
+        ):
             self._emit_status(self.tr("No selection"))
 
         if self._panel is not None:
             unlink = self._operations.can_unlink(
-                self._ports.project_provider(), current_groups, current_systems
+                self._ports.project_provider(), current_groups, current_linked_lines
             )
             self._panel.set_structure_actions_enabled(
-                merge=self._operations.can_merge(current_groups, current_systems),
-                split=self._operations.can_split(current_groups, current_systems),
-                delete=self._operations.can_delete(current_groups, current_systems),
+                merge=self._operations.can_merge(current_groups, current_linked_lines),
+                split=self._operations.can_split(current_groups, current_linked_lines),
+                delete=self._operations.can_delete(current_groups, current_linked_lines),
                 unlink=unlink,
             )
 
     def handle_group_activated(self, group_id: str) -> None:
-        """Focus the spectrum to the activated organize group."""
+        """Focus the spectrum to the activated structure group."""
         if self._panel is None:
             return
         entry = self._panel.group_entry(group_id)
@@ -187,7 +193,7 @@ class OrganizeInteractionCoordinator(QObject):
         self._ports.focus_range_callback(min_wave - padding, max_wave + padding)
 
     def handle_line_activated(self, line_id: str) -> None:
-        """Focus the spectrum to the activated organize line."""
+        """Focus the spectrum to the activated structure line."""
         project = self._ports.project_provider()
         if project is None:
             return
@@ -198,32 +204,32 @@ class OrganizeInteractionCoordinator(QObject):
 
         observed = _observed_line_wavelength(line)
 
-        span = max(observed * SYSTEM_FOCUS_FRACTION, SYSTEM_FOCUS_MIN_SPAN)
+        span = max(observed * LINKED_LINE_FOCUS_FRACTION, LINKED_LINE_FOCUS_MIN_SPAN)
         self._ports.focus_range_callback(observed - span, observed + span)
 
     def handle_context_menu(
-        self, global_pos: QPoint, group_ids: list[str], system_ids: list[str]
+        self, global_pos: QPoint, group_ids: list[str], linked_line_ids: list[str]
     ) -> None:
-        """Display organize-mode context menu actions."""
+        """Display structure-mode context menu actions."""
         menu_title = self.tr("Analysis Structure")
         menu = create_styled_menu(self._ports.context_menu_parent, menu_title)
 
         merge_action = menu.addAction(self.tr("Merge selected regions"))
-        merge_action.setEnabled(self._operations.can_merge(group_ids, system_ids))
+        merge_action.setEnabled(self._operations.can_merge(group_ids, linked_line_ids))
 
         split_action = menu.addAction(self.tr("Split line into new region"))
-        split_action.setEnabled(self._operations.can_split(group_ids, system_ids))
+        split_action.setEnabled(self._operations.can_split(group_ids, linked_line_ids))
 
-        unlink_action = menu.addAction(self.tr("Unlink this line system"))
+        unlink_action = menu.addAction(self.tr("Unlink these linked lines"))
         unlink_action.setEnabled(
-            self._operations.can_unlink(self._ports.project_provider(), group_ids, system_ids)
+            self._operations.can_unlink(self._ports.project_provider(), group_ids, linked_line_ids)
         )
 
         delete_action = menu.addAction(self.tr("Delete selection"))
-        delete_action.setEnabled(self._operations.can_delete(group_ids, system_ids))
+        delete_action.setEnabled(self._operations.can_delete(group_ids, linked_line_ids))
 
         focus_action = menu.addAction(self.tr("Move spectrum to selection"))
-        focus_action.setEnabled(self._operations.can_focus(group_ids, system_ids))
+        focus_action.setEnabled(self._operations.can_focus(group_ids, linked_line_ids))
 
         triggered = menu.exec(global_pos)
         if triggered is None:
@@ -238,13 +244,13 @@ class OrganizeInteractionCoordinator(QObject):
         elif triggered is delete_action:
             self.execute_delete()
         elif triggered is focus_action:
-            if group_ids and not system_ids:
+            if group_ids and not linked_line_ids:
                 self.handle_group_activated(group_ids[0])
-            elif system_ids and not group_ids:
-                self.handle_line_activated(system_ids[0])
+            elif linked_line_ids and not group_ids:
+                self.handle_line_activated(linked_line_ids[0])
 
     def handle_line_move(self, target_region_id: str, line_ids: list[str]) -> None:
-        """Move selected organize lines to the target region."""
+        """Move selected structure lines to the target region."""
         project = self._ports.project_provider()
 
         target_region = target_region_id or None
@@ -261,7 +267,7 @@ class OrganizeInteractionCoordinator(QObject):
             destination_name = self._get_region_display_name(project, result.destination_region)
             self._emit_status(
                 self.tr("Moved {count} lines to {destination}.").format(
-                    count=result.moved_system_count, destination=destination_name
+                    count=result.moved_linked_line_count, destination=destination_name
                 ),
                 undo_hint=True,
             )
@@ -269,7 +275,7 @@ class OrganizeInteractionCoordinator(QObject):
         self._publish_committed_change(clear_panel_selection=False, announce=announce)
 
     def execute_merge(self) -> bool:
-        """Merge the current organize region selection."""
+        """Merge the current structure region selection."""
         project = self._ports.project_provider()
         group_ids, _ = self._selection
 
@@ -292,13 +298,13 @@ class OrganizeInteractionCoordinator(QObject):
         return True
 
     def execute_split(self) -> bool:
-        """Split the current organize line selection into a new region."""
+        """Split the current structure line selection into a new region."""
         project = self._ports.project_provider()
-        _, system_ids = self._selection
+        _, linked_line_ids = self._selection
 
         result = self._operations.split_lines(
             project,
-            system_ids=system_ids,
+            linked_line_ids=linked_line_ids,
             history_recorder=self._ports.history_recorder_provider(),
         )
         if result is None or project is None:
@@ -317,12 +323,12 @@ class OrganizeInteractionCoordinator(QObject):
         return True
 
     def execute_delete(self) -> bool:
-        """Delete the current organize selection."""
+        """Delete the current structure selection."""
         project = self._ports.project_provider()
 
-        group_ids, system_ids = self._selection
+        group_ids, linked_line_ids = self._selection
         preview = self._operations.preview_delete(
-            project, group_ids=group_ids, system_ids=system_ids
+            project, group_ids=group_ids, linked_line_ids=linked_line_ids
         )
         if (
             project is None
@@ -333,7 +339,7 @@ class OrganizeInteractionCoordinator(QObject):
         result = self._operations.delete_selection(
             project,
             group_ids=group_ids,
-            system_ids=system_ids,
+            linked_line_ids=linked_line_ids,
             history_recorder=self._ports.history_recorder_provider(),
         )
         if result is None:
@@ -343,8 +349,8 @@ class OrganizeInteractionCoordinator(QObject):
         summary_parts: list[str] = []
         if result.groups_removed:
             summary_parts.append(self.tr("{count} regions").format(count=result.groups_removed))
-        if result.systems_removed:
-            summary_parts.append(self.tr("{count} lines").format(count=result.systems_removed))
+        if result.lines_removed:
+            summary_parts.append(self.tr("{count} lines").format(count=result.lines_removed))
         summary = ", ".join(summary_parts)
         self._publish_committed_change(
             clear_panel_selection=True,
@@ -355,19 +361,19 @@ class OrganizeInteractionCoordinator(QObject):
         return True
 
     def execute_unlink(self) -> bool:
-        """Unlink the current organize line-system selection."""
+        """Unlink the current structure linked-line selection."""
         project = self._ports.project_provider()
-        _, system_ids = self._selection
-        preview = self._operations.preview_unlink(project, system_ids=system_ids)
+        _, linked_line_ids = self._selection
+        preview = self._operations.preview_unlink(project, linked_line_ids=linked_line_ids)
         if (
             project is None
             or preview is None
             or not self._ports.unlink_confirmation(preview, project)
         ):
             return False
-        result = self._operations.unlink_line_system(
+        result = self._operations.unlink_linked_lines(
             project,
-            system_ids=system_ids,
+            linked_line_ids=linked_line_ids,
             history_recorder=self._ports.history_recorder_provider(),
         )
         if result is None:
@@ -377,7 +383,7 @@ class OrganizeInteractionCoordinator(QObject):
         self._publish_committed_change(
             clear_panel_selection=True,
             announce=lambda: self._emit_status(
-                self.tr("Unlinked {count} lines from the system.").format(
+                self.tr("Unlinked {count} linked lines.").format(
                     count=len(result.unlinked_line_ids)
                 ),
                 undo_hint=True,
@@ -422,27 +428,27 @@ class OrganizeInteractionCoordinator(QObject):
 
 
 def _observed_line_wavelength(line: AbsorptionLine) -> float:
-    """Return the observed wavelength for a valid organize line."""
+    """Return the observed wavelength for a valid structure line."""
     rest_wavelength = _finite_line_float("rest_wavelength", line.rest_wavelength)
     center_z = _finite_line_float("center_z", line.center_z)
     if rest_wavelength <= 0:
-        msg = f"Organize line rest_wavelength must be positive, got {rest_wavelength}."
+        msg = f"Structure line rest_wavelength must be positive, got {rest_wavelength}."
         raise ValueError(msg)
 
     observed = rest_wavelength * (1.0 + center_z)
     if not math.isfinite(observed) or observed <= 0:
-        msg = f"Organize line observed wavelength must be positive and finite, got {observed}."
+        msg = f"Structure line observed wavelength must be positive and finite, got {observed}."
         raise ValueError(msg)
     return observed
 
 
 def _finite_line_float(name: str, value: float) -> float:
-    """Return a finite float value from a required organize line field."""
+    """Return a finite float value from a required structure line field."""
     if isinstance(value, bool) or not isinstance(value, int | float):
-        msg = f"Organize line {name} must be numeric, got {type(value).__name__}."
+        msg = f"Structure line {name} must be numeric, got {type(value).__name__}."
         raise TypeError(msg)
     numeric = float(value)
     if not math.isfinite(numeric):
-        msg = f"Organize line {name} must be finite, got {numeric}."
+        msg = f"Structure line {name} must be finite, got {numeric}."
         raise ValueError(msg)
     return numeric

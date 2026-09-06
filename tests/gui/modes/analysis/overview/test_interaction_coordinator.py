@@ -1,4 +1,4 @@
-"""Tests for organize interaction coordinator boundaries."""
+"""Tests for structure interaction coordinator boundaries."""
 
 from __future__ import annotations
 
@@ -20,18 +20,18 @@ from chappy.core.analysis import (
 )
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.gui.modes.analysis.overview.interaction_coordinator import (
-    OrganizeInteractionCoordinator,
-    OrganizeInteractionPorts,
+    StructureInteractionCoordinator,
+    StructureInteractionPorts,
 )
-from chappy.application.organize import OrganizeOperationUseCase
-from chappy.gui.modes.analysis.overview.adapters import OrganizeOperationAdapter
+from chappy.application.structure.structure_operation_usecase import StructureOperationUseCase
+from chappy.gui.modes.analysis.overview.adapters import StructureOperationAdapter
 from chappy.gui.modes.analysis.overview import interaction_coordinator as interaction_module
-from chappy.gui.modes.analysis.overview.operation_controller import OrganizeOperationController
+from chappy.gui.modes.analysis.overview.operation_controller import StructureOperationController
 
 
 @dataclass
 class _Panel:
-    """Record organize panel mutations after a committed operation."""
+    """Record structure panel mutations after a committed operation."""
 
     clear_count: int = 0
     refresh_count: int = 0
@@ -73,7 +73,7 @@ class _ClearFailurePanel(_Panel):
 
 @dataclass
 class _MenuAction:
-    """Minimal action double for organize context-menu availability."""
+    """Minimal action double for structure context-menu availability."""
 
     text: str
     enabled: bool = True
@@ -107,7 +107,7 @@ def _line(
     center_z: float = 1.0,
     multiplet_ids: list[str] | None = None,
 ) -> AbsorptionLine:
-    """Create a organize absorption line."""
+    """Create a structure absorption line."""
     return AbsorptionLine(
         line_id=line_id,
         species="Mg II",
@@ -123,7 +123,7 @@ def _line(
 
 
 def _linked_project() -> SpectroscopyProject:
-    """Create one materialized two-line system in one region."""
+    """Create one materialized two-line linked group in one region."""
     project = SpectroscopyProject()
     blue = _line(line_id="blue", multiplet_ids=["red"])
     red = _line(line_id="red", multiplet_ids=["blue"])
@@ -154,11 +154,11 @@ def _coordinator(
     qtbot: QtBot,
     project_provider: Callable[[], SpectroscopyProject | None],
     focus_calls: list[tuple[float, float]],
-) -> OrganizeInteractionCoordinator:
-    """Create a organize interaction coordinator with captured focus calls."""
+) -> StructureInteractionCoordinator:
+    """Create a structure interaction coordinator with captured focus calls."""
     parent = QWidget()
     qtbot.addWidget(parent)
-    ports = OrganizeInteractionPorts(
+    ports = StructureInteractionPorts(
         project_provider=project_provider,
         history_recorder_provider=lambda: None,
         focus_range_callback=lambda start, end: focus_calls.append((start, end)),
@@ -167,9 +167,9 @@ def _coordinator(
         unlink_confirmation=lambda _impact, _project: True,
         context_menu_parent=parent,
     )
-    return OrganizeInteractionCoordinator(
-        operations=OrganizeOperationController(
-            operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase())
+    return StructureInteractionCoordinator(
+        operations=StructureOperationController(
+            operation_adapter=StructureOperationAdapter(StructureOperationUseCase())
         ),
         ports=ports,
     )
@@ -224,7 +224,7 @@ def test_line_activation_rejects_invalid_line_physics(qtbot: QtBot) -> None:
 def test_context_menu_exposes_topology_gated_unlink_action(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Context-menu unlink uses the same linked-system eligibility as the visible button."""
+    """Context-menu unlink uses the same linked-line eligibility as the visible button."""
     project = _linked_project()
     project.absorption_lines["single"] = _line(line_id="single")
     project.absorption_lines["single"].region_id = "region"
@@ -244,10 +244,10 @@ def test_context_menu_exposes_topology_gated_unlink_action(
     coordinator.handle_context_menu(QPoint(), [], ["single"])
 
     linked_action = next(
-        action for action in menus[0].actions if action.text == "Unlink this line system"
+        action for action in menus[0].actions if action.text == "Unlink these linked lines"
     )
     independent_action = next(
-        action for action in menus[1].actions if action.text == "Unlink this line system"
+        action for action in menus[1].actions if action.text == "Unlink these linked lines"
     )
     assert linked_action.enabled is True
     assert independent_action.enabled is False
@@ -287,7 +287,7 @@ def test_delete_confirmation_cancel_preserves_all_scientific_and_ui_state(qtbot:
     qtbot.addWidget(parent)
     confirmed_impacts: list[object] = []
     history_provider_calls: list[None] = []
-    ports = OrganizeInteractionPorts(
+    ports = StructureInteractionPorts(
         project_provider=lambda: project,
         history_recorder_provider=lambda: history_provider_calls.append(None),
         focus_range_callback=lambda _start, _end: None,
@@ -296,9 +296,9 @@ def test_delete_confirmation_cancel_preserves_all_scientific_and_ui_state(qtbot:
         unlink_confirmation=lambda _impact, _project: True,
         context_menu_parent=parent,
     )
-    coordinator = OrganizeInteractionCoordinator(
-        operations=OrganizeOperationController(
-            operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase())
+    coordinator = StructureInteractionCoordinator(
+        operations=StructureOperationController(
+            operation_adapter=StructureOperationAdapter(StructureOperationUseCase())
         ),
         ports=ports,
     )
@@ -339,7 +339,7 @@ def test_unlink_confirmation_cancel_preserves_all_scientific_and_ui_state(qtbot:
     qtbot.addWidget(parent)
     confirmed_impacts: list[object] = []
     history_provider_calls: list[None] = []
-    ports = OrganizeInteractionPorts(
+    ports = StructureInteractionPorts(
         project_provider=lambda: project,
         history_recorder_provider=lambda: history_provider_calls.append(None),
         focus_range_callback=lambda _start, _end: None,
@@ -348,9 +348,9 @@ def test_unlink_confirmation_cancel_preserves_all_scientific_and_ui_state(qtbot:
         unlink_confirmation=lambda impact, _project: confirmed_impacts.append(impact) or False,
         context_menu_parent=parent,
     )
-    coordinator = OrganizeInteractionCoordinator(
-        operations=OrganizeOperationController(
-            operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase())
+    coordinator = StructureInteractionCoordinator(
+        operations=StructureOperationController(
+            operation_adapter=StructureOperationAdapter(StructureOperationUseCase())
         ),
         ports=ports,
     )
@@ -388,7 +388,7 @@ def test_unlink_no_change_stops_before_confirmation_and_history(qtbot: QtBot) ->
     qtbot.addWidget(parent)
     confirmation_calls: list[None] = []
     history_provider_calls: list[None] = []
-    ports = OrganizeInteractionPorts(
+    ports = StructureInteractionPorts(
         project_provider=lambda: project,
         history_recorder_provider=lambda: history_provider_calls.append(None),
         focus_range_callback=lambda _start, _end: None,
@@ -397,9 +397,9 @@ def test_unlink_no_change_stops_before_confirmation_and_history(qtbot: QtBot) ->
         unlink_confirmation=lambda _impact, _project: confirmation_calls.append(None) or True,
         context_menu_parent=parent,
     )
-    coordinator = OrganizeInteractionCoordinator(
-        operations=OrganizeOperationController(
-            operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase())
+    coordinator = StructureInteractionCoordinator(
+        operations=StructureOperationController(
+            operation_adapter=StructureOperationAdapter(StructureOperationUseCase())
         ),
         ports=ports,
     )
@@ -419,7 +419,7 @@ def test_confirmed_unlink_commits_and_clears_interaction_state(qtbot: QtBot) -> 
     project = _linked_project()
     parent = QWidget()
     qtbot.addWidget(parent)
-    ports = OrganizeInteractionPorts(
+    ports = StructureInteractionPorts(
         project_provider=lambda: project,
         history_recorder_provider=lambda: None,
         focus_range_callback=lambda _start, _end: None,
@@ -428,9 +428,9 @@ def test_confirmed_unlink_commits_and_clears_interaction_state(qtbot: QtBot) -> 
         unlink_confirmation=lambda _impact, _project: True,
         context_menu_parent=parent,
     )
-    coordinator = OrganizeInteractionCoordinator(
-        operations=OrganizeOperationController(
-            operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase())
+    coordinator = StructureInteractionCoordinator(
+        operations=StructureOperationController(
+            operation_adapter=StructureOperationAdapter(StructureOperationUseCase())
         ),
         ports=ports,
     )
@@ -452,7 +452,7 @@ def test_postcommit_clear_failure_does_not_skip_other_observers(qtbot: QtBot) ->
     parent = QWidget()
     qtbot.addWidget(parent)
     status_messages: list[str] = []
-    ports = OrganizeInteractionPorts(
+    ports = StructureInteractionPorts(
         project_provider=lambda: project,
         history_recorder_provider=lambda: None,
         focus_range_callback=lambda _start, _end: None,
@@ -461,9 +461,9 @@ def test_postcommit_clear_failure_does_not_skip_other_observers(qtbot: QtBot) ->
         unlink_confirmation=lambda _impact, _project: True,
         context_menu_parent=parent,
     )
-    coordinator = OrganizeInteractionCoordinator(
-        operations=OrganizeOperationController(
-            operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase())
+    coordinator = StructureInteractionCoordinator(
+        operations=StructureOperationController(
+            operation_adapter=StructureOperationAdapter(StructureOperationUseCase())
         ),
         ports=ports,
     )
@@ -477,4 +477,4 @@ def test_postcommit_clear_failure_does_not_skip_other_observers(qtbot: QtBot) ->
     assert project.absorption_lines["red"].multiplet_ids == []
     assert coordinator.selection == ([], [])
     assert panel.clear_count == 1
-    assert status_messages[-1] == "Unlinked 2 lines from the system."
+    assert status_messages[-1] == "Unlinked 2 linked lines."

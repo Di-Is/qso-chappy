@@ -39,19 +39,19 @@ class CandidateTableItemPayload:
 
 
 @dataclass(slots=True)
-class CandidateLineRow:
-    """Representation of a temporary system row in workflow tab.
+class TemporaryLineRow:
+    """Representation of a temporary line row in workflow tab.
 
-    For multiplet groups, system_ids contains multiple IDs with the primary ID first.
+    For multiplet groups, temporary_line_ids contains multiple IDs with the primary ID first.
     """
 
-    system_ids: tuple[str, ...]  # Primary ID first, then others in rest_wavelength order
+    temporary_line_ids: tuple[str, ...]  # Primary ID first, then others in rest_wavelength order
     species: str
     lambda_start: float
     lambda_end: float
     creation_method: str
-    transition_name: str  # Required (from CandidateLine)
-    redshift: float | None = None  # center_z from CandidateLine
+    transition_name: str  # Required (from TemporaryLine)
+    redshift: float | None = None  # center_z from TemporaryLine
     display_id: int = 0  # 1-based display index for consistency with other modes
     multiplet_label: str = ""  # Multiplet name for display
 
@@ -66,15 +66,15 @@ class RegionPreviewRow:
     warning: bool = False
     is_existing_group: bool = False
     old_member_count: int | None = None
-    new_systems_count: int = 0
-    member_system_ids: list[str] = field(default_factory=list)
+    new_lines_count: int = 0
+    member_temporary_line_ids: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)
 class ConfirmedLineRow:
-    """Representation of a confirmed system within a group."""
+    """Representation of a confirmed line within a group."""
 
-    system_id: str
+    line_id: str
     species: str  # e.g., "Mg II 2796/2803" (multiplet combined)
     redshift: float  # z value
     lambda_start: float
@@ -89,29 +89,29 @@ class ConfirmedRegionRow:
 
     group_id: str
     label: str  # e.g., "Group 1"
-    systems: list[ConfirmedLineRow]
+    lines: list[ConfirmedLineRow]
     is_expanded: bool = False  # For accordion state
 
 
 class IdentifyWorkflowItemKind(Enum):
     """Typed item categories stored in workflow tree item payloads."""
 
-    TEMPORARY_SYSTEM = "temporary_system"
+    TEMPORARY_LINE = "temporary_line"
     CONFIRMED_GROUP = "confirmed_group"
-    CONFIRMED_SYSTEM = "confirmed_system"
+    CONFIRMED_LINE = "confirmed_line"
 
 
 @dataclass(frozen=True, slots=True)
-class TemporarySystemItemPayload:
-    """Tree payload for a temporary candidate system row."""
+class TemporaryLineItemPayload:
+    """Tree payload for a temporary line row."""
 
-    primary_system_id: str
-    system_ids: tuple[str, ...]
+    primary_temporary_line_id: str
+    temporary_line_ids: tuple[str, ...]
 
     @property
     def kind(self) -> IdentifyWorkflowItemKind:
         """Return the payload category."""
-        return IdentifyWorkflowItemKind.TEMPORARY_SYSTEM
+        return IdentifyWorkflowItemKind.TEMPORARY_LINE
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,17 +127,17 @@ class ConfirmedGroupItemPayload:
 
 
 @dataclass(frozen=True, slots=True)
-class ConfirmedSystemItemPayload:
-    """Tree payload for a confirmed system row."""
+class ConfirmedLineItemPayload:
+    """Tree payload for a confirmed line row."""
 
-    system_id: str
+    line_id: str
 
     @property
     def kind(self) -> IdentifyWorkflowItemKind:
         """Return the payload category."""
-        return IdentifyWorkflowItemKind.CONFIRMED_SYSTEM
+        return IdentifyWorkflowItemKind.CONFIRMED_LINE
 
 
 type IdentifyWorkflowItemPayload = (
-    TemporarySystemItemPayload | ConfirmedGroupItemPayload | ConfirmedSystemItemPayload
+    TemporaryLineItemPayload | ConfirmedGroupItemPayload | ConfirmedLineItemPayload
 )

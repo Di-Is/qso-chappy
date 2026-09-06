@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from chappy.application.analysis_artifacts import AnalysisMutationImpact
 
 
 class SpectrumRangeSource(StrEnum):
@@ -84,3 +88,12 @@ class RangeNavigationResult:
     wavelength_range: tuple[float, float]
     flux_range: tuple[float, float] | None
     source: SpectrumRangeSource
+
+
+@dataclass(frozen=True, slots=True)
+class ResolutionUpdateResult:
+    """Result of applying a spectral resolution value."""
+
+    value: float
+    enabled: bool
+    impact: AnalysisMutationImpact

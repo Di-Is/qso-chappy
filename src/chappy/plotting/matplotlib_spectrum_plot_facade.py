@@ -33,7 +33,6 @@ from chappy.plotting.overlays import (
     LineRegionOverlay,
     MaskRegionOverlay,
     MaskSelectionOverlay,
-    VelocityOriginOverlay,
 )
 from chappy.plotting.overlays.payload_validation import (
     require_marker_float,
@@ -289,7 +288,6 @@ class MatplotlibSpectrumPlotFacade:
         self._detection_region_overlay = DetectionRegionOverlay(
             renderer=self.renderer, canvas=self.canvas, prefix=self._detection_region_prefix
         )
-        self._velocity_origin_overlay = VelocityOriginOverlay(axes=self._axes, canvas=self.canvas)
         self._callbacks.attach_canvas()
         self._init_components()
         self._setup_plot()
@@ -903,18 +901,6 @@ class MatplotlibSpectrumPlotFacade:
         self._continuum_display_owner.ensure_reference_line(
             self._callbacks.translate_text("Continuum Reference")
         )
-
-    def show_velocity_origin_line(self, wavelength: float) -> None:
-        """Show the velocity-origin line at ``wavelength``."""
-        self._velocity_origin_overlay.show(wavelength)
-
-    def hide_velocity_origin_line(self) -> None:
-        """Hide the velocity origin line if it exists."""
-        self._velocity_origin_overlay.hide()
-
-    def update_velocity_origin_line(self, wavelength: float) -> None:
-        """Update the velocity-origin line position."""
-        self._velocity_origin_overlay.update(wavelength)
 
     def _create_mouse_event_bridge(self) -> MatplotlibMouseEventBridge:
         """Instantiate the injected mouse event bridge."""

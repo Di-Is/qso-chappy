@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from chappy.application.organize import (
+from chappy.application.spectrum import (
     ResolutionChangeNotifier,
     ResolutionProjectPort,
     ResolutionUpdateResult,

@@ -45,10 +45,10 @@ class _MainWindow:
         """Initialize refresh surface state."""
         self.identify_coordinator = None
         self.mode_shell_coordinator = None
-        self._active_organize_line_id = None
+        self._active_structure_line_id = None
 
-    def _update_organize_velocity_input(self, line_ids: list[str]) -> None:
-        """Accept organize velocity refresh requests."""
+    def _update_structure_velocity_input(self, line_ids: list[str]) -> None:
+        """Accept structure velocity refresh requests."""
 
     def _refresh_optimize_velocity_input(self) -> None:
         """Accept optimize velocity refresh requests."""

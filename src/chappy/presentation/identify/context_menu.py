@@ -10,6 +10,7 @@ class IdentifyContextMenuActionKind(StrEnum):
     """Identify context menu action kind."""
 
     TOGGLE_PREVIEW_LOCK = "toggle-preview-lock"
+    TOGGLE_VELOCITY_PLOT = "toggle-velocity-plot"
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,6 +18,8 @@ class IdentifyContextMenuMessages:
     """Labels used by identify context menu actions."""
 
     always_show_candidate_overlay: str
+    show_velocity_plot: str
+    baseline_required: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +28,7 @@ class IdentifyContextMenuState:
 
     preview_lock_enabled: bool
     preview_lock_available: bool
+    baseline_line_selected: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +41,7 @@ class IdentifyContextMenuAction:
     checkable: bool = False
     checked: bool = False
     preview_lock_enabled: bool | None = None
+    tooltip: str | None = None
 
 
 def build_identify_context_menu_actions(
@@ -59,5 +64,11 @@ def build_identify_context_menu_actions(
             checkable=True,
             checked=state.preview_lock_enabled,
             preview_lock_enabled=not state.preview_lock_enabled,
+        ),
+        IdentifyContextMenuAction(
+            label=messages.show_velocity_plot,
+            kind=IdentifyContextMenuActionKind.TOGGLE_VELOCITY_PLOT,
+            enabled=state.baseline_line_selected,
+            tooltip=None if state.baseline_line_selected else messages.baseline_required,
         ),
     )

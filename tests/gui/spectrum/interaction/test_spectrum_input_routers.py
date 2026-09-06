@@ -31,7 +31,6 @@ def test_shortcut_router_uses_identify_velocity_capability() -> None:
             identify_velocity_shortcut_enabled=True,
             mode_velocity_shortcut_enabled=False,
             active_channel=None,
-            velocity_pending=False,
         ),
     )
 
@@ -52,7 +51,6 @@ def test_shortcut_router_uses_mode_velocity_capability() -> None:
             identify_velocity_shortcut_enabled=False,
             mode_velocity_shortcut_enabled=True,
             active_channel=None,
-            velocity_pending=False,
         ),
     )
 
@@ -70,10 +68,7 @@ def test_click_router_uses_mode_click_capabilities() -> None:
         button="left",
         modifiers=0,
         state=ClickRouteState(
-            identify_click_enabled=True,
-            optimize_shift_click_enabled=False,
-            active_channel=None,
-            velocity_pending=False,
+            identify_click_enabled=True, optimize_shift_click_enabled=False, active_channel=None
         ),
     )
     optimize_result = router.route_click(
@@ -81,10 +76,7 @@ def test_click_router_uses_mode_click_capabilities() -> None:
         button="left",
         modifiers=shift_mask,
         state=ClickRouteState(
-            identify_click_enabled=False,
-            optimize_shift_click_enabled=True,
-            active_channel=None,
-            velocity_pending=False,
+            identify_click_enabled=False, optimize_shift_click_enabled=True, active_channel=None
         ),
     )
     blocked_result = router.route_click(
@@ -95,7 +87,6 @@ def test_click_router_uses_mode_click_capabilities() -> None:
             identify_click_enabled=False,
             optimize_shift_click_enabled=True,
             active_channel=InteractionChannel.RECT_ZOOM,
-            velocity_pending=False,
         ),
     )
 

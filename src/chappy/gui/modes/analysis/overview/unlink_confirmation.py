@@ -1,4 +1,4 @@
-"""Confirmation dialog for unlinking an organize line system."""
+"""Confirmation dialog for unlinking structure linked lines."""
 
 from __future__ import annotations
 
@@ -18,18 +18,18 @@ if TYPE_CHECKING:
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
 
-_CONTEXT = "OrganizeUnlinkConfirmation"
+_CONTEXT = "StructureUnlinkConfirmation"
 _TITLE_SOURCE = str(
-    QT_TRANSLATE_NOOP("OrganizeUnlinkConfirmation", "Unlink selected line system?")
+    QT_TRANSLATE_NOOP("StructureUnlinkConfirmation", "Unlink selected linked lines?")
 )
 _BODY_SOURCE = str(
     QT_TRANSLATE_NOOP(
-        "OrganizeUnlinkConfirmation",
-        "This keeps the lines, components, and masks, but removes their system links.",
+        "StructureUnlinkConfirmation",
+        "This keeps the lines, components, and masks, but removes the links between the lines.",
     )
 )
-_UNLINK_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeUnlinkConfirmation", "Unlink"))
-_CANCEL_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeUnlinkConfirmation", "Cancel"))
+_UNLINK_SOURCE = str(QT_TRANSLATE_NOOP("StructureUnlinkConfirmation", "Unlink"))
+_CANCEL_SOURCE = str(QT_TRANSLATE_NOOP("StructureUnlinkConfirmation", "Cancel"))
 
 
 def confirm_structure_unlink(
@@ -58,8 +58,8 @@ def create_structure_unlink_confirmation(
     message_box.setInformativeText(format_structure_impact(preview, project))
     unlink_button = message_box.addButton(_tr(_UNLINK_SOURCE), QMessageBox.ButtonRole.AcceptRole)
     cancel_button = message_box.addButton(_tr(_CANCEL_SOURCE), QMessageBox.ButtonRole.RejectRole)
-    unlink_button.setObjectName("organizeStructureUnlinkConfirmButton")
-    cancel_button.setObjectName("organizeStructureUnlinkCancelButton")
+    unlink_button.setObjectName("structureUnlinkConfirmButton")
+    cancel_button.setObjectName("structureUnlinkCancelButton")
     apply_button_variant(unlink_button, "primary")
     apply_button_variant(cancel_button, "secondary")
     message_box.setDefaultButton(cancel_button)

@@ -123,7 +123,7 @@ class FitAttempt:
     weights: NDArray[np.float64] | None
     target_component_ids: frozenset[str] | None
     mask_group_id: str | None
-    system_constraints: tuple[SystemConstraints, ...]
+    line_constraints: tuple[LineConstraints, ...]
     free_parameter_keys: tuple[tuple[str, str], ...]
 
 
@@ -142,21 +142,21 @@ class TiedComponent(Protocol):
 
 
 @dataclass(frozen=True)
-class SystemConstraints:
-    """System-based constraints for absorber components.
+class LineConstraints:
+    """Line-based constraints for absorber components.
 
     This immutable container holds the information needed to calculate
-    dynamic parameter bounds based on absorption line system properties.
+    dynamic parameter bounds based on absorption line properties.
 
     Attributes:
         component_id: Unique identifier of the absorber component
-        system_id: Unique identifier of the absorption line system
+        line_id: Unique identifier of the absorption line
         rest_wavelength: Rest wavelength of the absorption line (Angstrom)
-        lambda_range: Observed wavelength range of the system (min, max) in Angstrom
+        lambda_range: Observed wavelength range of the line (min, max) in Angstrom
     """
 
     component_id: str
-    system_id: str
+    line_id: str
     rest_wavelength: float
     lambda_range: tuple[float, float] | None
 
@@ -172,7 +172,7 @@ class SystemConstraints:
             ValueError: If rest_wavelength is invalid or lambda_range is None
         """
         if self.lambda_range is None:
-            msg = f"No wavelength range for system {self.system_id}"
+            msg = f"No wavelength range for line {self.line_id}"
             raise ValueError(msg)
 
         if self.rest_wavelength <= 0:
@@ -392,7 +392,7 @@ class OptimizeComponent(ModelComponent):
         *,
         target_component_ids: set[str] | None = None,
         mask_group_id: str | None = None,
-        system_constraints: Sequence[SystemConstraints] | None = None,
+        line_constraints: Sequence[LineConstraints] | None = None,
         cancellation: FitCancellationToken | None = None,
     ) -> FitResult:
         """Fit and atomically commit a spectrum model on the calling thread.
@@ -403,7 +403,7 @@ class OptimizeComponent(ModelComponent):
             weights: Optional weights for data points
             target_component_ids: Optional set of component identifiers to restrict fitting
             mask_group_id: Mask group identifier to apply during fitting
-            system_constraints: System-based constraints for absorber components.
+            line_constraints: Line-based constraints for absorber components.
                               If provided, dynamic bounds will be applied to redshift parameters.
             cancellation: Cooperative cancellation token checked by the optimizer.
 
@@ -416,7 +416,7 @@ class OptimizeComponent(ModelComponent):
             weights=weights,
             target_component_ids=target_component_ids,
             mask_group_id=mask_group_id,
-            system_constraints=system_constraints,
+            line_constraints=line_constraints,
         )
         result = self.run_fit_attempt(attempt, cancellation=cancellation)
         if result.success:
@@ -431,7 +431,7 @@ class OptimizeComponent(ModelComponent):
         *,
         target_component_ids: set[str] | None = None,
         mask_group_id: str | None = None,
-        system_constraints: Sequence[SystemConstraints] | None = None,
+        line_constraints: Sequence[LineConstraints] | None = None,
     ) -> FitAttempt:
         """Capture the live baseline and build a detached optimizer working model."""
         self._validate_spectrum_model(spectrum_model)
@@ -453,7 +453,7 @@ class OptimizeComponent(ModelComponent):
                 None if target_component_ids is None else frozenset(target_component_ids)
             ),
             mask_group_id=mask_group_id,
-            system_constraints=tuple(system_constraints or ()),
+            line_constraints=tuple(line_constraints or ()),
             free_parameter_keys=tuple(
                 (component.id, parameter_name)
                 for component, parameter_name, _parameter in working_free_params
@@ -496,7 +496,7 @@ class OptimizeComponent(ModelComponent):
         logger.info(
             "Fitting %d parameters to %d data points", len(free_params), len(fitting_data["flux"])
         )
-        constraint_map = self._build_constraint_map(attempt.system_constraints)
+        constraint_map = self._build_constraint_map(attempt.line_constraints)
         result = self._run_optimization(
             working_model, fitting_data, free_params, constraint_map, cancellation_token
         )
@@ -907,35 +907,35 @@ class OptimizeComponent(ModelComponent):
         return np.ones_like(fit_flux)
 
     def _build_constraint_map(
-        self, system_constraints: Sequence[SystemConstraints] | None
-    ) -> dict[str, SystemConstraints]:
-        """Build a mapping from component ID to system constraints.
+        self, line_constraints: Sequence[LineConstraints] | None
+    ) -> dict[str, LineConstraints]:
+        """Build a mapping from component ID to line constraints.
 
         Args:
-            system_constraints: Sequence of system constraints
+            line_constraints: Sequence of line constraints
 
         Returns:
-            Dictionary mapping component_id to SystemConstraints
+            Dictionary mapping component_id to LineConstraints
         """
-        if not system_constraints:
+        if not line_constraints:
             return {}
-        return {sc.component_id: sc for sc in system_constraints}
+        return {constraint.component_id: constraint for constraint in line_constraints}
 
     def _calculate_dynamic_bounds(
         self,
         free_params: list[tuple[ModelComponent, str, Parameter]],
-        constraint_map: dict[str, SystemConstraints],
+        constraint_map: dict[str, LineConstraints],
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-        """Calculate dynamic parameter bounds based on system constraints.
+        """Calculate dynamic parameter bounds based on line constraints.
 
-        For redshift parameters with associated system constraints, this method
-        calculates bounds from the system's wavelength range. For other parameters
+        For redshift parameters with associated line constraints, this method
+        calculates bounds from the line's wavelength range. For other parameters
         or components without constraints, default bounds from the Parameter object
         are used.
 
         Args:
             free_params: List of (component, param_name, Parameter) tuples
-            constraint_map: Mapping from component_id to SystemConstraints
+            constraint_map: Mapping from component_id to LineConstraints
 
         Returns:
             Tuple of (lower_bounds, upper_bounds) arrays
@@ -1004,7 +1004,7 @@ class OptimizeComponent(ModelComponent):
         spectrum_model: SpectrumModel,
         fitting_data: dict[str, NDArray[np.float64]],
         free_params: list[tuple[ModelComponent, str, Parameter]],
-        constraint_map: dict[str, SystemConstraints],
+        constraint_map: dict[str, LineConstraints],
         cancellation: FitCancellationToken,
     ) -> FitResult:
         """Run the selected optimization algorithm.
@@ -1013,7 +1013,7 @@ class OptimizeComponent(ModelComponent):
             spectrum_model: SpectrumModel instance
             fitting_data: Prepared fitting data
             free_params: Free parameters for fitting
-            constraint_map: System constraints mapping
+            constraint_map: Line constraints mapping
             cancellation: Cooperative cancellation token.
 
         Returns:
@@ -1102,7 +1102,7 @@ class OptimizeComponent(ModelComponent):
         observed_flux: NDArray[np.float64],
         weights: NDArray[np.float64],
         free_params: list[tuple[ModelComponent, str, Parameter]],
-        constraint_map: dict[str, SystemConstraints],
+        constraint_map: dict[str, LineConstraints],
         cancellation: FitCancellationToken,
     ) -> FitResult:
         """Fit using least squares optimization.
@@ -1114,7 +1114,7 @@ class OptimizeComponent(ModelComponent):
             observed_flux: Observed flux array (fit pixels)
             weights: Weight array (fit pixels)
             free_params: Free parameters
-            constraint_map: System constraints mapping
+            constraint_map: Line constraints mapping
             cancellation: Cooperative cancellation token.
 
         Returns:
@@ -1123,7 +1123,7 @@ class OptimizeComponent(ModelComponent):
         # Initial parameter values
         initial_values = np.array([param.value for _, _, param in free_params])
 
-        # Calculate dynamic bounds based on system constraints
+        # Calculate dynamic bounds based on line constraints
         lower_bounds, upper_bounds = self._calculate_dynamic_bounds(free_params, constraint_map)
 
         # Residual function for least_squares

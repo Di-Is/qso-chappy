@@ -137,6 +137,10 @@ _SOURCE_STRINGS = (
         "ManualAnnotations",
         "Central canvas that shows the observed spectrum and fitted models with zoom and measurement tools.",
     ),
+    QT_TRANSLATE_NOOP(
+        "ManualAnnotations",
+        "Choose the display language of the application. The preview below updates to the selected language.",
+    ),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Choose the error FITS file from a file dialog."),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Choose the flux FITS file from a file dialog."),
     QT_TRANSLATE_NOOP(
@@ -145,15 +149,11 @@ _SOURCE_STRINGS = (
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
-        "Choose the region to add the lines to, or specify creating a new region.",
-    ),
-    QT_TRANSLATE_NOOP(
-        "ManualAnnotations",
         "Choose the single line used as the identification anchor. The popup lists every line in the preset with its rest wavelength; hover an item to see its oscillator strength and full-precision wavelength.",
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
-        "Choosing the JA 日本語 / EN English radio button updates the preview to that language.",
+        "Choosing a language from the list updates the preview to that language.",
     ),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Clear Control Points"),
     QT_TRANSLATE_NOOP(
@@ -173,7 +173,6 @@ _SOURCE_STRINGS = (
     QT_TRANSLATE_NOOP(
         "ManualAnnotations", "Close the dialog without applying the search results."
     ),
-    QT_TRANSLATE_NOOP("ManualAnnotations", "Close the dialog without changing the setting."),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
         "Compare the current region's lines on a shared velocity axis. Display range reframes every subplot and page without changing the line analysis ranges.",
@@ -217,13 +216,13 @@ _SOURCE_STRINGS = (
     ),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Delete selection"),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Delete the selected custom preset."),
-    QT_TRANSLATE_NOOP("ManualAnnotations", "Destination"),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Detail preview"),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Detection candidate table"),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Detection candidates"),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Discard the changes and close the dialog."),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Discard the unsaved changes and close the project."),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Display"),
+    QT_TRANSLATE_NOOP("ManualAnnotations", "Display language"),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Display range"),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations", "Displays application status, messages, and cursor readouts."
@@ -321,14 +320,6 @@ _SOURCE_STRINGS = (
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
-        "Hold Shift over an absorption feature and press V while the all-species preview is visible to open the plot immediately at that exact wavelength. Dashed boundaries show the New-candidate analysis range; Display range reframes every subplot without changing candidate data.",
-    ),
-    QT_TRANSLATE_NOOP(
-        "ManualAnnotations",
-        "Hold Shift over an absorption feature and press V while the all-species preview is visible to verify that exact position in the Velocity Plot. Without a valid preview, press V and then select the velocity origin in the spectrum.",
-    ),
-    QT_TRANSLATE_NOOP(
-        "ManualAnnotations",
         "Hosts the component parameter table while Region Detail is open. Drag the splitter handle above it to resize.",
     ),
     QT_TRANSLATE_NOOP(
@@ -338,7 +329,7 @@ _SOURCE_STRINGS = (
     QT_TRANSLATE_NOOP("ManualAnnotations", "Identify Mode"),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
-        "Identify absorption systems and assign them to line species and regions.",
+        "Identify absorption lines and assign them to line species and regions.",
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
@@ -365,6 +356,7 @@ _SOURCE_STRINGS = (
         "Lines already in the preset are tagged as selected, and duplicate additions are prevented automatically.",
     ),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Link suggestions are not applied automatically."),
+    QT_TRANSLATE_NOOP("ManualAnnotations", "Linked lines and lines"),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
         "Lists temporary lines grouped by the registration result. Group headings show whether the lines will create a new region or be added to an existing one; a warning mark flags overlaps with multiple existing regions.",
@@ -431,10 +423,6 @@ _SOURCE_STRINGS = (
     QT_TRANSLATE_NOOP("ManualAnnotations", "Notes & Caveats"),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
-        "Number of regions that cannot be analysed yet. Click to filter the region list.",
-    ),
-    QT_TRANSLATE_NOOP(
-        "ManualAnnotations",
         "Number of regions that have not been fitted yet. Click to filter the region list.",
     ),
     QT_TRANSLATE_NOOP(
@@ -486,6 +474,10 @@ _SOURCE_STRINGS = (
         "ManualAnnotations",
         "Pick a preset in the setup header at the top of the side panel, and use the manage button to open the [Preset Management dialog](../../../menus/main_window/dialogs/PresetListDialog.md) so you can add, edit, or remove presets.",
     ),
+    QT_TRANSLATE_NOOP(
+        "ManualAnnotations",
+        "Place the cursor over an absorption feature and press V to verify that exact position in the Velocity Plot; hold Shift first when you want to see the all-species preview before deciding. Right-clicking the spectrum and selecting [Show Velocity Plot (V)] opens the plot at the position you right-clicked.",
+    ),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Preset list"),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Preset selector"),
     QT_TRANSLATE_NOOP(
@@ -503,7 +495,8 @@ _SOURCE_STRINGS = (
     ),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Press OK to apply the selected language immediately."),
     QT_TRANSLATE_NOOP(
-        "ManualAnnotations", "Press OK to confirm the value, or Skip to keep the existing setting."
+        "ManualAnnotations",
+        "Press OK to confirm the value, or Cancel to keep the existing setting.",
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations", "Press OK to save the settings and apply them to the main window."
@@ -519,6 +512,10 @@ _SOURCE_STRINGS = (
     QT_TRANSLATE_NOOP("ManualAnnotations", "Press Run fit and adjust masks to refine residuals."),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations", "Press Save to write the project to disk and then close it."
+    ),
+    QT_TRANSLATE_NOOP(
+        "ManualAnnotations",
+        "Press V with the cursor over an absorption feature to open the plot immediately at that exact wavelength, or right-click the spectrum and select [Show Velocity Plot (V)]. Press V again or select [Back to Spectrum] to return. Dashed boundaries show the New-candidate analysis range; Display range reframes every subplot without changing candidate data.",
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
@@ -730,7 +727,7 @@ _SOURCE_STRINGS = (
     QT_TRANSLATE_NOOP("ManualAnnotations", "Shows progress and notification messages."),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
-        "Shows review counts, selected-region reasons, read-only structure, and explicit navigation actions.",
+        "Shows readiness counts, the read-only structure of the selected region, and actions to open or edit it.",
     ),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Shows supplemental context for the active mode."),
     QT_TRANSLATE_NOOP(
@@ -750,7 +747,11 @@ _SOURCE_STRINGS = (
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
-        "Shows the hierarchy of confirmed regions and their lines. A single click selects a row; press Enter or double-click a region or line to move the spectrum view to its range.",
+        "Shows the hierarchy of confirmed regions and their lines. A single click only selects a row and does not move the spectrum view; press Enter or double-click a region or line to move the spectrum view to its range while Identify mode stays active. Right-click a region or line row to select it and choose Open region to open the region in Analysis Region Detail, or Edit region to open it in Analysis Structure; a right-click on a line row targets its parent region.",
+    ),
+    QT_TRANSLATE_NOOP(
+        "ManualAnnotations",
+        "Shows the linked-line and line counts for the selected region. When there are six or fewer linked lines, it also shows each redshift and transition name.",
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
@@ -825,8 +826,6 @@ _SOURCE_STRINGS = (
         "ManualAnnotations",
         "Switch the display language of the whole application and check the wording in the preview.",
     ),
-    QT_TRANSLATE_NOOP("ManualAnnotations", "Switch the user interface to English."),
-    QT_TRANSLATE_NOOP("ManualAnnotations", "Switch the user interface to Japanese."),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Temporary lines"),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
@@ -836,6 +835,10 @@ _SOURCE_STRINGS = (
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
         "The available presets. Selecting one updates the details and the state of the edit buttons.",
+    ),
+    QT_TRANSLATE_NOOP(
+        "ManualAnnotations",
+        "The confirmed regions in the side panel are the same regions that Analysis Overview lists in its region list. To delete, merge, split, or unlink one, right-click its row and choose Edit region to open Analysis Structure, then follow [Analysis Structure](../../../operations/analysis-structure.md).",
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations", "The data control panel is hidden while you stay in Start mode."
@@ -875,9 +878,8 @@ _SOURCE_STRINGS = (
         "ManualAnnotations",
         "Turning on Apply Instrument Resolution convolves the resolution into candidate detection in Identify mode and model calculations in Analysis Region Detail.",
     ),
-    QT_TRANSLATE_NOOP("ManualAnnotations", "Unavailable count"),
     QT_TRANSLATE_NOOP("ManualAnnotations", "Undo"),
-    QT_TRANSLATE_NOOP("ManualAnnotations", "Unlink system"),
+    QT_TRANSLATE_NOOP("ManualAnnotations", "Unlink linked lines"),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
         "Unlocking too many parameters can destabilise convergence; introduce changes gradually.",
@@ -920,10 +922,6 @@ _SOURCE_STRINGS = (
     QT_TRANSLATE_NOOP(
         "ManualAnnotations",
         "When more than six slices are available, move back to the earlier subplot page.",
-    ),
-    QT_TRANSLATE_NOOP(
-        "ManualAnnotations",
-        "When opened from Identify mode, shows the current absorption-region name and wavelength range.",
     ),
     QT_TRANSLATE_NOOP(
         "ManualAnnotations", "When Ωm + ΩΛ exceeds 1, Ωk shows the sign of the curvature."

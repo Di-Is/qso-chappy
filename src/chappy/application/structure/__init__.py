@@ -14,11 +14,17 @@ from .impact_preview import (
 )
 from .models import (
     AtomicStructureMutationExecution,
+    StructureDeleteResult,
     StructureInvalidationScope,
+    StructureMergeResult,
+    StructureMoveResult,
     StructureMutationOutcome,
     StructureMutationResult,
     StructureRegionDelta,
+    StructureSplitResult,
+    StructureUnlinkResult,
 )
+from .ports import StructureHistoryRecorder, StructureMoveHistoryRecorder, StructureProjectPort
 from .topology import (
     StructureTopologyProjectPort,
     StructureTopologySnapshot,
@@ -40,14 +46,21 @@ __all__ = [
     "MergeStructureRequest",
     "MoveStructureRequest",
     "SplitStructureRequest",
+    "StructureDeleteResult",
+    "StructureHistoryRecorder",
     "StructureImpactOperation",
     "StructureImpactPreview",
     "StructureImpactPreviewUseCase",
     "StructureImpactProjectPort",
     "StructureInvalidationScope",
+    "StructureMergeResult",
+    "StructureMoveHistoryRecorder",
+    "StructureMoveResult",
     "StructureMutationOutcome",
     "StructureMutationResult",
+    "StructureProjectPort",
     "StructureRegionDelta",
+    "StructureSplitResult",
     "StructureTopologyProjectPort",
     "StructureTopologySnapshot",
     "StructureTopologySnapshotService",
@@ -56,5 +69,6 @@ __all__ = [
     "StructureTopologyValidator",
     "StructureTopologyViolation",
     "StructureTopologyViolationKind",
+    "StructureUnlinkResult",
     "UnlinkStructureRequest",
 ]

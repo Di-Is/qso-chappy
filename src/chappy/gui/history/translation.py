@@ -13,24 +13,26 @@ if TYPE_CHECKING:
 
 _TRANSLATION_CONTEXT = "HistoryOperation"
 _OPERATION_SOURCES: dict[str, str] = {
-    "ident.add_candidate": str(QT_TRANSLATE_NOOP("HistoryOperation", "Add Candidate Line")),
-    "ident.remove_candidate": str(QT_TRANSLATE_NOOP("HistoryOperation", "Remove Candidate Line")),
-    "ident.clear_candidates": str(QT_TRANSLATE_NOOP("HistoryOperation", "Clear Candidates")),
+    "ident.add_temporary_line": str(QT_TRANSLATE_NOOP("HistoryOperation", "Add Temporary Line")),
+    "ident.remove_temporary_line": str(
+        QT_TRANSLATE_NOOP("HistoryOperation", "Remove Temporary Line")
+    ),
+    "ident.clear_temporary_lines": str(
+        QT_TRANSLATE_NOOP("HistoryOperation", "Clear Temporary Lines")
+    ),
     "ident.register_selected": str(
         QT_TRANSLATE_NOOP("HistoryOperation", "Register Selected Lines")
     ),
-    "ident.vplot_confirm_create": str(
-        QT_TRANSLATE_NOOP("HistoryOperation", "Create Velocity Plot")
+    "structure.move_linked_lines": str(QT_TRANSLATE_NOOP("HistoryOperation", "Move Lines")),
+    "structure.split": str(QT_TRANSLATE_NOOP("HistoryOperation", "Split Region")),
+    "structure.merge": str(QT_TRANSLATE_NOOP("HistoryOperation", "Merge Regions")),
+    "structure.delete": str(QT_TRANSLATE_NOOP("HistoryOperation", "Delete Region")),
+    "structure.unlink_linked_lines": str(
+        QT_TRANSLATE_NOOP("HistoryOperation", "Unlink Linked Lines")
     ),
-    "group.auto_confirm": str(QT_TRANSLATE_NOOP("HistoryOperation", "Confirm Auto Region")),
-    "group.move_systems": str(QT_TRANSLATE_NOOP("HistoryOperation", "Move Lines")),
-    "group.split": str(QT_TRANSLATE_NOOP("HistoryOperation", "Split Region")),
-    "group.merge": str(QT_TRANSLATE_NOOP("HistoryOperation", "Merge Regions")),
-    "group.delete": str(QT_TRANSLATE_NOOP("HistoryOperation", "Delete Region")),
-    "group.unlink_system": str(QT_TRANSLATE_NOOP("HistoryOperation", "Unlink Line System")),
-    "group.mask_create": str(QT_TRANSLATE_NOOP("HistoryOperation", "Create Mask")),
-    "group.mask_delete": str(QT_TRANSLATE_NOOP("HistoryOperation", "Delete Mask")),
-    "group.mask_edit": str(QT_TRANSLATE_NOOP("HistoryOperation", "Edit Mask")),
+    "mask.create": str(QT_TRANSLATE_NOOP("HistoryOperation", "Create Mask")),
+    "mask.delete": str(QT_TRANSLATE_NOOP("HistoryOperation", "Delete Mask")),
+    "mask.edit": str(QT_TRANSLATE_NOOP("HistoryOperation", "Edit Mask")),
     "cont.add_component": str(QT_TRANSLATE_NOOP("HistoryOperation", "Add Component")),
     "cont.add_point": str(QT_TRANSLATE_NOOP("HistoryOperation", "Add Continuum Point")),
     "cont.delete_point": str(QT_TRANSLATE_NOOP("HistoryOperation", "Delete Continuum Point")),

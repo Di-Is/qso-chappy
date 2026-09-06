@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from chappy.application.history import HistoryApplyError, HistoryRefreshTarget, RangeSnapshot
-    from chappy.application.organize import ResolutionChangeNotifier
+    from chappy.application.spectrum import ResolutionChangeNotifier
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
 

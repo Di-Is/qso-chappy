@@ -19,8 +19,8 @@ from chappy.application.optimize import (
     MaskMutationUseCase,
     TieSetEditUseCase,
 )
-from chappy.application.organize import OrganizeOperationUseCase, ResolutionUpdateUseCase
-from chappy.application.spectrum import AbsorberEditUseCase
+from chappy.application.spectrum import AbsorberEditUseCase, ResolutionUpdateUseCase
+from chappy.application.structure.structure_operation_usecase import StructureOperationUseCase
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.analysis import (
     AnalysisArtifact,
@@ -65,7 +65,7 @@ _MUTATION_CASES = (
         "analysis-half-width", _MutationScope.REGION_LOCAL, EditLineAnalysisHalfWidthUseCase
     ),
     _MutationCase("no-change", _MutationScope.NO_CHANGE, GlobalAnalysisMutationUseCase),
-    _MutationCase("display-only", _MutationScope.DISPLAY_ONLY, OrganizeOperationUseCase),
+    _MutationCase("display-only", _MutationScope.DISPLAY_ONLY, StructureOperationUseCase),
 )
 
 
@@ -172,16 +172,16 @@ def test_non_structure_revision_and_invalidation_matrix(case: _MutationCase) -> 
 @pytest.mark.parametrize(
     "case",
     [
-        _MutationCase("move-existing", _MutationScope.REGION_LOCAL, OrganizeOperationUseCase),
+        _MutationCase("move-existing", _MutationScope.REGION_LOCAL, StructureOperationUseCase),
         _MutationCase(
-            "move-new-and-remove-source", _MutationScope.REGION_LOCAL, OrganizeOperationUseCase
+            "move-new-and-remove-source", _MutationScope.REGION_LOCAL, StructureOperationUseCase
         ),
-        _MutationCase("split", _MutationScope.REGION_LOCAL, OrganizeOperationUseCase),
-        _MutationCase("merge", _MutationScope.REGION_LOCAL, OrganizeOperationUseCase),
-        _MutationCase("unlink", _MutationScope.REGION_LOCAL, OrganizeOperationUseCase),
-        _MutationCase("delete-local", _MutationScope.REGION_LOCAL, OrganizeOperationUseCase),
-        _MutationCase("delete-region", _MutationScope.REGION_LOCAL, OrganizeOperationUseCase),
-        _MutationCase("delete-model-global", _MutationScope.GLOBAL, OrganizeOperationUseCase),
+        _MutationCase("split", _MutationScope.REGION_LOCAL, StructureOperationUseCase),
+        _MutationCase("merge", _MutationScope.REGION_LOCAL, StructureOperationUseCase),
+        _MutationCase("unlink", _MutationScope.REGION_LOCAL, StructureOperationUseCase),
+        _MutationCase("delete-local", _MutationScope.REGION_LOCAL, StructureOperationUseCase),
+        _MutationCase("delete-region", _MutationScope.REGION_LOCAL, StructureOperationUseCase),
+        _MutationCase("delete-model-global", _MutationScope.GLOBAL, StructureOperationUseCase),
         _MutationCase(
             "identify-existing-and-new",
             _MutationScope.REGION_LOCAL,

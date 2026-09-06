@@ -990,7 +990,7 @@ class RegionDetailPanel(QWidget):
     def _current_region_readiness(self) -> AnalysisReadiness:
         group_id = self.analysis_focus.focused_region_id()
         if self._project is None or not group_id:
-            return AnalysisReadiness.UNAVAILABLE
+            return AnalysisReadiness.NOT_ANALYZED
         return self._group_selection_controller.analysis_readiness(self._project, group_id)
 
     def _update_optimize_button_state(self) -> None:

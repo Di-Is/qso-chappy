@@ -25,7 +25,6 @@ from chappy.gui.common.tutorial import (
 )
 from chappy.gui.modes.analysis.contracts import PanelState
 from chappy.gui.modes.identify.presets.preset_store import IdentifyPresetStore
-from chappy.gui.protocols.intent_types import PanIntent, ZoomRectIntent
 from chappy.gui.shell.composition import create_main_window
 from chappy.gui.shell.dependencies import ShellDependencies
 from chappy.gui.shell.main_window import (
@@ -33,9 +32,9 @@ from chappy.gui.shell.main_window import (
     _TUTORIAL_PRESET_LINE_IDS,
     _find_sample_spectrum_pair,
 )
-from chappy.gui.shell.tutorial_chapters import build_full_walkthrough_chapters
 from chappy.infrastructure import preset_store as infrastructure_preset_store
 from chappy.infrastructure.composition import create_default_infrastructure_dependencies
+from tests.helpers.tutorial_chapters import all_walkthrough_chapters
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -54,7 +53,7 @@ def _isolate_preset_storage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
 def _required_completions() -> set[TutorialCompletion]:
     return {
         step.requires
-        for chapter in build_full_walkthrough_chapters()
+        for chapter in all_walkthrough_chapters()
         for step in chapter.steps
         if step.requires is not None
     }
@@ -386,91 +385,6 @@ def _window_with_sample(qtbot, monkeypatch) -> MainWindow:
     return window
 
 
-def _absorber_in_view(window: MainWindow) -> bool:
-    return window._tutorial_completion_checks()[TutorialCompletion.MG2_ABSORBER_IN_VIEW]()
-
-
-def test_absorber_gate_stays_shut_while_the_mg2_pair_is_off_screen(qtbot, monkeypatch) -> None:
-    """A view elsewhere in the spectrum cannot satisfy the step that stages the absorber."""
-    window = _window_with_sample(qtbot, monkeypatch)
-    assert window.data_control_panel is not None
-
-    window.data_control_panel.wavelength_range_applied.emit(4700.0, 4800.0)
-
-    assert not _absorber_in_view(window)
-
-
-def test_absorber_gate_stays_shut_while_only_one_trough_is_framed(qtbot, monkeypatch) -> None:
-    """The next step names both troughs, so half the pair is not enough."""
-    window = _window_with_sample(qtbot, monkeypatch)
-    assert window.data_control_panel is not None
-
-    window.data_control_panel.wavelength_range_applied.emit(4935.0, 4970.0)
-
-    assert not _absorber_in_view(window)
-
-
-def test_absorber_gate_opens_from_the_wavelength_fields(qtbot, monkeypatch) -> None:
-    """The route the step names as quickest must open the gate."""
-    window = _window_with_sample(qtbot, monkeypatch)
-    assert window.data_control_panel is not None
-
-    window.data_control_panel.wavelength_range_applied.emit(4900.0, 4970.0)
-
-    assert _absorber_in_view(window)
-
-
-def _civ_absorber_in_view(window: MainWindow) -> bool:
-    return window._tutorial_completion_checks()[TutorialCompletion.CIV_ABSORBER_IN_VIEW]()
-
-
-def test_civ_absorber_gate_stays_shut_when_the_pair_is_off_screen(qtbot, monkeypatch) -> None:
-    """A narrow view away from C IV cannot satisfy the identify zoom step."""
-    window = _window_with_sample(qtbot, monkeypatch)
-    assert window.data_control_panel is not None
-
-    window.data_control_panel.wavelength_range_applied.emit(4700.0, 4725.0)
-
-    assert not _civ_absorber_in_view(window)
-
-
-def test_civ_absorber_gate_opens_at_the_instructed_range(qtbot, monkeypatch) -> None:
-    """The chapter's explicit 4755-4780 Å range must satisfy its gate."""
-    window = _window_with_sample(qtbot, monkeypatch)
-    assert window.data_control_panel is not None
-
-    window.data_control_panel.wavelength_range_applied.emit(4755.0, 4780.0)
-
-    assert _civ_absorber_in_view(window)
-
-
-def test_absorber_gate_opens_from_a_rectangle_zoom(qtbot, monkeypatch) -> None:
-    """Dragging a rectangle is one of the routes the first chapter taught."""
-    window = _window_with_sample(qtbot, monkeypatch)
-    spectrum_view = window.view_stack.spectrum_view
-    assert spectrum_view is not None
-
-    spectrum_view.coordinator.handle_navigation_intent(
-        ZoomRectIntent(min_wavelength=4900.0, max_wavelength=4970.0)
-    )
-
-    assert _absorber_in_view(window)
-
-
-def test_absorber_gate_opens_from_panning(qtbot, monkeypatch) -> None:
-    """Arrow-key and scroll panning must reach the same goal as typing the range."""
-    window = _window_with_sample(qtbot, monkeypatch)
-    assert window.data_control_panel is not None
-    spectrum_view = window.view_stack.spectrum_view
-    assert spectrum_view is not None
-    window.data_control_panel.wavelength_range_applied.emit(4990.0, 5060.0)
-    assert not _absorber_in_view(window)
-
-    spectrum_view.coordinator.handle_navigation_intent(PanIntent(fraction=-1.0))
-
-    assert _absorber_in_view(window)
-
-
 def _register_region(
     window: MainWindow, species: str, rest_wavelengths: tuple[float, ...], *, redshift: float
 ) -> str:
@@ -618,18 +532,15 @@ def test_joint_component_gates_distinguish_species_and_count(qtbot, monkeypatch)
     assert gates[TutorialCompletion.FE2_AND_MG2_HAVE_THREE_COMPONENTS]()
 
 
-def test_fixed_mg2_gate_requires_fixed_logn_and_a_fresh_refit(qtbot, monkeypatch) -> None:
-    """The last joint-fit gate combines the parameter edit with a later fit."""
+def test_fixed_mg2_gate_tracks_only_the_logn_fix(qtbot, monkeypatch) -> None:
+    """The fix step opens on the parameter edit alone; the refit is a separate step."""
     window = _window_with_sample(qtbot, monkeypatch)
     region_id = _register_region(
         window, "Mg II", _MG2_REST_WAVELENGTHS, redshift=_ABSORBER_REDSHIFT
     )
     _focus_region_detail(window, region_id)
     _add_species_components(window, "Mg II", 1)
-    monkeypatch.setattr(window, "_tutorial_region_fit_applied", lambda: True)
-    gate = window._tutorial_completion_checks()[
-        TutorialCompletion.MG2_LOGN_FIXED_AND_REFIT_APPLIED
-    ]
+    gate = window._tutorial_completion_checks()[TutorialCompletion.MG2_LOGN_FIXED]
     assert not gate()
 
     project = window.current_project
@@ -640,5 +551,24 @@ def test_fixed_mg2_gate_requires_fixed_logn_and_a_fresh_refit(qtbot, monkeypatch
     component.parameters["column_density"].fixed = True
     assert gate()
 
-    monkeypatch.setattr(window, "_tutorial_region_fit_applied", lambda: False)
-    assert not gate()
+
+def test_fixed_mg2_note_explains_the_closed_gate_until_logn_is_fixed(qtbot, monkeypatch) -> None:
+    """The gated step shows how to fix logN instead of only a disabled [Next]."""
+    window = _window_with_sample(qtbot, monkeypatch)
+    region_id = _register_region(
+        window, "Mg II", _MG2_REST_WAVELENGTHS, redshift=_ABSORBER_REDSHIFT
+    )
+    _focus_region_detail(window, region_id)
+    _add_species_components(window, "Mg II", 1)
+    note = window._tutorial_completion_notes()[TutorialCompletion.MG2_LOGN_FIXED]
+
+    assert note() == COMPLETION_NOTE_SOURCES[TutorialCompletion.MG2_LOGN_FIXED]
+
+    project = window.current_project
+    assert project is not None
+    mg_line = window._tutorial_focused_region_lines("Mg II")[0]
+    component = project.find_absorber_component(mg_line.model_ids[0])
+    assert component is not None
+    component.parameters["column_density"].fixed = True
+
+    assert note() is None

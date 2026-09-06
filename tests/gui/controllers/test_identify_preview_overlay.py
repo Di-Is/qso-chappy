@@ -164,7 +164,6 @@ def test_preview_lock_enable_keeps_active_shift_preview() -> None:
 
     assert controller.preview_always_on() is True
     assert preview_calls == []
-    assert controller.velocity_verification_wavelength() == 3100.0
 
 
 def test_preview_lock_disable_clears_overlay() -> None:
@@ -200,7 +199,6 @@ def test_preview_lock_toggle_reuses_cursor_without_shift_guidance() -> None:
     assert payload is not None
     assert payload["observed_cursor"] == 3100.5
     assert "hint_text" not in payload
-    assert "velocity_verification_wavelength" not in payload
 
 
 def test_shift_preview_exposes_same_observed_wavelength_and_hint() -> None:
@@ -216,9 +214,7 @@ def test_shift_preview_exposes_same_observed_wavelength_and_hint() -> None:
     payload = preview_calls[-1]
     assert payload is not None
     assert payload["observed_cursor"] == 3101.25
-    assert payload["velocity_verification_wavelength"] == payload["observed_cursor"]
     assert payload["hint_text"] == "Shift hint"
-    assert controller.velocity_verification_wavelength() == payload["observed_cursor"]
 
 
 def test_velocity_intent_forgets_shift_state_before_later_reapply() -> None:
@@ -229,12 +225,11 @@ def test_velocity_intent_forgets_shift_state_before_later_reapply() -> None:
         lines=[baseline], baseline=baseline, preview_calls=preview_calls
     )
     controller.handle_cursor_position(3101.75, 0.0, shift_modifier_value())
-    pending: list[str] = []
     toggles: list[float | None] = []
     surface = IdentifySharedSurfaceIntentController(
         workflow_provider=lambda: cast(IdentifySharedSurfaceWorkflowPort, controller),
         velocity_toggle_callback=toggles.append,
-        velocity_pending_callback=lambda: pending.append("pending"),
+        cursor_wavelength_provider=lambda: 3101.75,
     )
 
     surface.handle_mode_velocity_shortcut()
@@ -243,10 +238,8 @@ def test_velocity_intent_forgets_shift_state_before_later_reapply() -> None:
     controller.set_preview_always_on(True)
 
     assert toggles == [3101.75]
-    assert pending == []
     assert calls_after_velocity_entry[-1] is None
     assert preview_calls == calls_after_velocity_entry
-    assert controller.velocity_verification_wavelength() is None
 
 
 def test_mode_leave_forgets_shift_state_before_reentry_and_lock() -> None:
@@ -271,7 +264,6 @@ def test_mode_leave_forgets_shift_state_before_reentry_and_lock() -> None:
 
     assert calls_after_mode_leave[-1] is None
     assert preview_calls == calls_after_mode_leave
-    assert controller.velocity_verification_wavelength() is None
 
 
 def test_preview_lock_without_shift_has_no_velocity_verification_hint() -> None:
@@ -287,43 +279,29 @@ def test_preview_lock_without_shift_has_no_velocity_verification_hint() -> None:
 
     payload = preview_calls[-1]
     assert payload is not None
-    assert "velocity_verification_wavelength" not in payload
     assert "hint_text" not in payload
-    assert controller.velocity_verification_wavelength() is None
 
 
-def test_invalid_shift_preview_has_no_velocity_verification_target() -> None:
-    """Shift without a valid baseline cannot bypass velocity pending input."""
-    controller = _build_controller(lines=[], baseline=None)
-
-    controller.handle_cursor_position(3103.0, 0.0, shift_modifier_value())
-
-    assert controller.velocity_verification_wavelength() is None
-
-
-def test_shift_release_clears_preview_and_next_velocity_shortcut_is_pending() -> None:
-    """Releasing Shift clears stale verification state without pointer movement."""
+def test_shift_release_clears_preview_but_velocity_shortcut_still_toggles() -> None:
+    """Releasing Shift clears stale verification state without disabling the shortcut."""
     baseline = _make_line("base", "C IV", 1550.0)
     preview_calls: list[CursorPreviewPayload | None] = []
     controller = _build_controller(
         lines=[baseline], baseline=baseline, preview_calls=preview_calls
     )
     controller.handle_cursor_position(3104.25, 0.0, shift_modifier_value())
-    pending: list[str] = []
     toggles: list[float | None] = []
     surface = IdentifySharedSurfaceIntentController(
         workflow_provider=lambda: cast(IdentifySharedSurfaceWorkflowPort, controller),
         velocity_toggle_callback=toggles.append,
-        velocity_pending_callback=lambda: pending.append("pending"),
+        cursor_wavelength_provider=lambda: 3104.25,
     )
 
     controller.handle_shift_released()
     surface.handle_mode_velocity_shortcut()
 
     assert preview_calls[-1] is None
-    assert controller.velocity_verification_wavelength() is None
-    assert toggles == []
-    assert pending == ["pending"]
+    assert toggles == [3104.25]
 
 
 def test_shift_release_reapplies_locked_preview_without_hint_or_target() -> None:
@@ -342,8 +320,6 @@ def test_shift_release_reapplies_locked_preview_without_hint_or_target() -> None
     assert payload is not None
     assert payload["observed_cursor"] == 3105.5
     assert "hint_text" not in payload
-    assert "velocity_verification_wavelength" not in payload
-    assert controller.velocity_verification_wavelength() is None
 
     controller.reapply_cursor_preview()
 
@@ -351,8 +327,6 @@ def test_shift_release_reapplies_locked_preview_without_hint_or_target() -> None
     assert reapplied_payload is not None
     assert reapplied_payload["observed_cursor"] == 3105.5
     assert "hint_text" not in reapplied_payload
-    assert "velocity_verification_wavelength" not in reapplied_payload
-    assert controller.velocity_verification_wavelength() is None
 
 
 def test_locked_shift_release_clears_stale_overlay_when_dependencies_become_invalid() -> None:
@@ -369,4 +343,3 @@ def test_locked_shift_release_clears_stale_overlay_when_dependencies_become_inva
     controller.handle_shift_released()
 
     assert preview_calls[-1] is None
-    assert controller.velocity_verification_wavelength() is None

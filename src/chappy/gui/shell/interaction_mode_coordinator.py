@@ -13,7 +13,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     InteractionPhase,
     MaskSelectionContext,
     RectZoomContext,
-    VelocityContext,
 )
 
 if TYPE_CHECKING:
@@ -144,9 +143,6 @@ class InteractionModeCoordinator:
         if snapshot.channel is InteractionChannel.CONTINUUM:
             self._handle_continuum_snapshot(snapshot)
             return
-        if snapshot.channel is InteractionChannel.VELOCITY:
-            self._handle_velocity_snapshot(snapshot)
-            return
         self._raise_unhandled_interaction_snapshot_channel(snapshot.channel)
 
     def _handle_rect_zoom_snapshot(self, snapshot: SpectrumInteractionSnapshot) -> None:
@@ -195,24 +191,12 @@ class InteractionModeCoordinator:
         self._latest_interaction_snapshot = snapshot
         self._requested_interaction_mode = None
 
-    def _handle_velocity_snapshot(self, snapshot: SpectrumInteractionSnapshot) -> None:
-        self._require_snapshot_context_type(
-            snapshot, expected_type=VelocityContext, channel_name=InteractionChannel.VELOCITY.value
-        )
-        self._latest_interaction_snapshot = snapshot
-        self._requested_interaction_mode = None
-        self._log_velocity_snapshot(snapshot)
-
     @staticmethod
     def _require_snapshot_context_type(
         snapshot: SpectrumInteractionSnapshot,
         *,
         expected_type: type[
-            RectZoomContext
-            | AbsorberDragContext
-            | MaskSelectionContext
-            | ContinuumContext
-            | VelocityContext
+            RectZoomContext | AbsorberDragContext | MaskSelectionContext | ContinuumContext
         ],
         channel_name: str,
     ) -> None:
@@ -328,32 +312,6 @@ class InteractionModeCoordinator:
             logger.info("✅ Mode coordinator applied absorber drag completion", extra=payload)
             return
         logger.debug("🎯 Mode coordinator tracking absorber drag", extra=payload)
-
-    def _log_velocity_snapshot(self, snapshot: SpectrumInteractionSnapshot) -> None:
-        """Emit diagnostic logs for velocity interaction snapshots."""
-        phase = snapshot.phase
-        context = snapshot.context
-        if context is not None and not isinstance(context, VelocityContext):
-            msg = f"Velocity log context must be VelocityContext, got {type(context).__name__}."
-            raise TypeError(msg)
-        payload: dict[str, object] = {
-            "interaction_id": snapshot.interaction_id,
-            "phase": phase.value,
-        }
-        if context:
-            payload["target_wavelength"] = context.target_wavelength
-            payload["confirmed_wavelength"] = context.confirmed_wavelength
-            payload["trigger"] = context.trigger
-            payload["modifiers"] = context.modifiers
-            payload["cancel_reason"] = context.cancel_reason
-
-        if phase is InteractionPhase.CANCELLED:
-            logger.info("🛑 Mode coordinator received velocity cancellation", extra=payload)
-            return
-        if phase is InteractionPhase.IDLE:
-            logger.info("✅ Mode coordinator applied velocity completion", extra=payload)
-            return
-        logger.debug("⚡ Mode coordinator tracking velocity interaction", extra=payload)
 
 
 __all__ = ["InteractionModeCoordinator"]

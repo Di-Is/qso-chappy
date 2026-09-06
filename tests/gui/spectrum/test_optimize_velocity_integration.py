@@ -734,7 +734,7 @@ def _make_drag_presenter(
         AbsorberModelMutationController(
             ports=AbsorberModelMutationPorts(
                 project_provider=lambda: project,
-                system_info_provider=presenter._get_system_info_for_component,
+                line_info_provider=presenter._get_line_info_for_component,
                 history_provider=_History,
                 plot_widget_provider=lambda: plot.plot_widget,
                 plot_refresh_callback=view.update_plot,

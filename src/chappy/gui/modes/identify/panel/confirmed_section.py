@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, override
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from PySide6.QtCore import QPoint
     from PySide6.QtGui import QKeyEvent, QMouseEvent
 
     from chappy.gui.modes.identify.panel.panel_models import ConfirmedRegionRow
@@ -30,7 +31,7 @@ from chappy.gui.modes.identify.panel.workflow_tree_renderer import (
     IdentifyWorkflowTreeRenderer,
     IdentifyWorkflowTreeText,
 )
-from chappy.gui.theme import empty_state_label_style, table_surface_frame_style
+from chappy.gui.theme import create_styled_menu, empty_state_label_style, table_surface_frame_style
 from chappy.gui.visual_tokens import SidePanelMetrics
 
 
@@ -64,7 +65,9 @@ class IdentifyConfirmedRegionsSection(QWidget):
     """Confirmed absorption regions with focus and activation interactions."""
 
     group_focus_requested = Signal(str, float, float)
-    system_focus_requested = Signal(str, float, float)
+    line_focus_requested = Signal(str, float, float)
+    region_open_requested = Signal(str)
+    region_structure_edit_requested = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Construct the confirmed regions section."""
@@ -90,7 +93,9 @@ class IdentifyConfirmedRegionsSection(QWidget):
         self._groups_tree.setStyleSheet(
             "QTreeWidget#identifyGroupsTree { border: none; border-radius: 0; }"
         )
+        self._groups_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._groups_tree.itemActivated.connect(self._activate_focus_target)
+        self._groups_tree.customContextMenuRequested.connect(self._show_row_context_menu)
 
         self._empty_placeholder = QLabel(self)
         self._empty_placeholder.setObjectName("identifyConfirmedEmptyState")
@@ -157,16 +162,16 @@ class IdentifyConfirmedRegionsSection(QWidget):
             return self.tr("0 regions · Shown after registration")
         regions = self.tr("{count} region") if count == 1 else self.tr("{count} regions")
         representative = self._confirmed_regions[-1]
-        if representative.systems:
-            system = representative.systems[0]
+        if representative.lines:
+            line = representative.lines[0]
             #: {regions} is a localized region count; {label} is a region label;
             #: {species} and {redshift} identify its first line.
             template = self.tr("{regions} · {label} · {species} z={redshift:.4f}")
             return template.format(
                 regions=regions.format(count=count),
                 label=representative.label,
-                species=system.species,
-                redshift=system.redshift,
+                species=line.species,
+                redshift=line.redshift,
             )
         #: {regions} is a localized region count; {label} is a region label.
         template = self.tr("{regions} · {label}")
@@ -176,7 +181,7 @@ class IdentifyConfirmedRegionsSection(QWidget):
         return IdentifyWorkflowTreeText(unknown=self.tr("Unknown"))
 
     def _activate_focus_target(self, item: QTreeWidgetItem, _column: int) -> None:
-        """Focus the group or system activated by Enter or double-click."""
+        """Focus the group or line activated by Enter or double-click."""
         if item is None:
             return
 
@@ -191,9 +196,38 @@ class IdentifyConfirmedRegionsSection(QWidget):
                 target.identifier, target.min_wavelength, target.max_wavelength
             )
         else:
-            self.system_focus_requested.emit(
+            self.line_focus_requested.emit(
                 target.identifier, target.min_wavelength, target.max_wavelength
             )
+
+    def _show_row_context_menu(self, position: QPoint) -> None:
+        """Offer the Analysis entry points for the region under the cursor."""
+        item = self._groups_tree.itemAt(position)
+        if item is None:
+            return
+        region_id = self._resolve_region_id(item)
+        if region_id is None:
+            return
+
+        self._groups_tree.setCurrentItem(item)
+        menu = create_styled_menu(self)
+        menu.addAction(self.tr("Open region"), lambda: self.region_open_requested.emit(region_id))
+        menu.addAction(
+            self.tr("Edit region"), lambda: self.region_structure_edit_requested.emit(region_id)
+        )
+        menu.exec(self._groups_tree.viewport().mapToGlobal(position))
+
+    def _resolve_region_id(self, item: QTreeWidgetItem) -> str | None:
+        payload = self._selection_controller.item_payload(item)
+        if isinstance(payload, ConfirmedGroupItemPayload):
+            return payload.group_id
+        parent = item.parent()
+        if parent is None:
+            return None
+        parent_payload = self._selection_controller.item_payload(parent)
+        if isinstance(parent_payload, ConfirmedGroupItemPayload):
+            return parent_payload.group_id
+        return None
 
     @override
     def changeEvent(self, event: QEvent) -> None:

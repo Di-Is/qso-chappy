@@ -1,4 +1,4 @@
-"""Tests for the organize line-system unlink confirmation."""
+"""Tests for the structure linked-line unlink confirmation."""
 
 from __future__ import annotations
 

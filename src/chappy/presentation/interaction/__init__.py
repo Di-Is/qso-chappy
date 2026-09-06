@@ -17,7 +17,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     RectZoomBounds,
     RectZoomContext,
     ValidationError,
-    VelocityContext,
 )
 
 __all__ = [
@@ -37,5 +36,4 @@ __all__ = [
     "RectZoomBounds",
     "RectZoomContext",
     "ValidationError",
-    "VelocityContext",
 ]

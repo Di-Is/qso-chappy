@@ -275,7 +275,7 @@ def test_persistence_round_trip_with_multiple_regions(panel: RegionDetailPanel) 
     project.set_region_optimizer_settings(region_a.region_id, 2500, 1e-10)
     project.set_region_optimizer_settings(region_b.region_id, 5000, 1e-6)
 
-    restored = project_from_document(project_to_document(project))
+    restored = project_from_document(project_to_document(project)).project
     panel.optimize_editor.set_project(restored)
     panel.set_project(restored)
 

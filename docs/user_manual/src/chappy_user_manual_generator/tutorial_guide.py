@@ -28,7 +28,6 @@ class _WalkthroughSummary:
 class _ChapterSummary:
     chapter_id: str
     title_source: str
-    included_source: str
     learn_source: str
     has_prerequisite: bool
 
@@ -84,10 +83,13 @@ _STARTING_NOTE = QT_TRANSLATE_NOOP(
 )
 
 _WALKTHROUGHS_HEADING = QT_TRANSLATE_NOOP(
-    "ManualExporter", "Short Walkthrough or Full Walkthrough"
+    "ManualExporter", "Essential Walkthrough or Advanced Walkthrough"
 )
 _WALKTHROUGHS_INTRO = QT_TRANSLATE_NOOP(
-    "ManualExporter", "The dialog offers two lengths; both start from the same first chapter."
+    "ManualExporter",
+    "The dialog offers two separate walkthroughs. The advanced walkthrough continues from"
+    " where the essential one leaves off, with no overlap between the two. Each reopens the"
+    " sample spectrum and starts independently, so you can run them in separate sessions.",
 )
 _WALKTHROUGH_COLUMN = QT_TRANSLATE_NOOP("ManualExporter", "Dialog Button")
 _COVERAGE_COLUMN = QT_TRANSLATE_NOOP("ManualExporter", "Coverage")
@@ -97,39 +99,37 @@ _WALKTHROUGHS = (
         QT_TRANSLATE_NOOP("ManualExporter", "[Try the Essential Workflow]"),
         QT_TRANSLATE_NOOP(
             "ManualExporter",
-            "The minimal loop: load data, identify one absorption system, fit it, save the"
-            " project.",
+            "The minimal loop: load data, identify one absorption line, fit it, save the project.",
         ),
         5,
     ),
     _WalkthroughSummary(
-        QT_TRANSLATE_NOOP("ManualExporter", "[Explore All Features]"),
+        QT_TRANSLATE_NOOP("ManualExporter", "[Continue with Advanced Topics]"),
         QT_TRANSLATE_NOOP(
             "ManualExporter",
-            "Everything in the essential workflow plus building a custom preset, the velocity"
-            " plot, merging regions, tying ions together, and continuum correction.",
+            "Continuing from the essentials: building a custom preset, identifying with the"
+            " velocity plot, merging and splitting regions, tying ions together in a joint fit,"
+            " and continuum correction.",
         ),
-        10,
+        7,
     ),
 )
 
 _CHAPTERS_HEADING = QT_TRANSLATE_NOOP("ManualExporter", "Chapters")
 _CHAPTERS_INTRO = QT_TRANSLATE_NOOP(
     "ManualExporter",
-    "Chapters run in the order below. A chapter marked Full only is skipped in the essential"
-    " workflow.",
+    "The essential and advanced walkthroughs each run their own chapters, in the order shown"
+    " in the two tables below.",
 )
+_ESSENTIAL_CHAPTERS_HEADING = QT_TRANSLATE_NOOP("ManualExporter", "Essential Walkthrough")
+_ADVANCED_CHAPTERS_HEADING = QT_TRANSLATE_NOOP("ManualExporter", "Advanced Walkthrough")
 _NUMBER_COLUMN = QT_TRANSLATE_NOOP("ManualExporter", "No.")
 _CHAPTER_COLUMN = QT_TRANSLATE_NOOP("ManualExporter", "Chapter")
-_INCLUDED_COLUMN = QT_TRANSLATE_NOOP("ManualExporter", "Included In")
 _LEARN_COLUMN = QT_TRANSLATE_NOOP("ManualExporter", "What You Learn")
-_BOTH_WALKTHROUGHS = QT_TRANSLATE_NOOP("ManualExporter", "Essential and Full")
-_FULL_ONLY = QT_TRANSLATE_NOOP("ManualExporter", "Full only")
-_CHAPTERS = (
+_ESSENTIAL_CHAPTERS = (
     _ChapterSummary(
         "getting_started",
         QT_TRANSLATE_NOOP("ManualExporter", "Getting Started"),
-        _BOTH_WALKTHROUGHS,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
             "Navigating the loaded spectrum: wheel/keyboard zoom and pan, rectangle zoom,"
@@ -140,19 +140,17 @@ _CHAPTERS = (
     ),
     _ChapterSummary(
         "identify",
-        QT_TRANSLATE_NOOP("ManualExporter", "Identifying Absorption Systems"),
-        _BOTH_WALKTHROUGHS,
+        QT_TRANSLATE_NOOP("ManualExporter", "Identifying Absorption Lines"),
         QT_TRANSLATE_NOOP(
             "ManualExporter",
             'Selecting the built-in "Metal Lines" preset, choosing a reference line, marking'
-            " a candidate absorption system on the spectrum, and confirming it as a region.",
+            " a candidate absorption line on the spectrum, and confirming it as a region.",
         ),
         False,
     ),
     _ChapterSummary(
         "analysis",
         QT_TRANSLATE_NOOP("ManualExporter", "Reviewing Analysis Readiness"),
-        _BOTH_WALKTHROUGHS,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
             "Selecting the confirmed region in Analysis Overview and reading its fit readiness.",
@@ -162,7 +160,6 @@ _CHAPTERS = (
     _ChapterSummary(
         "analysis_detail",
         QT_TRANSLATE_NOOP("ManualExporter", "Fitting a Region in Detail"),
-        _BOTH_WALKTHROUGHS,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
             "Opening Analysis Region Detail, adding a fit component to a line, running the"
@@ -171,9 +168,33 @@ _CHAPTERS = (
         True,
     ),
     _ChapterSummary(
+        "save",
+        QT_TRANSLATE_NOOP("ManualExporter", "Saving Your Work"),
+        QT_TRANSLATE_NOOP(
+            "ManualExporter",
+            "Saving the project, and a recap of the load, identify, review, fit, and save"
+            " loop just completed.",
+        ),
+        False,
+    ),
+)
+_ADVANCED_CHAPTERS = (
+    _ChapterSummary(
+        "advanced_intro",
+        QT_TRANSLATE_NOOP("ManualExporter", "Continuing from the Essentials"),
+        QT_TRANSLATE_NOOP(
+            "ManualExporter",
+            "That the sample spectrum has been reopened for this walkthrough, replacing"
+            " whatever project was open, and what lies ahead: building a custom preset,"
+            " identifying with the velocity plot, merging and splitting regions, tying"
+            " redshifts together across ions, and correcting the continuum. Completing the"
+            " essential walkthrough first is recommended, though not required.",
+        ),
+        False,
+    ),
+    _ChapterSummary(
         "preset_build",
         QT_TRANSLATE_NOOP("ManualExporter", "Building a Custom Preset"),
-        _FULL_ONLY,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
             "Creating a named preset, adding Fe II and Mg II lines to it, linking and"
@@ -184,10 +205,9 @@ _CHAPTERS = (
     _ChapterSummary(
         "velocity_identify",
         QT_TRANSLATE_NOOP("ManualExporter", "Identifying with the Velocity Plot"),
-        _FULL_ONLY,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
-            "Selecting the custom preset, moving to a second, hidden absorption system in the"
+            "Selecting the custom preset, moving to a second, hidden absorption line in the"
             " sample, and using the velocity plot to identify and confirm it.",
         ),
         True,
@@ -195,7 +215,6 @@ _CHAPTERS = (
     _ChapterSummary(
         "analysis_structure",
         QT_TRANSLATE_NOOP("ManualExporter", "Merging Regions"),
-        _FULL_ONLY,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
             "Opening Analysis Structure for two regions, merging them so one region spans more"
@@ -207,7 +226,6 @@ _CHAPTERS = (
     _ChapterSummary(
         "joint_fit",
         QT_TRANSLATE_NOOP("ManualExporter", "Tying Ions and Fitting Together"),
-        _FULL_ONLY,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
             "Building three-component models for both ions, tying their main components'"
@@ -219,7 +237,6 @@ _CHAPTERS = (
     _ChapterSummary(
         "continuum",
         QT_TRANSLATE_NOOP("ManualExporter", "Correcting the Continuum"),
-        _FULL_ONLY,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
             "Switching to Continuum mode and running [Auto Estimate] to fit the continuum"
@@ -231,11 +248,11 @@ _CHAPTERS = (
     _ChapterSummary(
         "save",
         QT_TRANSLATE_NOOP("ManualExporter", "Saving Your Work"),
-        _BOTH_WALKTHROUGHS,
         QT_TRANSLATE_NOOP(
             "ManualExporter",
-            "Saving the project, and a recap of the load, identify, review, fit, and save"
-            " loop just completed.",
+            "Saving the project, and a recap of the preset-building, velocity-plot"
+            " identification, region-editing, cross-ion tying, and continuum-correction work"
+            " just completed.",
         ),
         False,
     ),
@@ -332,10 +349,10 @@ _ENDING_NOTES = (
         "ManualExporter",
         "> [!NOTE]\n> The tour keeps no memory of where you stopped. Whether you close it with"
         " [Exit Tour] or quit chappy, the next walkthrough you start from [Help] > [Tutorial]"
-        " begins again at the first chapter, [Getting Started], and reopens the sample"
-        " spectrum. Switching modes yourself does not end the tour, but the widget the"
-        " current step points at is no longer on screen; switch back to the mode the"
-        " chapter is guiding to see the coach mark again.",
+        " begins again at its own first chapter and reopens the sample spectrum. Switching"
+        " modes yourself does not end the tour, but the widget the current step points at is"
+        " no longer on screen; switch back to the mode the chapter is guiding to see the coach"
+        " mark again.",
     ),
 )
 
@@ -379,19 +396,19 @@ def export_tutorial_guide(*, out_dir: Path) -> Path:
     lines.extend(walkthrough_table.lines())
 
     lines.extend(["", f"## {tr(_CHAPTERS_HEADING)}", "", tr(_CHAPTERS_INTRO)])
-    chapters_table = MarkdownTableBuilder(
-        [tr(_NUMBER_COLUMN), tr(_CHAPTER_COLUMN), tr(_INCLUDED_COLUMN), tr(_LEARN_COLUMN)]
-    )
-    chapters_table.extend(
-        (
-            str(number),
-            tr(chapter.title_source),
-            tr(chapter.included_source),
-            tr(chapter.learn_source),
+    for heading, chapters in (
+        (_ESSENTIAL_CHAPTERS_HEADING, _ESSENTIAL_CHAPTERS),
+        (_ADVANCED_CHAPTERS_HEADING, _ADVANCED_CHAPTERS),
+    ):
+        lines.extend(["", f"### {tr(heading)}", ""])
+        chapters_table = MarkdownTableBuilder(
+            [tr(_NUMBER_COLUMN), tr(_CHAPTER_COLUMN), tr(_LEARN_COLUMN)]
         )
-        for number, chapter in enumerate(_CHAPTERS, 1)
-    )
-    lines.extend(chapters_table.lines())
+        chapters_table.extend(
+            (str(number), tr(chapter.title_source), tr(chapter.learn_source))
+            for number, chapter in enumerate(chapters, 1)
+        )
+        lines.extend(chapters_table.lines())
 
     lines.extend(["", f"## {tr(_PREREQUISITES_HEADING)}", "", tr(_PREREQUISITES_INTRO)])
     prereq_table = MarkdownTableBuilder([tr(_PREREQ_CHAPTER_COLUMN), tr(_PREREQ_CONDITION_COLUMN)])

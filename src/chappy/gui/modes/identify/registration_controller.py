@@ -11,27 +11,29 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
     from chappy.application.identify import RegistrationOutcome
-    from chappy.core.identify_state import CandidateLine
+    from chappy.core.identify_state import TemporaryLine
 
 
 class IdentifyRegistrationSessionPort(Protocol):
     """Session state required by identify registration routing."""
 
     @property
-    def candidate_lines(self) -> Sequence[CandidateLine]:
-        """Return temporary candidate lines."""
+    def temporary_lines(self) -> Sequence[TemporaryLine]:
+        """Return temporary lines."""
         ...
 
 
 class IdentifyRegistrationWorkflowPort(Protocol):
     """Registration operations provided by identify workflow."""
 
-    def expand_multiplet_candidate_lines(self, selected_ids: Sequence[str]) -> list[str]:
+    def expand_multiplet_temporary_lines(self, selected_ids: Sequence[str]) -> list[str]:
         """Expand selected primary ids to multiplet member ids."""
         ...
 
-    def register_candidates(self, systems: Sequence[CandidateLine]) -> IdentifyRegistrationResult:
-        """Register the given candidate systems immediately."""
+    def register_temporary_lines(
+        self, lines: Sequence[TemporaryLine]
+    ) -> IdentifyRegistrationResult:
+        """Register the given temporary lines immediately."""
         ...
 
 
@@ -43,13 +45,13 @@ type IdentifyRegistrationRefreshCallback = Callable[[], None]
 class IdentifyRegistrationMessages:
     """User-facing registration messages supplied by the shell."""
 
-    no_candidates: str
-    no_selected_candidates: str
+    no_temporary_lines: str
+    no_selected_temporary_lines: str
 
 
 @dataclass(frozen=True, slots=True)
 class IdentifyRegistrationResult:
-    """Result of registering identify candidates."""
+    """Result of registering identify temporary lines."""
 
     message: str
     outcome: RegistrationOutcome | None = None
@@ -77,7 +79,7 @@ class IdentifyRegistrationPorts:
 
 
 class IdentifyRegistrationController:
-    """Register identify candidates in a single immediate operation."""
+    """Register identify temporary lines in a single immediate operation."""
 
     def __init__(self, ports: IdentifyRegistrationPorts) -> None:
         """Initialize the controller.
@@ -90,35 +92,37 @@ class IdentifyRegistrationController:
     def register(
         self, selected_ids: Sequence[str] | None = None
     ) -> IdentifyRegistrationResult | None:
-        """Register current or selected candidates immediately.
+        """Register current or selected temporary lines immediately.
 
         Args:
-            selected_ids: Optional primary candidate ids restricting the registration.
-                When omitted or empty, all current candidates are registered.
+            selected_ids: Optional primary temporary-line IDs restricting registration.
+                When omitted or empty, all current temporary lines are registered.
 
         Returns:
             Typed successful registration result, or None when nothing was registered.
         """
         messages = self._ports.messages_provider()
         session = self._ports.session_provider()
-        candidates = list(session.candidate_lines)
-        if not candidates:
-            self._ports.status_callback(messages.no_candidates)
+        temporary_lines = list(session.temporary_lines)
+        if not temporary_lines:
+            self._ports.status_callback(messages.no_temporary_lines)
             return None
 
         workflow = self._workflow()
 
         if selected_ids:
-            expanded_ids = workflow.expand_multiplet_candidate_lines(selected_ids)
+            expanded_ids = workflow.expand_multiplet_temporary_lines(selected_ids)
             selected_set = set(expanded_ids)
-            target_systems = [system for system in candidates if system.system_id in selected_set]
-            if not target_systems:
-                self._ports.status_callback(messages.no_selected_candidates)
+            target_lines = [
+                line for line in temporary_lines if line.temporary_line_id in selected_set
+            ]
+            if not target_lines:
+                self._ports.status_callback(messages.no_selected_temporary_lines)
                 return None
         else:
-            target_systems = candidates
+            target_lines = temporary_lines
 
-        result = workflow.register_candidates(tuple(target_systems))
+        result = workflow.register_temporary_lines(tuple(target_lines))
         actions: list[Callable[[], object]] = [lambda: self._ports.status_callback(result.message)]
         if result.refresh_workflow:
             actions.append(self._ports.refresh_workflow_callback)

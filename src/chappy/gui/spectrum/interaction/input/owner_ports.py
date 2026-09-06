@@ -99,14 +99,6 @@ class RectZoomInputOwnerPort(Protocol):
         """Apply rectangle zoom cursor feedback."""
         ...
 
-    def is_velocity_pending(self) -> bool:
-        """Return whether velocity pending mode is active."""
-        ...
-
-    def cancel_velocity_pending(self, *, reason: str) -> None:
-        """Cancel velocity pending mode."""
-        ...
-
 
 class SpectrumPointerInputOwnerPort(Protocol):
     """Owner operations required by plot pointer input."""
@@ -122,10 +114,6 @@ class SpectrumPointerInputOwnerPort(Protocol):
 
     def dragging_absorber_id(self) -> str | None:
         """Return the active absorber drag id, if any."""
-        ...
-
-    def is_velocity_pending(self) -> bool:
-        """Return whether velocity pending mode is active."""
         ...
 
     def cancel_mask_selection_interaction(self, *, reason: str | None = None) -> bool:
@@ -164,24 +152,6 @@ class VelocityShortcutOwnerPort(Protocol):
 
     def cancel_rect_zoom_interaction(self, *, reason: str) -> bool:
         """Cancel rectangle zoom interaction."""
-        ...
-
-    def is_velocity_pending(self) -> bool:
-        """Return whether velocity pending mode is active."""
-        ...
-
-    def cancel_velocity_pending(self, *, reason: str) -> None:
-        """Cancel velocity pending mode."""
-        ...
-
-    def resolve_velocity_toggle_wavelength(self) -> float | None:
-        """Resolve the wavelength used for velocity toggle commands."""
-        ...
-
-    def enter_velocity_pending(
-        self, wavelength: float | None, modifiers: int | None, *, trigger: str
-    ) -> None:
-        """Enter velocity pending mode."""
         ...
 
     def emit_mode_velocity_shortcut(self) -> None:

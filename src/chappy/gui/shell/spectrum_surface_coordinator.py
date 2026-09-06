@@ -56,7 +56,7 @@ class SpectrumSurfaceCoordinator:
         self._absorber_model_mutation_controller = AbsorberModelMutationController(
             ports=AbsorberModelMutationPorts(
                 project_provider=self._ports.project_provider,
-                system_info_provider=presenter.system_info_for_component,
+                line_info_provider=presenter.line_info_for_component,
                 history_provider=self._ports.history_provider,
                 plot_widget_provider=presenter.plot_widget,
                 plot_refresh_callback=spectrum_view.update_plot,

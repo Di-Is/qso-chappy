@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from chappy.gui.protocols.intent_types import (
-    AddIdentifyCandidateIntent,
+    AddIdentifyTemporaryLineIntent,
     CenterOnWavelengthIntent,
     EndAbsorberDragIntent,
     ModifyAbsorberIntent,
@@ -62,7 +62,7 @@ class SpectrumIntentEmitter:
         if isinstance(intent, ShowContextMenuIntent):
             self.context_menu_requested.emit(intent)
             return
-        if isinstance(intent, ToggleVelocityPlotIntent | AddIdentifyCandidateIntent):
+        if isinstance(intent, ToggleVelocityPlotIntent | AddIdentifyTemporaryLineIntent):
             self.identify_action.emit(intent)
             return
         if isinstance(intent, CenterOnWavelengthIntent):

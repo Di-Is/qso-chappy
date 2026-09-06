@@ -150,7 +150,7 @@ def test_update_parameter_history_failure_rolls_back_all_scientific_state() -> N
 
 
 def test_update_redshift_clamps_to_supplied_wavelength_range() -> None:
-    """Redshift edits should use the supplied system wavelength constraints."""
+    """Redshift edits should use the supplied line wavelength constraints."""
     project, absorber = _project_with_absorber()
     usecase = AbsorberEditUseCase()
 

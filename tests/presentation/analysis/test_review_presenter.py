@@ -20,7 +20,6 @@ from chappy.presentation.analysis import (
     AnalysisReviewPresenter,
     AnalysisReviewRow,
     AnalysisReviewSummary,
-    AnalysisUnavailableCause,
 )
 
 
@@ -66,33 +65,11 @@ def _facts(
 
 
 @pytest.mark.parametrize(
-    ("facts", "fit_kind", "causes", "next_action", "has_summary"),
+    ("facts", "fit_kind", "next_action", "has_summary"),
     [
-        pytest.param(
-            _facts(AnalysisReadiness.UNAVAILABLE, state=None, line_ids=()),
-            AnalysisFitResultKind.UNAVAILABLE,
-            (AnalysisUnavailableCause.NO_LINES,),
-            AnalysisNextAction.RESOLVE_PREREQUISITES,
-            False,
-            id="unavailable-with-no-lines",
-        ),
-        pytest.param(
-            _facts(
-                AnalysisReadiness.UNAVAILABLE,
-                state=_state(),
-                line_ids=("line-1", "line-missing"),
-                missing_line_ids=("line-missing",),
-            ),
-            AnalysisFitResultKind.UNAVAILABLE,
-            (AnalysisUnavailableCause.MISSING_LINE_REFERENCE,),
-            AnalysisNextAction.RESOLVE_PREREQUISITES,
-            False,
-            id="missing-line-reference-is-explicit",
-        ),
         pytest.param(
             _facts(AnalysisReadiness.NOT_ANALYZED, state=_state()),
             AnalysisFitResultKind.NOT_ANALYZED,
-            (),
             AnalysisNextAction.ANALYZE,
             False,
             id="not-analyzed-without-artifact",
@@ -100,7 +77,6 @@ def _facts(
         pytest.param(
             _facts(AnalysisReadiness.STALE, state=_state(current_revision=2, artifact_revision=1)),
             AnalysisFitResultKind.STALE,
-            (),
             AnalysisNextAction.REANALYZE,
             False,
             id="stale-revision-hides-old-summary",
@@ -116,7 +92,6 @@ def _facts(
                 requires_reanalysis=True,
             ),
             AnalysisFitResultKind.STALE,
-            (),
             AnalysisNextAction.REANALYZE,
             False,
             id="explicit-reanalysis-hides-current-summary",
@@ -131,7 +106,6 @@ def _facts(
                 ),
             ),
             AnalysisFitResultKind.NUMERICAL,
-            (),
             AnalysisNextAction.OPEN_REGION,
             True,
             id="latest-numerical-summary",
@@ -141,7 +115,6 @@ def _facts(
 def test_build_row_resolves_all_display_semantics(
     facts: AnalysisReviewFacts,
     fit_kind: AnalysisFitResultKind,
-    causes: tuple[AnalysisUnavailableCause, ...],
     next_action: AnalysisNextAction,
     has_summary: bool,
 ) -> None:
@@ -153,7 +126,6 @@ def test_build_row_resolves_all_display_semantics(
     assert row.analysis_status is facts.readiness
     assert row.fit_result.kind is fit_kind
     assert (row.fit_result.summary is not None) is has_summary
-    assert row.unavailable_causes == causes
     assert row.next_action is next_action
 
 
@@ -171,7 +143,6 @@ def test_summary_counts_exclusive_readiness() -> None:
     """Summary counts are constructed from typed rows rather than GUI text."""
     presenter = AnalysisReviewPresenter()
     rows = (
-        presenter.build_row(_facts(AnalysisReadiness.UNAVAILABLE, state=None, line_ids=())),
         presenter.build_row(_facts(AnalysisReadiness.NOT_ANALYZED, state=_state())),
         presenter.build_row(
             _facts(
@@ -189,8 +160,7 @@ def test_summary_counts_exclusive_readiness() -> None:
 
     summary = presenter.build_summary(iter(rows))
 
-    assert summary.total == 4
-    assert summary.unavailable == 1
+    assert summary.total == 3
     assert summary.not_analyzed == 1
     assert summary.stale == 1
     assert summary.latest == 1
@@ -229,11 +199,11 @@ def test_facts_reject_contradictions_from_the_readiness_contract(
 
 
 def test_missing_line_ids_must_belong_to_the_region_references() -> None:
-    """Unavailable causes cannot name unrelated lines."""
+    """Missing references cannot name unrelated lines."""
     with pytest.raises(ValueError, match="Missing line IDs"):
         _facts(
-            AnalysisReadiness.UNAVAILABLE,
-            state=None,
+            AnalysisReadiness.NOT_ANALYZED,
+            state=_state(),
             line_ids=("line-1",),
             missing_line_ids=("line-other",),
         )
@@ -277,8 +247,8 @@ def test_facts_reject_invalid_line_identity_collections(
     """Cause inputs retain stable, non-duplicated line identities."""
     with pytest.raises(ValueError, match=message):
         _facts(
-            AnalysisReadiness.UNAVAILABLE,
-            state=None,
+            AnalysisReadiness.NOT_ANALYZED,
+            state=_state(),
             line_ids=line_ids,
             missing_line_ids=missing_line_ids,
         )
@@ -297,20 +267,7 @@ def test_review_row_rejects_cross_column_contradictions() -> None:
             region=AnalysisRegionDisplay("region-1", "Region 1"),
             analysis_status=AnalysisReadiness.STALE,
             fit_result=AnalysisFitResultDisplay(AnalysisFitResultKind.STALE),
-            unavailable_causes=(),
             next_action=AnalysisNextAction.OPEN_REGION,
-        )
-
-
-def test_review_row_rejects_causes_outside_unavailable_readiness() -> None:
-    """Unavailable causes are exclusive to the unavailable status."""
-    with pytest.raises(ValueError, match="unavailable causes"):
-        AnalysisReviewRow(
-            region=AnalysisRegionDisplay("region-1", "Region 1"),
-            analysis_status=AnalysisReadiness.STALE,
-            fit_result=AnalysisFitResultDisplay(AnalysisFitResultKind.STALE),
-            unavailable_causes=(AnalysisUnavailableCause.NO_LINES,),
-            next_action=AnalysisNextAction.REANALYZE,
         )
 
 
@@ -321,7 +278,6 @@ def test_review_row_rejects_fit_kind_disagreeing_with_readiness() -> None:
             region=AnalysisRegionDisplay("region-1", "Region 1"),
             analysis_status=AnalysisReadiness.LATEST,
             fit_result=AnalysisFitResultDisplay(AnalysisFitResultKind.STALE),
-            unavailable_causes=(),
             next_action=AnalysisNextAction.OPEN_REGION,
         )
 
@@ -329,4 +285,4 @@ def test_review_row_rejects_fit_kind_disagreeing_with_readiness() -> None:
 def test_summary_rejects_counts_that_do_not_add_up() -> None:
     """Readiness counts must partition the total exactly."""
     with pytest.raises(ValueError, match="add up"):
-        AnalysisReviewSummary(total=2, unavailable=0, not_analyzed=0, stale=0, latest=1)
+        AnalysisReviewSummary(total=2, not_analyzed=0, stale=0, latest=1)

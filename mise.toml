@@ -19,6 +19,7 @@ _.file = { path = ".env", redact = true }
 # QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM = 1
 
 [tools]
+apm = "latest"
 opencode = "latest"
 ruff = "0.15.16"
 typos = "1.47.1"

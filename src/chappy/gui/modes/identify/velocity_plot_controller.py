@@ -38,10 +38,14 @@ class IdentifyVelocityWorkflowPort(Protocol):
         """Notify the workflow that the velocity plot was closed."""
         ...
 
+    def report_invalid_wavelength(self) -> None:
+        """Report that a valid wavelength position must be specified."""
+        ...
+
     def confirm_velocity_plot_selection(
         self, *, center_z: float | None, slices: Sequence[IdentifyVelocitySelectionPort]
     ) -> None:
-        """Create candidates from selected velocity slices."""
+        """Create temporary lines from selected velocity slices."""
         ...
 
 
@@ -91,6 +95,7 @@ class IdentifyVelocityPlotController:
 
         target_wavelength = wavelength
         if target_wavelength is None:
+            workflow.report_invalid_wavelength()
             return
 
         context = workflow.request_velocity_plot(target_wavelength)
@@ -137,7 +142,7 @@ class IdentifyVelocityPlotController:
         overlay_info: VelocitySelectionOverlayPort | None,
         selections: Sequence[IdentifyVelocitySelectionPort],
     ) -> None:
-        """Create temporary systems from selected velocity slices."""
+        """Create temporary lines from selected velocity slices."""
         workflow = self._workflow()
 
         center_z = overlay_info.center_z if overlay_info is not None else None

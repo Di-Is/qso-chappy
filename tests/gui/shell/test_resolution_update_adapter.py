@@ -12,7 +12,7 @@ from chappy.application.analysis_artifacts import (
     AnalysisMutationOutcome,
     GlobalAnalysisMutationUseCase,
 )
-from chappy.application.organize import ResolutionUpdateUseCase
+from chappy.application.spectrum import ResolutionUpdateUseCase
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.analysis import AnalysisRevision, FitSummary
 from chappy.core.spectroscopy_project import SpectroscopyProject

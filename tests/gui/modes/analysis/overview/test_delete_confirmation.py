@@ -1,4 +1,4 @@
-"""Tests for the shared organize structure deletion confirmation contract."""
+"""Tests for the shared structure structure deletion confirmation contract."""
 
 from __future__ import annotations
 

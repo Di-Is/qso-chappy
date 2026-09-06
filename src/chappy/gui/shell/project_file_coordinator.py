@@ -11,6 +11,9 @@ from typing import TYPE_CHECKING, Protocol, TypeVar, runtime_checkable
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QDialog, QMainWindow
 
+from chappy.application.structure.region_line_topology import RegionLineTopologyIssueKind
+from chappy.core.absorption.models import UNASSIGNED_REGION_ID
+from chappy.core.absorption_display import format_region_display, sort_lines_for_display
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.gui.dialogs.file_type_selection_dialog import FileTypeSelectionDialog
 from chappy.gui.dialogs.observation_data_dialog import ObservationDataDialog
@@ -31,6 +34,7 @@ if TYPE_CHECKING:
     from PySide6.QtGui import QDragEnterEvent, QDropEvent
 
     from chappy.application.project_io_usecase import ProjectIOUseCase
+    from chappy.application.structure.region_line_repair import RegionLineRepairReport
 logger = logging.getLogger(__name__)
 
 _RequiredDependency = TypeVar("_RequiredDependency")
@@ -253,7 +257,10 @@ class ProjectFileCoordinator(QObject):
         try:
             # Load project
             self.status_message.emit(self.tr("Loading project..."))
-            project = project_io.load_project(file_path)
+            load_result = project_io.load_project(file_path)
+            project = load_result.project
+            if load_result.repair_report.has_repairs:
+                self._show_repair_notice(load_result.repair_report, project)
 
             # Emit signals for project loading
             self.project_loaded.emit(project)
@@ -806,7 +813,10 @@ class ProjectFileCoordinator(QObject):
 
         try:
             self.status_message.emit(self.tr("Loading project..."))
-            project = project_io.load_project(project_path)
+            load_result = project_io.load_project(project_path)
+            project = load_result.project
+            if load_result.repair_report.has_repairs:
+                self._show_repair_notice(load_result.repair_report, project)
             self.project_loaded.emit(project)
             self.project_path_recorded.emit(project_path)
             opened_template = self.tr("Opened project: {name}")
@@ -821,3 +831,111 @@ class ProjectFileCoordinator(QObject):
             self.status_message.emit(self.tr("Failed to open project"))
             logger.exception("Failed to load project file: %s", project_path)
             event.ignore()
+
+    def _show_repair_notice(
+        self, report: RegionLineRepairReport, project: SpectroscopyProject
+    ) -> None:
+        """Describe automatic repairs before publishing the loaded project."""
+        message_dialogs = self._require_dependency(self._message_dialogs, "_message_dialogs")
+        #: {count} is the number of automatically repaired line references.
+        summary_template = self.tr(
+            "{count} inconsistent line reference(s) were automatically fixed while opening "
+            "this project."
+        )
+        detail_lines: list[str] = []
+
+        def region_label(region_id: str) -> str:
+            if region_id == UNASSIGNED_REGION_ID:
+                return self.tr("Unassigned")
+            region = project.absorption_regions.get(region_id)
+            if region is None:
+                return region_id[:8]
+            lines = sort_lines_for_display(
+                [
+                    project.absorption_lines[line_id]
+                    for line_id in region.line_ids
+                    if line_id in project.absorption_lines
+                ]
+            )
+            return (
+                format_region_display(lines, region.analysis_range).display_name
+                if lines
+                else region_id[:8]
+            )
+
+        for action in report.actions:
+            if action.kind is RegionLineTopologyIssueKind.MISSING_LINE_REFERENCE:
+                #: {region} is the display identity of an absorption region.
+                template = self.tr('Region "{region}": a reference to a missing line was removed.')
+                detail_lines.append(template.format(region=region_label(action.region_id)))
+                continue
+
+            line_label = f"{action.line_species} {action.line_transition}".strip()
+            if not line_label:
+                #: {region} is the display identity of an absorption region.
+                template = self.tr('Region "{region}": an inconsistent line was reassigned.')
+                detail_lines.append(template.format(region=region_label(action.region_id)))
+                continue
+
+            if action.kind is RegionLineTopologyIssueKind.DUPLICATE_MEMBERSHIP:
+                #: {region} is a region label; {species} and {transition} identify a line.
+                template = self.tr(
+                    'Region "{region}": line "{species} {transition}" was removed from this '
+                    "region because another region owns it."
+                )
+                detail_lines.append(
+                    template.format(
+                        region=region_label(action.region_id),
+                        species=action.line_species,
+                        transition=action.line_transition,
+                    )
+                )
+                continue
+
+            if action.kind is RegionLineTopologyIssueKind.REGION_LINE_MISMATCH:
+                #: {region} is a region label; {species} and {transition} identify a line.
+                template = self.tr(
+                    'Region "{region}": line "{species} {transition}" was updated to reference '
+                    "this region."
+                )
+                detail_lines.append(
+                    template.format(
+                        region=region_label(action.region_id),
+                        species=action.line_species,
+                        transition=action.line_transition,
+                    )
+                )
+                continue
+
+            #: {species} and {transition} identify a line; {unassigned} is a region label.
+            template = self.tr(
+                'Line "{species} {transition}" did not belong to any region and was moved to '
+                "{unassigned}."
+            )
+            detail_lines.append(
+                template.format(
+                    species=action.line_species,
+                    transition=action.line_transition,
+                    unassigned=self.tr("Unassigned"),
+                )
+            )
+
+        removed_region_ids = sorted(
+            {
+                action.region_id
+                for action in report.actions
+                if action.kind is not RegionLineTopologyIssueKind.UNLISTED_LINE
+                and action.region_id != UNASSIGNED_REGION_ID
+                and action.region_id not in project.absorption_regions
+            }
+        )
+        for region_id in removed_region_ids:
+            #: {region} is the display identity of an absorption region.
+            template = self.tr('Region "{region}" no longer has any lines and was removed.')
+            detail_lines.append(template.format(region=region_label(region_id)))
+
+        message_dialogs.show_repair_notice(
+            self.main_window,
+            summary=summary_template.format(count=len(report.actions)),
+            details="\n".join(detail_lines),
+        )

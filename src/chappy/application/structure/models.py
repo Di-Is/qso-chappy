@@ -7,6 +7,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from chappy.core.absorption.models import AbsorptionRegion
     from chappy.core.change_set import ChangeSet
 
 
@@ -105,10 +106,53 @@ class AtomicStructureMutationExecution[T]:
     postcommit_changes: ChangeSet
 
 
+@dataclass(frozen=True, slots=True)
+class StructureMoveResult:
+    """Result of moving absorption lines between structure regions."""
+
+    destination_id: str
+    moved_linked_line_count: int
+    destination_region: AbsorptionRegion | None
+
+
+@dataclass(frozen=True, slots=True)
+class StructureMergeResult:
+    """Result of merging structure regions."""
+
+    merged_region: AbsorptionRegion
+
+
+@dataclass(frozen=True, slots=True)
+class StructureSplitResult:
+    """Result of splitting selected lines into a new structure region."""
+
+    new_region: AbsorptionRegion | None
+
+
+@dataclass(frozen=True, slots=True)
+class StructureDeleteResult:
+    """Result of deleting structure regions or linked lines."""
+
+    groups_removed: int
+    lines_removed: int
+
+
+@dataclass(frozen=True, slots=True)
+class StructureUnlinkResult:
+    """Result of unlinking one materialized linked-line group."""
+
+    unlinked_line_ids: tuple[str, ...]
+
+
 __all__ = [
     "AtomicStructureMutationExecution",
+    "StructureDeleteResult",
     "StructureInvalidationScope",
+    "StructureMergeResult",
+    "StructureMoveResult",
     "StructureMutationOutcome",
     "StructureMutationResult",
     "StructureRegionDelta",
+    "StructureSplitResult",
+    "StructureUnlinkResult",
 ]

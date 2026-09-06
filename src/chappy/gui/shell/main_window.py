@@ -11,13 +11,11 @@ from PySide6.QtWidgets import QDockWidget, QMainWindow, QProgressBar, QWidget
 from chappy.application.analysis_artifacts import DeriveAnalysisReadinessUseCase
 from chappy.application.history import HistoryRecorder
 from chappy.application.optimize import CosmologyChangeNotifier
-from chappy.application.organize import ResolutionUpdateUseCase
-from chappy.application.spectrum import SpectrumRangeSource
+from chappy.application.spectrum import ResolutionUpdateUseCase
 from chappy.core.absorption import UNASSIGNED_REGION_ID
 from chappy.core.analysis import AnalysisReadiness
 from chappy.core.editing_mode import EditingMode
 from chappy.core.history import CommandHistory, HistoryState
-from chappy.core.history.operation_id import OperationId
 from chappy.core.presets import METAL_LINES_PRESET_ID
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.gui.adapters.model_event_adapter import SpectrumModelEventAdapter
@@ -31,7 +29,7 @@ from chappy.gui.common.tutorial import (
 from chappy.gui.dialogs.welcome_dialog import WelcomeDialog
 from chappy.gui.history.bridge import HistoryBridge
 from chappy.gui.modes.analysis.contracts import PanelState
-from chappy.gui.modes.analysis.intents import OpenAnalysisRegionIntent
+from chappy.gui.modes.analysis.intents import OpenAnalysisRegionIntent, OpenAnalysisStructureIntent
 from chappy.gui.modes.analysis.surface_coordinator import AnalysisSurfaceCoordinator
 from chappy.gui.modes.common.analysis_navigation import AnalysisSurface
 from chappy.gui.modes.identify.velocity_plot_controller import IdentifyVelocityRangePort
@@ -65,9 +63,10 @@ from chappy.gui.shell.signal_connector import (
 )
 from chappy.gui.shell.spectrum_region_focus_controller import SpectrumRegionFocusController
 from chappy.gui.shell.tutorial_chapters import (
-    build_full_walkthrough_chapters,
-    build_short_walkthrough_chapters,
+    build_advanced_walkthrough_chapters,
+    build_essential_walkthrough_chapters,
 )
+from chappy.gui.shell.tutorial_start_override import resolve_tutorial_start_chapters
 from chappy.gui.shell.tutorial_tour_controller import TutorialTourController
 from chappy.gui.spectrum.spectrum_view import SpectrumView
 from chappy.gui.theme import get_application_stylesheet
@@ -148,16 +147,6 @@ def _find_sample_spectrum_pair() -> tuple[Path, Path] | None:
     return flux_path, error_path
 
 
-_RECT_ZOOM_OPERATION_ID = (
-    f"{OperationId.DRAW_RANGE_CHANGE.value}.{SpectrumRangeSource.RECT_ZOOM.value}"
-)
-
-# Mg II 2796/2803 at z = 0.7627 fall on 4929.2 and 4941.8 A; the bounds keep a
-# margin so neither trough sits on the frame edge the next step must hover.
-_MG2_ABSORBER_VIEW_BOUNDS = (4926.0, 4945.0)
-# C IV 1548/1550 at z = 2.0764 fall near 4763 and 4771 A; the bounds retain a
-# small margin around both troughs.
-_CIV_ABSORBER_VIEW_BOUNDS = (4760.0, 4774.0)
 _TUTORIAL_PRESET_LINE_IDS = frozenset(
     {
         "580d9a1e59b77a82",  # Fe II 2374.5
@@ -430,7 +419,7 @@ class MainWindow(QMainWindow):
                     view_stack=self.view_stack,
                     mode_context_bar=self.mode_context_bar,
                     status_controller=self.status_controller,
-                    organize_history_recorder=self._history_recorder,
+                    structure_history_recorder=self._history_recorder,
                     is_velocity_plot_visible=self._velocity_overlay_port.is_velocity_overlay_visible,
                     toggle_velocity_plot_optimize=self._optimize_runtime.toggle_velocity_overlay,
                     refresh_visible_optimize_velocity_overlay=(
@@ -611,7 +600,15 @@ class MainWindow(QMainWindow):
         self._emit_status_message(message, timeout_ms)
 
     def show_welcome_dialog(self) -> None:
-        """Show the welcome dialog and act on the selected learning path."""
+        """Show the welcome dialog and act on the selected learning path.
+
+        The developer start override replaces this with a tour over the
+        current project, leaving the loaded data untouched.
+        """
+        override_chapters = resolve_tutorial_start_chapters()
+        if override_chapters is not None:
+            self._start_tutorial_walkthrough(override_chapters)
+            return
         sample_pair = _find_sample_spectrum_pair()
         dialog = WelcomeDialog(self, sample_available=sample_pair is not None)
         dialog.exec()
@@ -621,18 +618,18 @@ class MainWindow(QMainWindow):
         self._require_project_session().open_sample_data(
             str(flux_path), str(error_path), resolving_power=_SAMPLE_RESOLVING_POWER
         )
-        if dialog.choice is WelcomeDialog.Choice.START_SHORT_WALKTHROUGH:
-            self.start_tutorial_short_walkthrough()
-        elif dialog.choice is WelcomeDialog.Choice.START_FULL_WALKTHROUGH:
-            self.start_tutorial_full_walkthrough()
+        if dialog.choice is WelcomeDialog.Choice.START_ESSENTIAL_WALKTHROUGH:
+            self.start_tutorial_essential_walkthrough()
+        elif dialog.choice is WelcomeDialog.Choice.START_ADVANCED_WALKTHROUGH:
+            self.start_tutorial_advanced_walkthrough()
 
-    def start_tutorial_short_walkthrough(self) -> None:
-        """Start (or restart) the short guided walkthrough."""
-        self._start_tutorial_walkthrough(build_short_walkthrough_chapters())
+    def start_tutorial_essential_walkthrough(self) -> None:
+        """Start (or restart) the essential guided walkthrough."""
+        self._start_tutorial_walkthrough(build_essential_walkthrough_chapters())
 
-    def start_tutorial_full_walkthrough(self) -> None:
-        """Start (or restart) the full guided walkthrough."""
-        self._start_tutorial_walkthrough(build_full_walkthrough_chapters())
+    def start_tutorial_advanced_walkthrough(self) -> None:
+        """Start (or restart) the advanced guided walkthrough."""
+        self._start_tutorial_walkthrough(build_advanced_walkthrough_chapters())
 
     def _start_tutorial_walkthrough(self, chapters: tuple[TutorialChapter, ...]) -> None:
         """Replace any running tour with a walkthrough over ``chapters``."""
@@ -709,14 +706,12 @@ class MainWindow(QMainWindow):
     def _tutorial_completion_checks(self) -> dict[TutorialCompletion, Callable[[], bool]]:
         """Return tutorial step-completion predicates over live project state."""
         return {
-            TutorialCompletion.RECT_ZOOM_APPLIED: self._tutorial_rect_zoom_applied,
             TutorialCompletion.METAL_LINES_PRESET_SELECTED: (
                 self._tutorial_metal_lines_preset_selected
             ),
             TutorialCompletion.REFERENCE_LINE_IS_CIV1548: (
                 self._tutorial_reference_line_is_civ1548
             ),
-            TutorialCompletion.CIV_ABSORBER_IN_VIEW: self._tutorial_civ_absorber_in_view,
             TutorialCompletion.CONFIRMED_REGION_EXISTS: (
                 lambda: self._confirmed_tutorial_region_count() >= 1
             ),
@@ -732,7 +727,6 @@ class MainWindow(QMainWindow):
                 self._tutorial_preset_baseline_is_mg2796
             ),
             TutorialCompletion.TUTORIAL_PRESET_SELECTED: self._tutorial_preset_is_selected,
-            TutorialCompletion.MG2_ABSORBER_IN_VIEW: self._tutorial_mg2_absorber_in_view,
             TutorialCompletion.VELOCITY_PLOT_VISIBLE: self._tutorial_velocity_plot_visible,
             TutorialCompletion.VELOCITY_SLICES_SELECTED: (self._tutorial_velocity_slices_selected),
             TutorialCompletion.FE2_AND_MG2_REGIONS_EXIST: (
@@ -760,9 +754,7 @@ class MainWindow(QMainWindow):
                 self._tutorial_cross_ion_redshift_tie_exists
             ),
             TutorialCompletion.REGION_FIT_APPLIED: self._tutorial_region_fit_applied,
-            TutorialCompletion.MG2_LOGN_FIXED_AND_REFIT_APPLIED: (
-                self._tutorial_mg2_logn_fixed_and_refit_applied
-            ),
+            TutorialCompletion.MG2_LOGN_FIXED: self._tutorial_mg2_logn_fixed,
         }
 
     def _tutorial_completion_notes(self) -> dict[TutorialCompletion, Callable[[], str | None]]:
@@ -776,11 +768,10 @@ class MainWindow(QMainWindow):
                 self._tutorial_preset_fe2_single_group_note
             ),
             TutorialCompletion.PRESET_BASELINE_IS_MG2796: self._tutorial_preset_baseline_note,
-            TutorialCompletion.MG2_ABSORBER_IN_VIEW: self._tutorial_mg2_absorber_in_view_note,
-            TutorialCompletion.CIV_ABSORBER_IN_VIEW: self._tutorial_civ_absorber_in_view_note,
             TutorialCompletion.FE2_AND_MG2_REGIONS_EXIST: (
                 self._tutorial_fe2_and_mg2_regions_note
             ),
+            TutorialCompletion.MG2_LOGN_FIXED: self._tutorial_mg2_logn_fixed_note,
         }
 
     def _tutorial_unmet_note(self, condition: TutorialCompletion, *, met: bool) -> str | None:
@@ -835,16 +826,10 @@ class MainWindow(QMainWindow):
             met=self._tutorial_fe2_and_mg2_regions_exist(),
         )
 
-    def _tutorial_mg2_absorber_in_view_note(self) -> str | None:
-        """Return why the Mg II absorber gate is still closed."""
+    def _tutorial_mg2_logn_fixed_note(self) -> str | None:
+        """Return why the Mg II logN fix gate is still closed."""
         return self._tutorial_unmet_note(
-            TutorialCompletion.MG2_ABSORBER_IN_VIEW, met=self._tutorial_mg2_absorber_in_view()
-        )
-
-    def _tutorial_civ_absorber_in_view_note(self) -> str | None:
-        """Return why the C IV absorber gate is still closed."""
-        return self._tutorial_unmet_note(
-            TutorialCompletion.CIV_ABSORBER_IN_VIEW, met=self._tutorial_civ_absorber_in_view()
+            TutorialCompletion.MG2_LOGN_FIXED, met=self._tutorial_mg2_logn_fixed()
         )
 
     def _tutorial_region_fit_note(self) -> str | None:
@@ -859,10 +844,6 @@ class MainWindow(QMainWindow):
         if outcome is None:
             return None
         return QCoreApplication.translate("Tutorial", FIT_OUTCOME_NOTE_SOURCES[outcome])
-
-    def _tutorial_rect_zoom_applied(self) -> bool:
-        """Return whether a rectangle zoom is present in the undo history."""
-        return self._command_history.has_undoable_operation(_RECT_ZOOM_OPERATION_ID)
 
     def _current_tutorial_preset(self) -> Preset | None:
         """Return the currently selected preset, if any."""
@@ -957,23 +938,6 @@ class MainWindow(QMainWindow):
     def _tutorial_preset_is_selected(self) -> bool:
         """Return whether the currently selected preset is the tutorial's custom preset."""
         return self._tutorial_new_preset_is_selected()
-
-    def _tutorial_mg2_absorber_in_view(self) -> bool:
-        """Return whether both Mg II troughs are inside the current view."""
-        return self._tutorial_absorber_in_view(bounds=_MG2_ABSORBER_VIEW_BOUNDS)
-
-    def _tutorial_civ_absorber_in_view(self) -> bool:
-        """Return whether both C IV troughs are inside the current view."""
-        return self._tutorial_absorber_in_view(bounds=_CIV_ABSORBER_VIEW_BOUNDS)
-
-    def _tutorial_absorber_in_view(self, *, bounds: tuple[float, float]) -> bool:
-        """Return whether a bounded absorber interval is visible."""
-        spectrum_view = self.view_stack.spectrum_view if self.view_stack is not None else None
-        if spectrum_view is None or spectrum_view.data_bridge.get_spectrum_data() is None:
-            return False
-        min_wave, max_wave = spectrum_view.get_wavelength_range()
-        lower_bound, upper_bound = bounds
-        return min_wave <= lower_bound and max_wave >= upper_bound
 
     def _tutorial_velocity_plot_visible(self) -> bool:
         """Return whether the identify velocity plot is currently visible."""
@@ -1152,10 +1116,10 @@ class MainWindow(QMainWindow):
         readiness = DeriveAnalysisReadinessUseCase().execute(project, region_id)
         return readiness is AnalysisReadiness.LATEST
 
-    def _tutorial_mg2_logn_fixed_and_refit_applied(self) -> bool:
-        """Return whether Mg II logN is fixed and the focused region was refitted."""
+    def _tutorial_mg2_logn_fixed(self) -> bool:
+        """Return whether a focused-region Mg II component holds its logN fixed."""
         project = self.current_project
-        if project is None or not self._tutorial_region_fit_applied():
+        if project is None:
             return False
         for line in self._tutorial_focused_region_lines("Mg II"):
             for model_id in line.model_ids:
@@ -1275,7 +1239,7 @@ class MainWindow(QMainWindow):
         data_control = self.data_control_container
         spectrum_view = self.view_stack.spectrum_view if self.view_stack is not None else None
         detail = dock.region_detail_ui()
-        overview = dock.organize_panel
+        overview = dock.structure_panel
         if (
             workspace is None
             or bottom_pane is None
@@ -1382,13 +1346,10 @@ class MainWindow(QMainWindow):
         return coordinator.open_region(OpenAnalysisRegionIntent(region_id))
 
     def handle_identify_open_analysis_region(self, intent: object) -> None:
-        """Open Identify's confirmed region in the required four-step order."""
+        """Open Identify's confirmed region in the required focus-surface-mode order."""
         if not isinstance(intent, OpenAnalysisRegionIntent):
             msg = "Identify Analysis navigation requires OpenAnalysisRegionIntent"
             raise TypeError(msg)
-        project = self.current_project
-        if project is None or not project.is_region_analysis_capable(intent.region_id):
-            return
         if not self._analysis_navigation.focus_region(intent.region_id):
             return
         self._analysis_navigation.set_surface(AnalysisSurface.REGION_DETAIL)
@@ -1397,11 +1358,29 @@ class MainWindow(QMainWindow):
             raise RuntimeError(msg)
         self.mode_shell_coordinator.switch_mode(EditingMode.ANALYSIS)
 
+    def handle_identify_open_analysis_structure(self, intent: object) -> None:
+        """Land Identify's confirmed region on the nested Overview structure editor."""
+        if not isinstance(intent, OpenAnalysisStructureIntent):
+            msg = "Identify Analysis navigation requires OpenAnalysisStructureIntent"
+            raise TypeError(msg)
+        if not self._analysis_navigation.focus_region(intent.region_id):
+            return
+        self._analysis_navigation.set_surface(AnalysisSurface.OVERVIEW)
+        if self.mode_shell_coordinator is None:
+            msg = "Mode shell coordinator is required for Identify Analysis navigation"
+            raise RuntimeError(msg)
+        self.mode_shell_coordinator.switch_mode(EditingMode.ANALYSIS)
+        if not self.open_analysis_structure():
+            return
+        panel = self._require_dock_coordinator().structure_panel
+        if panel is not None:
+            panel.restore_selection((intent.region_id,), ())
+
     def back_to_analysis_overview(self) -> bool:
         """Return to Overview through the guarded surface transition."""
         changed = self._require_analysis_surface_coordinator().back_to_overview()
         if changed:
-            panel = self._require_dock_coordinator().organize_panel
+            panel = self._require_dock_coordinator().structure_panel
             if panel is not None:
                 panel.set_structure_editor_visible(False)
                 region_id = self._analysis_navigation.state.focused_region_id
@@ -1413,7 +1392,7 @@ class MainWindow(QMainWindow):
         """Open the nested Structure page without switching top-level mode."""
         if not self._require_analysis_surface_coordinator().open_structure_editor():
             return False
-        panel = self._require_dock_coordinator().organize_panel
+        panel = self._require_dock_coordinator().structure_panel
         if panel is not None:
             panel.set_structure_editor_visible(True)
         return True
@@ -1422,7 +1401,7 @@ class MainWindow(QMainWindow):
         """Execute Delete only while the nested Structure page owns the action."""
         if not self._require_analysis_surface_coordinator().structure_actions_enabled():
             return False
-        return self._require_dock_coordinator()._execute_organize_delete()
+        return self._require_dock_coordinator()._execute_structure_delete()
 
     def _require_analysis_surface_coordinator(self) -> AnalysisSurfaceCoordinator:
         coordinator = self._analysis_surface_coordinator
@@ -1457,12 +1436,12 @@ class MainWindow(QMainWindow):
         """Setup project handling."""
         self._require_project_session().setup_project_handling()
 
-    def _toggle_identify_velocity_pending(self) -> None:
-        """Preserve Identify's V-then-click workflow when no Shift preview is active."""
+    def _wavelength_under_cursor(self) -> float | None:
+        """Return the spectrum wavelength under the pointer."""
         if self.view_stack is None or self.view_stack.spectrum_view is None:
-            msg = "Spectrum view is required for Identify velocity pending input."
+            msg = "Spectrum view is required to resolve the wavelength under the cursor."
             raise RuntimeError(msg)
-        self.view_stack.spectrum_view.toggle_identify_velocity_pending()
+        return self.view_stack.spectrum_view.wavelength_under_cursor()
 
     def _update_spectrum_plot_from_router(self) -> None:
         """Refresh spectrum plot after a routed mode action mutates model state."""

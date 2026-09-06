@@ -64,15 +64,15 @@ class _DockLayout:
 
     def __init__(self) -> None:
         """Initialize counters."""
-        self.organize_refreshes: list[bool] = []
+        self.structure_refreshes = 0
         self.optimize_refreshes: list[str | None] = []
         self.invalidated_groups: list[str | None] = []
         self.optimize_velocity_plot_refreshes = 0
         self.optimize_wavelength_refreshes: list[str] = []
 
-    def refresh_organize_panel(self, *, preserve_selection: bool) -> None:
-        """Record organize panel refresh."""
-        self.organize_refreshes.append(preserve_selection)
+    def refresh_structure_panel(self) -> None:
+        """Record structure panel refresh."""
+        self.structure_refreshes += 1
 
     def refresh_optimize_panel_for_history(self, region_id: str | None) -> None:
         """Record optimize panel refresh."""
@@ -107,8 +107,8 @@ def test_refresh_model_requires_dock_layout_when_project_exists() -> None:
         adapter.refresh_model(_Project(), None)
 
 
-def test_refresh_velocity_window_requires_dock_for_organize_mode() -> None:
-    """Organize velocity-window refresh requires the dock layout refresh port."""
+def test_refresh_velocity_window_requires_dock_for_structure_mode() -> None:
+    """Structure velocity-window refresh requires the dock layout refresh port."""
     adapter = HistoryRefreshAdapter(_MainWindow(EditingMode.ANALYSIS))
 
     with pytest.raises(RuntimeError, match="dock layout refresh port"):

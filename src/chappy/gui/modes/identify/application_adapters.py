@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Protocol
 from chappy.application.identify import (
     AtomicLineSnapshot,
     BuildVelocityPreviewUseCase,
-    CandidateLineSnapshot,
     DetectedRegionSnapshot,
     PreviewEntryModel,
     RegionPreviewSnapshot,
-    VelocityCandidateRequest,
+    TemporaryLineSnapshot,
     VelocityPreview,
+    VelocityTemporaryLineRequest,
 )
 from chappy.core.identify_state import DetectedRegion, RegionPreview
 from chappy.core.velocity_ranges import LineAnalysisHalfWidth
@@ -68,12 +68,12 @@ class IdentifyAtomicLinePort(Protocol):
         ...
 
 
-class CandidateLinePort(Protocol):
-    """Candidate line fields required by identify registration use cases."""
+class TemporaryLinePort(Protocol):
+    """Temporary line fields required by identify registration use cases."""
 
     @property
-    def system_id(self) -> str:
-        """Return the candidate system identifier."""
+    def temporary_line_id(self) -> str:
+        """Return the temporary line identifier."""
         ...
 
     @property
@@ -93,7 +93,7 @@ class CandidateLinePort(Protocol):
 
     @property
     def creation_method(self) -> str:
-        """Return the candidate creation method."""
+        """Return the temporary-line creation method."""
         ...
 
     @property
@@ -108,7 +108,7 @@ class CandidateLinePort(Protocol):
 
     @property
     def center_z(self) -> float:
-        """Return the candidate redshift."""
+        """Return the temporary-line redshift."""
         ...
 
     @property
@@ -143,7 +143,7 @@ class CandidateLinePort(Protocol):
 
     @property
     def analysis_half_width_kms(self) -> float:
-        """Return the candidate analysis half-width."""
+        """Return the temporary-line analysis half-width."""
         ...
 
 
@@ -199,7 +199,7 @@ class VelocityPreviewAdapter:
             Velocity preview result.
         """
         return self._usecase.build(
-            VelocityCandidateRequest(
+            VelocityTemporaryLineRequest(
                 observed_wavelength=observed_wavelength,
                 baseline_line=baseline_line,
                 preset_lines=preset_lines,
@@ -315,31 +315,31 @@ def preview_entry_to_model(entry: PreviewEntry) -> PreviewEntryModel:
     )
 
 
-def candidate_line_to_snapshot(candidate: CandidateLinePort) -> CandidateLineSnapshot:
-    """Convert a candidate line boundary to an application snapshot.
+def temporary_line_to_snapshot(temporary_line: TemporaryLinePort) -> TemporaryLineSnapshot:
+    """Convert a temporary line boundary to an application snapshot.
 
     Args:
-        candidate: Candidate line boundary.
+        temporary_line: Temporary line boundary.
 
     Returns:
-        Immutable application candidate snapshot.
+        Immutable application temporary-line snapshot.
     """
-    return CandidateLineSnapshot(
-        system_id=candidate.system_id,
-        species=candidate.species,
-        lambda_min=candidate.lambda_min,
-        lambda_max=candidate.lambda_max,
-        creation_method=candidate.creation_method,
-        line_id=candidate.line_id,
-        rest_wavelength=candidate.rest_wavelength,
-        center_z=candidate.center_z,
-        multiplet_id=candidate.multiplet_id,
-        multiplet_label=candidate.multiplet_label,
-        tie_group_key=candidate.tie_group_key,
-        transition_name=candidate.transition_name,
-        oscillator_strength=candidate.oscillator_strength,
-        gamma_value=candidate.gamma_value,
-        analysis_half_width=LineAnalysisHalfWidth(candidate.analysis_half_width_kms),
+    return TemporaryLineSnapshot(
+        temporary_line_id=temporary_line.temporary_line_id,
+        species=temporary_line.species,
+        lambda_min=temporary_line.lambda_min,
+        lambda_max=temporary_line.lambda_max,
+        creation_method=temporary_line.creation_method,
+        line_id=temporary_line.line_id,
+        rest_wavelength=temporary_line.rest_wavelength,
+        center_z=temporary_line.center_z,
+        multiplet_id=temporary_line.multiplet_id,
+        multiplet_label=temporary_line.multiplet_label,
+        tie_group_key=temporary_line.tie_group_key,
+        transition_name=temporary_line.transition_name,
+        oscillator_strength=temporary_line.oscillator_strength,
+        gamma_value=temporary_line.gamma_value,
+        analysis_half_width=LineAnalysisHalfWidth(temporary_line.analysis_half_width_kms),
     )
 
 
@@ -374,7 +374,7 @@ def region_preview_from_snapshot(preview: RegionPreviewSnapshot) -> RegionPrevie
     return RegionPreview(
         group_id=preview.group_id,
         name=preview.name,
-        member_system_ids=list(preview.member_system_ids),
+        member_temporary_line_ids=list(preview.member_temporary_line_ids),
         overlap_warning=preview.overlap_warning,
         color=preview.color,
         existing_group_id=preview.existing_group_id,

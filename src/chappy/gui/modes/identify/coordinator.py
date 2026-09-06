@@ -11,27 +11,24 @@ from chappy.application.identify import (
     AtomicIdentifyRegistrationUseCase,
     BuildRegionPreviewsUseCase,
     BuildVelocityPreviewUseCase,
-    BuildVelocitySliceCandidatesUseCase,
-    CreateCandidateFromVelocityUseCase,
+    BuildVelocitySliceTemporaryLinesUseCase,
+    CreateTemporaryLineFromVelocityUseCase,
     DetectCandidateLinesUseCase,
 )
 from chappy.core.conversion import coerce_float
 from chappy.core.editing_mode import EditingMode
 from chappy.core.identify_state import (
-    CandidateLine,
     DetectedRegion,
     IdentifySessionState,
     RegionPreview,
+    TemporaryLine,
 )
-from chappy.gui.modes.common.analysis_navigation import OpenAnalysisRegionIntent
+from chappy.gui.modes.common.analysis_navigation import (
+    OpenAnalysisRegionIntent,
+    OpenAnalysisStructureIntent,
+)
 from chappy.gui.modes.identify.adapters import IdentifyPresetAdapter
 from chappy.gui.modes.identify.application_adapters import VelocityPreviewAdapter
-from chappy.gui.modes.identify.candidate_controller import (
-    IdentifyCandidateController,
-    IdentifyCandidateHistoryRecorder,
-    IdentifyCandidateMessages,
-    IdentifyCandidatePorts,
-)
 from chappy.gui.modes.identify.cursor_preview_controller import (
     IdentifyCursorPreviewController,
     IdentifyCursorPreviewPorts,
@@ -73,6 +70,12 @@ from chappy.gui.modes.identify.shell_ports import (
     IdentifyModeStateProvider,
     IdentifyShellPorts,
     IdentifySpectrumView,
+)
+from chappy.gui.modes.identify.temporary_line_controller import (
+    IdentifyTemporaryLineController,
+    IdentifyTemporaryLineHistoryRecorder,
+    IdentifyTemporaryLineMessages,
+    IdentifyTemporaryLinePorts,
 )
 from chappy.gui.modes.identify.workflow_lifecycle_controller import (
     IdentifyWorkflowLifecycleController,
@@ -120,6 +123,7 @@ class IdentifyModeCoordinator(QObject):
 
     status_message = Signal(str)
     open_analysis_region_requested = Signal(object)  # OpenAnalysisRegionIntent
+    open_analysis_structure_requested = Signal(object)  # OpenAnalysisStructureIntent
 
     def __init__(
         self,
@@ -180,24 +184,24 @@ class IdentifyModeCoordinator(QObject):
                 preview_hint_provider=self._cursor_preview_hint,
             )
         )
-        self._candidate_controller = IdentifyCandidateController(
-            IdentifyCandidatePorts(
+        self._temporary_line_controller = IdentifyTemporaryLineController(
+            IdentifyTemporaryLinePorts(
                 session_provider=lambda: self._session,
                 identify_mode_active_provider=self._is_identify_mode_active,
                 baseline_line_provider=self._current_baseline_line,
                 current_lines_provider=self._collect_current_lines,
                 tie_group_keys_provider=self._current_tie_group_keys,
                 observed_bounds_provider=self._observed_wavelength_bounds,
-                history_recorder_provider=self._identify_candidate_history_recorder,
+                history_recorder_provider=self._identify_temporary_line_history_recorder,
                 primary_members_provider=self._primary_members,
                 status_callback=self.status_message.emit,
                 refresh_workflow_callback=self._refresh_workflow,
                 refresh_candidates_callback=self._refresh_candidates,
                 clear_cursor_preview_callback=self.clear_cursor_preview,
-                messages_provider=self._candidate_messages,
+                messages_provider=self._temporary_line_messages,
                 shift_modifier_value_provider=shift_modifier_value,
             ),
-            CreateCandidateFromVelocityUseCase(),
+            CreateTemporaryLineFromVelocityUseCase(),
             preview_adapter=self._velocity_preview_adapter,
         )
         self._focus_controller = IdentifySpectrumFocusController(
@@ -257,8 +261,8 @@ class IdentifyModeCoordinator(QObject):
                 current_lines_provider=self._collect_current_lines,
                 atomic_data_provider=lambda: self._atomic_data,
                 tie_group_keys_provider=self._current_tie_group_keys,
-                candidate_creation_callback=lambda entries, redshift, half_width: (
-                    self._create_candidates_from_entries(
+                temporary_line_creation_callback=lambda entries, redshift, half_width: (
+                    self._create_temporary_lines_from_entries(
                         entries, redshift=redshift, new_candidate_analysis_half_width=half_width
                     )
                 ),
@@ -267,7 +271,7 @@ class IdentifyModeCoordinator(QObject):
                 refresh_candidates_callback=self._refresh_candidates,
                 messages_provider=self._velocity_messages,
             ),
-            BuildVelocitySliceCandidatesUseCase(),
+            BuildVelocitySliceTemporaryLinesUseCase(),
         )
 
         self._initialise_preset_store()
@@ -293,7 +297,9 @@ class IdentifyModeCoordinator(QObject):
                 temporary_clear_callback=self._handle_temporary_clear_requested,
                 registration_requested_callback=self._handle_registration_requested,
                 group_focus_callback=self._handle_group_focus_requested,
-                system_focus_callback=self._handle_system_focus_requested,
+                line_focus_callback=self._handle_line_focus_requested,
+                region_open_callback=self._handle_region_open_requested,
+                region_structure_edit_callback=self._handle_region_structure_edit_requested,
                 refresh_candidates_callback=self._refresh_candidates,
                 refresh_workflow_callback=self._refresh_workflow,
             )
@@ -315,8 +321,10 @@ class IdentifyModeCoordinator(QObject):
             )
         )
 
-    def _identify_candidate_history_recorder(self) -> IdentifyCandidateHistoryRecorder | None:
-        """Return a validated candidate history recorder when configured."""
+    def _identify_temporary_line_history_recorder(
+        self,
+    ) -> IdentifyTemporaryLineHistoryRecorder | None:
+        """Return a validated temporary-line history recorder when configured."""
         recorder = self._shell_ports.history_recorder_provider()
         if recorder is None:
             return None
@@ -378,37 +386,33 @@ class IdentifyModeCoordinator(QObject):
         """
         return self._cursor_preview_controller.preview_always_on()
 
-    def velocity_verification_wavelength(self) -> float | None:
-        """Return the active Shift-preview wavelength for velocity verification."""
-        return self._cursor_preview_controller.velocity_verification_wavelength()
-
     def _cursor_preview_hint(self) -> str:
         """Return guidance shown only while a Shift preview is active."""
         #: {value} is the future-candidate analysis half-width in km/s.
         template = self.tr("New candidates ±{value:g} km/s  ·  V: Verify in Velocity Plot")
         return template.format(value=self._session.new_candidate_analysis_half_width.kms)
 
-    def _candidate_messages(self) -> IdentifyCandidateMessages:
-        """Return translated messages for candidate workflows."""
-        return IdentifyCandidateMessages(
+    def _temporary_line_messages(self) -> IdentifyTemporaryLineMessages:
+        """Return translated messages for temporary-line workflows."""
+        return IdentifyTemporaryLineMessages(
             invalid_wavelength=self.tr("Please specify a valid wavelength position"),
             baseline_required=self.tr("Select a baseline line before opening the velocity plot."),
             no_lines_selected=self.tr("No lines were selected."),
             invalid_baseline=self.tr("Baseline wavelength is invalid for velocity conversion."),
-            limit_reached=self.tr("Candidate line limit reached (1000 entries)."),
+            limit_reached=self.tr("Temporary line limit reached (1000 entries)."),
             add_one_template=self.tr(
-                "Candidate line added for {species} (λ = {start:.2f}–{end:.2f} Å)."
+                "Temporary line added for {species} (λ = {start:.2f}–{end:.2f} Å)."
             ),
-            add_many_template=self.tr("Added {count} candidate line(s)."),
+            add_many_template=self.tr("Added {count} temporary line(s)."),
             duplicate_partial_template=self.tr(
-                "Added {created} candidate line(s); skipped {skipped} duplicate(s)."
+                "Added {created} temporary line(s); skipped {skipped} duplicate(s)."
             ),
-            duplicate_existing=self.tr("Candidate line already exists at this location."),
-            none_selected=self.tr("No candidate lines selected."),
-            remove_failed=self.tr("Selected candidate lines were not removed."),
-            remove_template=self.tr("Removed {count} candidate line(s)."),
-            none_to_clear=self.tr("No candidate lines to clear."),
-            cleared=self.tr("Candidate lines cleared."),
+            duplicate_existing=self.tr("A temporary line already exists at this location."),
+            none_selected=self.tr("No temporary lines selected."),
+            remove_failed=self.tr("Selected temporary lines were not removed."),
+            remove_template=self.tr("Removed {count} temporary line(s)."),
+            none_to_clear=self.tr("No temporary lines to clear."),
+            cleared=self.tr("Temporary lines cleared."),
         )
 
     def _focus_messages(self) -> IdentifyFocusMessages:
@@ -420,7 +424,7 @@ class IdentifyModeCoordinator(QObject):
             group_template=self.tr(
                 "Focused spectrum view on region range (λ = {start:.1f}–{end:.1f} Å)."
             ),
-            system_template=self.tr(
+            line_template=self.tr(
                 "Focused spectrum view on line range (λ = {start:.1f}–{end:.1f} Å)."
             ),
         )
@@ -528,7 +532,7 @@ class IdentifyModeCoordinator(QObject):
         return self._panel_refresh_controller.current_candidate_rows()
 
     def _primary_members(self) -> dict[str, tuple[str, ...]]:
-        """Return latest primary-to-member candidate line mapping."""
+        """Return latest primary-to-member temporary line mapping."""
         return self._panel_refresh_controller.primary_to_members
 
     def _set_identify_preview(self, payload: CursorPreviewPayload | None) -> None:
@@ -538,26 +542,26 @@ class IdentifyModeCoordinator(QObject):
             return
         spectrum_view.set_identify_preview(payload)
 
-    def handle_manual_candidate(
+    def handle_manual_temporary_line(
         self, *, observed_wavelength: float, modifiers: int = 0, source: str = "click"
     ) -> None:
-        """Create temporary system candidates at the given wavelength."""
-        self._cursor_preview_controller.note_manual_candidate_position(
+        """Create temporary lines at the given wavelength."""
+        self._cursor_preview_controller.note_manual_temporary_line_position(
             observed_wavelength, modifiers
         )
-        self._candidate_controller.handle_manual_candidate(
+        self._temporary_line_controller.handle_manual_temporary_line(
             observed_wavelength=observed_wavelength, modifiers=modifiers, source=source
         )
 
-    def _create_candidates_from_entries(
+    def _create_temporary_lines_from_entries(
         self,
         entries: list[PreviewEntry],
         *,
         redshift: float,
         new_candidate_analysis_half_width: NewCandidateAnalysisHalfWidth,
-    ) -> tuple[list[tuple[CandidateLine, PreviewEntry]], int, bool]:
-        """Create temporary systems from prepared entry data."""
-        return self._candidate_controller.create_candidates_from_entries(
+    ) -> tuple[list[tuple[TemporaryLine, PreviewEntry]], int, bool]:
+        """Create temporary lines from prepared entry data."""
+        return self._temporary_line_controller.create_temporary_lines_from_entries(
             entries,
             redshift=redshift,
             new_candidate_analysis_half_width=new_candidate_analysis_half_width,
@@ -646,7 +650,7 @@ class IdentifyModeCoordinator(QObject):
 
     def _build_live_region_previews(self) -> list[RegionPreview]:
         """Re-evaluate the bundling result for the always-visible grouping display."""
-        return self._registration_workflow.build_region_previews(self._session.candidate_lines)
+        return self._registration_workflow.build_region_previews(self._session.temporary_lines)
 
     def _refresh_velocity_overlay(self) -> None:
         if not self._velocity_workflow.is_active():
@@ -660,8 +664,8 @@ class IdentifyModeCoordinator(QObject):
     def _registration_messages(self) -> IdentifyRegistrationMessages:
         """Return translated messages for registration routing."""
         return IdentifyRegistrationMessages(
-            no_candidates=self.tr("No candidate lines to group."),
-            no_selected_candidates=self.tr("No selected candidate lines to group."),
+            no_temporary_lines=self.tr("No temporary lines to group."),
+            no_selected_temporary_lines=self.tr("No selected temporary lines to group."),
         )
 
     def _registration_workflow_messages(self) -> IdentifyRegistrationWorkflowMessages:
@@ -670,8 +674,8 @@ class IdentifyModeCoordinator(QObject):
             cannot_register_without_project=self.tr(
                 "Cannot register lines without an active project."
             ),
-            no_candidates_to_register=self.tr("No candidate lines to register."),
-            candidate_lines_could_not_register=self.tr("Candidate lines could not be registered."),
+            no_temporary_lines_to_register=self.tr("No temporary lines to register."),
+            temporary_lines_could_not_register=self.tr("Temporary lines could not be registered."),
             #: {count} is the number of registered lines.
             registered_template=self.tr("Registered {count} line(s)"),
             #: {details} is a pre-built list such as "2 new region(s), added to Region 3".
@@ -686,7 +690,11 @@ class IdentifyModeCoordinator(QObject):
                 "Structure after registering."
             ),
             missing_atomic_template=self.tr(
-                "{count} system(s) could not be registered due to missing atomic data."
+                "{count} temporary line(s) could not be registered due to missing atomic data."
+            ),
+            #: Keep {undo_shortcut} unchanged; it is replaced for the running OS.
+            undo_hint=self.tr("Undo ({undo_shortcut}) reverts this registration.").format(
+                undo_shortcut=self._shell_ports.undo_shortcut_provider()
             ),
             unknown=self.tr("Unknown"),
         )
@@ -701,15 +709,15 @@ class IdentifyModeCoordinator(QObject):
             centered_template=self.tr("Velocity plot centered at z = {z:.4f} for {label}."),
             closed=self.tr("Velocity plot closed."),
             select_one=self.tr("Select at least one line in the velocity plot."),
-            unable_to_create=self.tr("Unable to create candidate lines from the selected lines."),
+            unable_to_create=self.tr("Unable to create temporary lines from the selected lines."),
             add_one_template=self.tr(
-                "Candidate line added for {species} (λ = {start:.2f}–{end:.2f} Å)."
+                "Temporary line added for {species} (λ = {start:.2f}–{end:.2f} Å)."
             ),
-            add_many_template=self.tr("Added {count} candidate line(s) from the velocity plot."),
+            add_many_template=self.tr("Added {count} temporary line(s) from the velocity plot."),
             duplicate_partial_template=self.tr(
-                "Added {created} candidate line(s); skipped {skipped} duplicate(s)."
+                "Added {created} temporary line(s); skipped {skipped} duplicate(s)."
             ),
-            duplicate_existing=self.tr("Candidate line already exists at this location."),
+            duplicate_existing=self.tr("A temporary line already exists at this location."),
         )
 
     def _show_preset_management_dialog(self) -> None:
@@ -723,20 +731,26 @@ class IdentifyModeCoordinator(QObject):
         self._focus_controller.focus_candidate(candidate_id)
 
     def _handle_group_focus_requested(
-        self, group_id: str, _min_wave: float, _max_wave: float
+        self, _group_id: str, min_wave: float, max_wave: float
     ) -> None:
-        self.open_analysis_region_requested.emit(OpenAnalysisRegionIntent(group_id))
+        self._focus_controller.focus_group(min_wave, max_wave)
 
-    def _handle_system_focus_requested(
-        self, _system_id: str, min_wave: float, max_wave: float
+    def _handle_region_open_requested(self, region_id: str) -> None:
+        self.open_analysis_region_requested.emit(OpenAnalysisRegionIntent(region_id))
+
+    def _handle_region_structure_edit_requested(self, region_id: str) -> None:
+        self.open_analysis_structure_requested.emit(OpenAnalysisStructureIntent(region_id))
+
+    def _handle_line_focus_requested(
+        self, _temporary_line_id: str, min_wave: float, max_wave: float
     ) -> None:
-        self._focus_controller.focus_system(min_wave, max_wave)
+        self._focus_controller.focus_line(min_wave, max_wave)
 
-    def _handle_temporary_delete_requested(self, system_ids: list[str]) -> None:
-        self._candidate_controller.delete_candidates(system_ids)
+    def _handle_temporary_delete_requested(self, temporary_line_ids: list[str]) -> None:
+        self._temporary_line_controller.delete_temporary_lines(temporary_line_ids)
 
     def _handle_temporary_clear_requested(self) -> None:
-        self._candidate_controller.clear_candidates()
+        self._temporary_line_controller.clear_temporary_lines()
 
     def _handle_registration_requested(self, selected_ids: list[str] | None = None) -> None:
         result = self._registration_controller.register(selected_ids)
@@ -773,10 +787,18 @@ class IdentifyModeCoordinator(QObject):
         """Reset internal state when the velocity plot is dismissed."""
         self._velocity_workflow.handle_velocity_plot_closed()
 
+    def report_invalid_wavelength(self) -> None:
+        """Tell the user that a valid wavelength position must be specified."""
+        self._velocity_workflow.report_invalid_wavelength()
+
+    def baseline_line_selected(self) -> bool:
+        """Return whether the active preset defines a baseline line."""
+        return self._current_baseline_line() is not None
+
     def confirm_velocity_plot_selection(
         self, *, center_z: float | None, slices: Sequence[IdentifyVelocitySelectionPort]
     ) -> None:
-        """Create temporary systems from checked velocity slices."""
+        """Create temporary lines from checked velocity slices."""
         self._velocity_workflow.confirm_velocity_plot_selection(center_z=center_z, slices=slices)
 
     def _current_preset(self) -> Preset | None:

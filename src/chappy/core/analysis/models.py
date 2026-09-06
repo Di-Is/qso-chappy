@@ -74,7 +74,6 @@ class RegionAnalysisState:
 class AnalysisReadiness(StrEnum):
     """Exclusive readiness derived from project and artifact facts."""
 
-    UNAVAILABLE = "unavailable"
     NOT_ANALYZED = "not_analyzed"
     STALE = "stale"
     LATEST = "latest"

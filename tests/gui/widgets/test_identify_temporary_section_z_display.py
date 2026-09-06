@@ -9,10 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from chappy.gui.modes.identify.panel.panel_models import (
-    CandidateLineRow,
-    TemporarySystemItemPayload,
-)
+from chappy.gui.modes.identify.panel.panel_models import TemporaryLineRow, TemporaryLineItemPayload
 from chappy.gui.modes.identify.panel.temporary_section import IdentifyTemporarySection
 
 
@@ -26,18 +23,18 @@ def section(qtbot: "QtBot") -> IdentifyTemporarySection:
     return IdentifyTemporarySection()
 
 
-def _make_temporary_system_row(
-    system_ids: tuple[str, ...],
+def _make_temporary_line_row(
+    temporary_line_ids: tuple[str, ...],
     species: str = "H I",
     lambda_start: float = 5000.0,
     lambda_end: float = 5010.0,
     creation_method: str = "manual",
     transition_name: str | None = None,
     redshift: float = 1.0,
-) -> CandidateLineRow:
-    """Create a CandidateLineRow for testing."""
-    return CandidateLineRow(
-        system_ids=system_ids,
+) -> TemporaryLineRow:
+    """Create a TemporaryLineRow for testing."""
+    return TemporaryLineRow(
+        temporary_line_ids=temporary_line_ids,
         species=species,
         lambda_start=lambda_start,
         lambda_end=lambda_end,
@@ -52,8 +49,10 @@ class TestZDisplayInTreeFormat:
 
     def test_z_value_displayed_in_tree_item(self, section: IdentifyTemporarySection) -> None:
         """Z value should be displayed in tree item text."""
-        rows = [_make_temporary_system_row(system_ids=("id1",), species="H I", redshift=1.2345)]
-        section.set_temporary_systems(rows)
+        rows = [
+            _make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=1.2345)
+        ]
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -66,13 +65,13 @@ class TestZDisplayInTreeFormat:
     def test_z_value_displayed_with_four_decimals(self, section: IdentifyTemporarySection) -> None:
         """Z value should be displayed with 4 decimal places."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("id1",),
+            _make_temporary_line_row(
+                temporary_line_ids=("id1",),
                 species="H I",
                 redshift=1.23456789,  # More than 4 decimals
             )
         ]
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -84,8 +83,8 @@ class TestZDisplayInTreeFormat:
 
     def test_z_zero_displayed_correctly(self, section: IdentifyTemporarySection) -> None:
         """Z value of 0 should be displayed as 0.0000."""
-        rows = [_make_temporary_system_row(system_ids=("id1",), species="H I", redshift=0.0)]
-        section.set_temporary_systems(rows)
+        rows = [_make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=0.0)]
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -96,8 +95,10 @@ class TestZDisplayInTreeFormat:
 
     def test_z_small_value_displayed_correctly(self, section: IdentifyTemporarySection) -> None:
         """Small z value should be displayed with 4 decimal places."""
-        rows = [_make_temporary_system_row(system_ids=("id1",), species="H I", redshift=0.0001)]
-        section.set_temporary_systems(rows)
+        rows = [
+            _make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=0.0001)
+        ]
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -108,8 +109,10 @@ class TestZDisplayInTreeFormat:
 
     def test_z_large_value_displayed_correctly(self, section: IdentifyTemporarySection) -> None:
         """Large z value should be displayed with 4 decimal places."""
-        rows = [_make_temporary_system_row(system_ids=("id1",), species="H I", redshift=5.1234)]
-        section.set_temporary_systems(rows)
+        rows = [
+            _make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=5.1234)
+        ]
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -125,11 +128,11 @@ class TestZOrderSorting:
     def test_items_sorted_by_z_ascending(self, section: IdentifyTemporarySection) -> None:
         """Items should be sorted by redshift ascending."""
         rows = [
-            _make_temporary_system_row(system_ids=("id3",), species="C IV", redshift=3.0),
-            _make_temporary_system_row(system_ids=("id1",), species="H I", redshift=1.0),
-            _make_temporary_system_row(system_ids=("id2",), species="O VI", redshift=2.0),
+            _make_temporary_line_row(temporary_line_ids=("id3",), species="C IV", redshift=3.0),
+            _make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=1.0),
+            _make_temporary_line_row(temporary_line_ids=("id2",), species="O VI", redshift=2.0),
         ]
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         assert tree.topLevelItemCount() == 3
@@ -148,12 +151,12 @@ class TestZOrderSorting:
         payload0 = item0.data(0, Qt.ItemDataRole.UserRole)
         payload1 = item1.data(0, Qt.ItemDataRole.UserRole)
         payload2 = item2.data(0, Qt.ItemDataRole.UserRole)
-        assert isinstance(payload0, TemporarySystemItemPayload)
-        assert isinstance(payload1, TemporarySystemItemPayload)
-        assert isinstance(payload2, TemporarySystemItemPayload)
-        assert payload0.primary_system_id == "id1"
-        assert payload1.primary_system_id == "id2"
-        assert payload2.primary_system_id == "id3"
+        assert isinstance(payload0, TemporaryLineItemPayload)
+        assert isinstance(payload1, TemporaryLineItemPayload)
+        assert isinstance(payload2, TemporaryLineItemPayload)
+        assert payload0.primary_temporary_line_id == "id1"
+        assert payload1.primary_temporary_line_id == "id2"
+        assert payload2.primary_temporary_line_id == "id3"
 
 
 class TestMultipletTooltipInTree:
@@ -162,13 +165,13 @@ class TestMultipletTooltipInTree:
     def test_multiplet_has_tooltip(self, section: IdentifyTemporarySection) -> None:
         """Multiplet row should have tooltip with member count."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("id1", "id2", "id3"),  # 3 members
+            _make_temporary_line_row(
+                temporary_line_ids=("id1", "id2", "id3"),  # 3 members
                 species="Mg II",
                 redshift=1.5000,
             )
         ]
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -178,18 +181,16 @@ class TestMultipletTooltipInTree:
         assert "3" in tooltip, f"Expected '3' in tooltip, got: {tooltip}"
         assert "grouped" in tooltip.lower(), f"Expected 'grouped' in tooltip, got: {tooltip}"
 
-    def test_single_system_has_no_multiplet_tooltip(
-        self, section: IdentifyTemporarySection
-    ) -> None:
-        """Single system should not have multiplet tooltip."""
+    def test_single_line_has_no_multiplet_tooltip(self, section: IdentifyTemporarySection) -> None:
+        """Single line should not have multiplet tooltip."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("single_id",),  # Single member
+            _make_temporary_line_row(
+                temporary_line_ids=("single_id",),  # Single member
                 species="H I",
                 redshift=1.0000,
             )
         ]
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)

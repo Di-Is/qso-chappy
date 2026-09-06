@@ -75,59 +75,66 @@ def _target(
     )
 
 
-def build_short_walkthrough_chapters() -> tuple[TutorialChapter, ...]:
-    """Return the short walkthrough: the minimal load-identify-fit-save loop.
+def build_essential_walkthrough_chapters() -> tuple[TutorialChapter, ...]:
+    """Return the essential walkthrough: the minimal load-identify-fit-save loop.
 
     Returns:
-        Chapters of the short guided walkthrough.
+        Chapters of the essential guided walkthrough.
     """
     return (
-        _chapter_getting_started(full_walkthrough=False),
+        _chapter_getting_started(),
         _chapter_identify(),
         _chapter_analysis_overview(),
         _chapter_optimize(),
-        _chapter_save(full_walkthrough=False),
+        _chapter_save(
+            str(
+                QT_TRANSLATE_NOOP(
+                    "Tutorial",
+                    "That's the core workflow: load, identify, review in Analysis,"
+                    " fit Region Detail, then save. The same steps apply to your own data.",
+                )
+            )
+        ),
     )
 
 
-def build_full_walkthrough_chapters() -> tuple[TutorialChapter, ...]:
-    """Return the full walkthrough covering every mode and panel.
+def build_advanced_walkthrough_chapters() -> tuple[TutorialChapter, ...]:
+    """Return the advanced walkthrough continuing from the essential one.
+
+    It covers custom presets, the velocity plot, region editing, ties across
+    ions, and continuum correction.
 
     Returns:
-        Chapters of the full guided walkthrough.
+        Chapters of the advanced guided walkthrough.
     """
     return (
-        _chapter_getting_started(full_walkthrough=True),
-        _chapter_identify(),
-        _chapter_analysis_overview(),
-        _chapter_optimize(),
+        _chapter_advanced_intro(),
         _chapter_preset_build(),
         _chapter_velocity_identify(),
         _chapter_organize(),
         _chapter_joint_fit(),
         _chapter_continuum(),
-        _chapter_save(full_walkthrough=True),
+        _chapter_save(
+            str(
+                QT_TRANSLATE_NOOP(
+                    "Tutorial",
+                    "That's the advanced workflow: build a custom preset, identify"
+                    " with the velocity plot, merge and split regions, tie ions and"
+                    " fit them together, correct the continuum, then save. The same"
+                    " steps apply to your own data.",
+                )
+            )
+        ),
     )
 
 
-def _chapter_getting_started(*, full_walkthrough: bool) -> TutorialChapter:
-    introduction_source = (
-        str(
-            QT_TRANSLATE_NOOP(
-                "Tutorial",
-                "The bundled sample spectrum of quasar Q0329-385 has been"
-                " loaded. This tour walks you through the full analysis"
-                " workflow using it.",
-            )
-        )
-        if full_walkthrough
-        else str(
-            QT_TRANSLATE_NOOP(
-                "Tutorial",
-                "The bundled sample spectrum of quasar Q0329-385 has been"
-                " loaded. This short tour walks you through identifying and"
-                " fitting one absorption system using it.",
-            )
+def _chapter_getting_started() -> TutorialChapter:
+    introduction_source = str(
+        QT_TRANSLATE_NOOP(
+            "Tutorial",
+            "The bundled sample spectrum of quasar Q0329-385 has been"
+            " loaded. This tour walks you through identifying and"
+            " fitting one absorption line using it.",
         )
     )
     return TutorialChapter(
@@ -221,7 +228,6 @@ def _chapter_getting_started(*, full_walkthrough: bool) -> TutorialChapter:
                     )
                 ),
                 operation=get_shared_operation("zoom_rect"),
-                requires=TutorialCompletion.RECT_ZOOM_APPLIED,
             ),
             TutorialStep(
                 targets=(
@@ -355,6 +361,56 @@ def _chapter_getting_started(*, full_walkthrough: bool) -> TutorialChapter:
     )
 
 
+def _chapter_advanced_intro() -> TutorialChapter:
+    return TutorialChapter(
+        chapter_id="advanced_intro",
+        title_source=str(QT_TRANSLATE_NOOP("Tutorial", "Continuing from the Essentials")),
+        destination=_NO_DESTINATION,
+        steps=(
+            TutorialStep(
+                targets=(
+                    _target("spectrumPlotContainer", TutorialTargetRole.OBSERVE, primary=True),
+                ),
+                action_source=str(
+                    QT_TRANSLATE_NOOP(
+                        "Tutorial",
+                        "The bundled sample spectrum of quasar Q0329-385 has been"
+                        " loaded again. This tour continues from the essential"
+                        " workflow and covers building a custom preset, identifying"
+                        " with the velocity plot, merging and splitting regions,"
+                        " tying redshifts across ions, and correcting the continuum.",
+                    )
+                ),
+                expected_source=str(
+                    QT_TRANSLATE_NOOP(
+                        "Tutorial",
+                        "The spectrum is displayed and the project starts fresh,"
+                        " with no regions from an earlier tour.",
+                    )
+                ),
+            ),
+            TutorialStep(
+                targets=(),
+                action_source=str(
+                    QT_TRANSLATE_NOOP(
+                        "Tutorial",
+                        "This tour assumes you can already identify an absorption"
+                        " line, review it in Analysis, and fit it in Region Detail."
+                        " If you have not done that yet, run"
+                        " [Try the Essential Workflow] first.",
+                    )
+                ),
+                expected_source=str(
+                    QT_TRANSLATE_NOOP(
+                        "Tutorial",
+                        "Once those basics are familiar, you are ready for the advanced steps.",
+                    )
+                ),
+            ),
+        ),
+    )
+
+
 def _chapter_analysis_overview() -> TutorialChapter:
     return TutorialChapter(
         chapter_id="analysis",
@@ -403,22 +459,8 @@ def _chapter_preset_build() -> TutorialChapter:
     return TutorialChapter(
         chapter_id="preset_build",
         title_source=str(QT_TRANSLATE_NOOP("Tutorial", "Building a Custom Preset")),
-        destination=_NO_DESTINATION,
+        destination=_IDENTIFY_DESTINATION,
         steps=(
-            TutorialStep(
-                targets=(_primary_target("modeButton_IDENTIFY"),),
-                action_source=str(
-                    QT_TRANSLATE_NOOP(
-                        "Tutorial",
-                        "Click [Identify] to build a custom preset for another absorber.",
-                    )
-                ),
-                expected_source=str(
-                    QT_TRANSLATE_NOOP("Tutorial", "Identify mode opens with its preset controls.")
-                ),
-                advance=AdvanceTrigger.MODE_CHANGE,
-                advance_mode=EditingMode.IDENTIFY,
-            ),
             TutorialStep(
                 targets=(_primary_target("identifyManagePresetButton"),),
                 action_source=str(
@@ -695,7 +737,6 @@ def _chapter_velocity_identify() -> TutorialChapter:
                         " 4942 Å — the Mg II 2796/2803 pair.",
                     )
                 ),
-                requires=TutorialCompletion.MG2_ABSORBER_IN_VIEW,
             ),
             TutorialStep(
                 targets=(_primary_target("spectrumPlotContainer"),),
@@ -722,6 +763,7 @@ def _chapter_velocity_identify() -> TutorialChapter:
                         " of the same absorber align vertically.",
                     )
                 ),
+                operation=get_shared_operation("identify_toggle_velocity"),
             ),
             TutorialStep(
                 targets=(_primary_observe_target("velocityPlotContainer"),),
@@ -852,8 +894,8 @@ def _chapter_organize() -> TutorialChapter:
                 action_source=str(
                     QT_TRANSLATE_NOOP(
                         "Tutorial",
-                        "Back in Analysis, the overview now also lists the Fe II"
-                        " and Mg II regions. Select one of them.",
+                        "Back in Analysis, the overview lists the Fe II and Mg II"
+                        " regions. Select one of them.",
                     )
                 ),
                 expected_source=str(
@@ -974,7 +1016,7 @@ def _chapter_organize() -> TutorialChapter:
                 requires=TutorialCompletion.MULTI_ION_REGION_EXISTS,
             ),
             TutorialStep(
-                targets=(_primary_target("organizeSidePanelBackButton"),),
+                targets=(_primary_target("structureSidePanelBackButton"),),
                 action_source=str(
                     QT_TRANSLATE_NOOP(
                         "Tutorial", "Click [Back to Overview] to leave the region editor."
@@ -1217,22 +1259,24 @@ def _chapter_joint_fit() -> TutorialChapter:
             TutorialStep(
                 targets=(
                     _primary_target("analysisDetailParameterTree"),
-                    _target("analysisDetailFitButton", TutorialTargetRole.INTERACT),
                     _target("analysisDetailResultsCard", TutorialTargetRole.OBSERVE),
                 ),
                 action_source=str(
                     QT_TRANSLATE_NOOP(
                         "Tutorial",
                         "Mg II is saturated, so its logN is unreliable:"
-                        " right-click the main Mg II component, tick"
-                        " [Fix logN], and fit once more.",
+                        " right-click the main Mg II component and tick the"
+                        " entry that starts with [Fix logN]. The two Mg II"
+                        " lines are tied as a multiplet, so the entry also"
+                        " names the shared tie and how many components it"
+                        " covers.",
                     )
                 ),
                 expected_source=str(
                     QT_TRANSLATE_NOOP(
                         "Tutorial",
-                        "The fit converges with Mg II's logN held fixed; quote"
-                        " such values as lower limits, not measurements.",
+                        "Mg II's logN is marked fixed, and the applied fit"
+                        " becomes out of date because the model changed.",
                     )
                 ),
                 domain_note_source=str(
@@ -1244,6 +1288,28 @@ def _chapter_joint_fit() -> TutorialChapter:
                         " Fixing logN for saturated lines is standard practice.",
                     )
                 ),
+                requires=TutorialCompletion.MG2_LOGN_FIXED,
+            ),
+            TutorialStep(
+                targets=(
+                    _primary_target("analysisDetailFitButton"),
+                    _target("analysisDetailParameterTree", TutorialTargetRole.OBSERVE),
+                    _target("analysisDetailResultsCard", TutorialTargetRole.OBSERVE),
+                ),
+                action_source=str(
+                    QT_TRANSLATE_NOOP(
+                        "Tutorial",
+                        "Click [Fit] once more so the remaining parameters"
+                        " settle with Mg II's logN held fixed.",
+                    )
+                ),
+                expected_source=str(
+                    QT_TRANSLATE_NOOP(
+                        "Tutorial",
+                        "The fit converges with Mg II's logN held fixed; quote"
+                        " such values as lower limits, not measurements.",
+                    )
+                ),
                 checkpoint_source=str(
                     QT_TRANSLATE_NOOP(
                         "Tutorial",
@@ -1252,7 +1318,7 @@ def _chapter_joint_fit() -> TutorialChapter:
                     )
                 ),
                 operation=get_shared_operation("analysis_fit"),
-                requires=TutorialCompletion.MG2_LOGN_FIXED_AND_REFIT_APPLIED,
+                requires=TutorialCompletion.REGION_FIT_APPLIED,
             ),
             TutorialStep(
                 targets=(_primary_target("modeButton_CONTINUUM"),),
@@ -1390,7 +1456,7 @@ def _chapter_continuum() -> TutorialChapter:
 def _chapter_identify() -> TutorialChapter:
     return TutorialChapter(
         chapter_id="identify",
-        title_source=str(QT_TRANSLATE_NOOP("Tutorial", "Identifying Absorption Systems")),
+        title_source=str(QT_TRANSLATE_NOOP("Tutorial", "Identifying Absorption Lines")),
         destination=_IDENTIFY_DESTINATION,
         steps=(
             TutorialStep(
@@ -1480,7 +1546,6 @@ def _chapter_identify() -> TutorialChapter:
                         " absorbs the background light at a specific wavelength.",
                     )
                 ),
-                requires=TutorialCompletion.CIV_ABSORBER_IN_VIEW,
             ),
             TutorialStep(
                 targets=(
@@ -1535,7 +1600,7 @@ def _chapter_identify() -> TutorialChapter:
                 ),
                 requires=TutorialCompletion.CONFIRMED_REGION_EXISTS,
                 checkpoint_source=str(
-                    QT_TRANSLATE_NOOP("Tutorial", "Did you identify the C IV system at z ≈ 2.076?")
+                    QT_TRANSLATE_NOOP("Tutorial", "Did you identify the C IV line at z ≈ 2.076?")
                 ),
             ),
             TutorialStep(
@@ -1697,26 +1762,7 @@ def _chapter_optimize() -> TutorialChapter:
     )
 
 
-def _chapter_save(*, full_walkthrough: bool) -> TutorialChapter:
-    conclusion_source = (
-        str(
-            QT_TRANSLATE_NOOP(
-                "Tutorial",
-                "That's the whole workflow: load, identify, review in Analysis,"
-                " fit Region Detail, edit regions as needed, and correct the continuum when"
-                " fit residuals call for it, then save. The same steps"
-                " apply to your own data.",
-            )
-        )
-        if full_walkthrough
-        else str(
-            QT_TRANSLATE_NOOP(
-                "Tutorial",
-                "That's the core workflow: load, identify, review in Analysis,"
-                " fit Region Detail, then save. The same steps apply to your own data.",
-            )
-        )
-    )
+def _chapter_save(conclusion_source: str) -> TutorialChapter:
     return TutorialChapter(
         chapter_id="save",
         title_source=str(QT_TRANSLATE_NOOP("Tutorial", "Saving Your Work")),

@@ -10,12 +10,12 @@ from chappy.application.history import (
     AbsorptionRegionSnapshot,
     ChangeSet,
     HistoryCommandContext,
-    IdentifyAddCandidateCommand,
-    IdentifyClearCandidatesCommand,
+    IdentifyAddTemporaryLineCommand,
+    IdentifyClearTemporaryLinesCommand,
     IdentifyRegisterSelectedCommand,
-    IdentifyRemoveCandidateCommand,
+    IdentifyRemoveTemporaryLineCommand,
 )
-from chappy.application.identify import CandidateLineSnapshot
+from chappy.application.identify import TemporaryLineSnapshot
 from chappy.core.velocity_ranges import LineAnalysisHalfWidth
 
 
@@ -23,25 +23,27 @@ from chappy.core.velocity_ranges import LineAnalysisHalfWidth
 class _IdentifyPort:
     """Identify history port test double."""
 
-    restored_candidates: list[tuple[CandidateLineSnapshot, ...]] = field(default_factory=list)
-    removed_candidates: list[tuple[str, ...]] = field(default_factory=list)
+    restored_temporary_lines: list[tuple[TemporaryLineSnapshot, ...]] = field(default_factory=list)
+    removed_temporary_lines: list[tuple[str, ...]] = field(default_factory=list)
     clear_count: int = 0
     updated_regions: list[tuple[str, ...]] = field(default_factory=list)
 
-    def restore_identify_candidates(
-        self, snapshots: tuple[CandidateLineSnapshot, ...]
+    def restore_identify_temporary_lines(
+        self, snapshots: tuple[TemporaryLineSnapshot, ...]
     ) -> ChangeSet:
-        """Record restored identify candidates."""
-        self.restored_candidates.append(snapshots)
-        return ChangeSet(changed_candidate_ids=tuple(snapshot.system_id for snapshot in snapshots))
+        """Record restored identify temporary lines."""
+        self.restored_temporary_lines.append(snapshots)
+        return ChangeSet(
+            changed_temporary_line_ids=tuple(snapshot.temporary_line_id for snapshot in snapshots)
+        )
 
-    def remove_identify_candidates(self, system_ids: tuple[str, ...]) -> ChangeSet:
-        """Record removed identify candidates."""
-        self.removed_candidates.append(system_ids)
-        return ChangeSet(changed_candidate_ids=system_ids)
+    def remove_identify_temporary_lines(self, temporary_line_ids: tuple[str, ...]) -> ChangeSet:
+        """Record removed identify temporary lines."""
+        self.removed_temporary_lines.append(temporary_line_ids)
+        return ChangeSet(changed_temporary_line_ids=temporary_line_ids)
 
-    def clear_identify_candidates(self) -> ChangeSet:
-        """Record candidate clearing."""
+    def clear_identify_temporary_lines(self) -> ChangeSet:
+        """Record temporary-line clearing."""
         self.clear_count += 1
         return ChangeSet.empty()
 
@@ -52,8 +54,8 @@ class _IdentifyPort:
 
 
 @dataclass(slots=True)
-class _OrganizePort:
-    """Organize history port test double for identify registration."""
+class _StructurePort:
+    """Structure history port test double for identify registration."""
 
     restored_regions: list[tuple[AbsorptionRegionSnapshot, ...]] = field(default_factory=list)
     restored_lines: list[tuple[AbsorptionLineSnapshot, ...]] = field(default_factory=list)
@@ -91,15 +93,15 @@ class _OrganizePort:
         return ChangeSet(changed_region_ids=tuple(item.region_id for item in snapshots))
 
 
-def _candidate_snapshot(system_id: str) -> CandidateLineSnapshot:
-    """Create one candidate snapshot."""
-    return CandidateLineSnapshot(
-        system_id=system_id,
+def _temporary_line_snapshot(temporary_line_id: str) -> TemporaryLineSnapshot:
+    """Create one temporary-line snapshot."""
+    return TemporaryLineSnapshot(
+        temporary_line_id=temporary_line_id,
         species="C IV",
         lambda_min=1547.0,
         lambda_max=1549.0,
         creation_method="manual",
-        line_id=f"atomic-{system_id}",
+        line_id=f"atomic-{temporary_line_id}",
         rest_wavelength=1548.2,
         center_z=2.0,
         multiplet_id="civ",
@@ -145,11 +147,11 @@ def _region_snapshot(region_id: str) -> AbsorptionRegionSnapshot:
     )
 
 
-def test_identify_add_candidate_command_restores_and_removes_candidates() -> None:
-    """Verify candidate add history uses typed identify port calls."""
-    snapshot = _candidate_snapshot("candidate-1")
+def test_identify_add_temporary_line_command_restores_and_removes_temporary_lines() -> None:
+    """Verify temporary-line add history uses typed identify port calls."""
+    snapshot = _temporary_line_snapshot("temporary-line-1")
     port = _IdentifyPort()
-    command = IdentifyAddCandidateCommand(snapshots=(snapshot,))
+    command = IdentifyAddTemporaryLineCommand(snapshots=(snapshot,))
     context = HistoryCommandContext(identify_port=port)
 
     redo = command.redo(context)
@@ -157,15 +159,17 @@ def test_identify_add_candidate_command_restores_and_removes_candidates() -> Non
 
     assert redo.success is True
     assert undo.success is True
-    assert port.restored_candidates == [(snapshot,)]
-    assert port.removed_candidates == [("candidate-1",)]
+    assert port.restored_temporary_lines == [(snapshot,)]
+    assert port.removed_temporary_lines == [("temporary-line-1",)]
 
 
-def test_identify_remove_candidate_command_removes_and_restores_candidates() -> None:
-    """Verify candidate remove history uses typed identify port calls."""
-    snapshot = _candidate_snapshot("candidate-1")
+def test_identify_remove_temporary_line_command_removes_and_restores_temporary_lines() -> None:
+    """Verify temporary-line remove history uses typed identify port calls."""
+    snapshot = _temporary_line_snapshot("temporary-line-1")
     port = _IdentifyPort()
-    command = IdentifyRemoveCandidateCommand(system_ids=("candidate-1",), snapshots=(snapshot,))
+    command = IdentifyRemoveTemporaryLineCommand(
+        temporary_line_ids=("temporary-line-1",), snapshots=(snapshot,)
+    )
     context = HistoryCommandContext(identify_port=port)
 
     redo = command.redo(context)
@@ -173,15 +177,15 @@ def test_identify_remove_candidate_command_removes_and_restores_candidates() -> 
 
     assert redo.success is True
     assert undo.success is True
-    assert port.removed_candidates == [("candidate-1",)]
-    assert port.restored_candidates == [(snapshot,)]
+    assert port.removed_temporary_lines == [("temporary-line-1",)]
+    assert port.restored_temporary_lines == [(snapshot,)]
 
 
-def test_identify_clear_candidates_command_clears_and_restores_candidates() -> None:
-    """Verify candidate clear history restores captured typed snapshots."""
-    snapshot = _candidate_snapshot("candidate-1")
+def test_identify_clear_temporary_lines_command_clears_and_restores_temporary_lines() -> None:
+    """Verify temporary-line clear history restores captured typed snapshots."""
+    snapshot = _temporary_line_snapshot("temporary-line-1")
     port = _IdentifyPort()
-    command = IdentifyClearCandidatesCommand(snapshots=(snapshot,))
+    command = IdentifyClearTemporaryLinesCommand(snapshots=(snapshot,))
     context = HistoryCommandContext(identify_port=port)
 
     redo = command.redo(context)
@@ -190,36 +194,36 @@ def test_identify_clear_candidates_command_clears_and_restores_candidates() -> N
     assert redo.success is True
     assert undo.success is True
     assert port.clear_count == 1
-    assert port.restored_candidates == [(snapshot,)]
+    assert port.restored_temporary_lines == [(snapshot,)]
 
 
 def test_identify_register_selected_command_replays_and_reverts_registration() -> None:
-    """Verify selected registration history coordinates identify and organize ports."""
-    candidate = _candidate_snapshot("candidate-1")
+    """Verify selected registration history coordinates identify and structure ports."""
+    temporary_line = _temporary_line_snapshot("temporary-line-1")
     line = _line_snapshot("line-1", "region-1")
     region = _region_snapshot("region-1")
     identify_port = _IdentifyPort()
-    organize_port = _OrganizePort()
+    structure_port = _StructurePort()
     command = IdentifyRegisterSelectedCommand(
         created_line_ids=("line-1",),
-        removed_system_ids=("candidate-1",),
-        candidate_snapshots=(candidate,),
+        removed_temporary_line_ids=("temporary-line-1",),
+        temporary_line_snapshots=(temporary_line,),
         affected_region_ids=("region-1",),
         line_snapshots=(line,),
         before_affected_region_snapshots=(),
         after_affected_region_snapshots=(region,),
     )
-    context = HistoryCommandContext(identify_port=identify_port, organize_port=organize_port)
+    context = HistoryCommandContext(identify_port=identify_port, structure_port=structure_port)
 
     redo = command.redo(context)
     undo = command.undo(context)
 
     assert redo.success is True
     assert undo.success is True
-    assert identify_port.removed_candidates == [("candidate-1",)]
-    assert identify_port.restored_candidates == [(candidate,)]
+    assert identify_port.removed_temporary_lines == [("temporary-line-1",)]
+    assert identify_port.restored_temporary_lines == [(temporary_line,)]
     assert identify_port.updated_regions == []
-    assert organize_port.restored_regions == [(region,)]
-    assert organize_port.restored_lines == [(line,)]
-    assert organize_port.removed_lines == [("line-1",)]
-    assert organize_port.partial_regions == [(region,), ()]
+    assert structure_port.restored_regions == [(region,)]
+    assert structure_port.restored_lines == [(line,)]
+    assert structure_port.removed_lines == [("line-1",)]
+    assert structure_port.partial_regions == [(region,), ()]

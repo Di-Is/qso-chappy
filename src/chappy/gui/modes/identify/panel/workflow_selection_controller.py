@@ -10,11 +10,11 @@ from PySide6.QtCore import Qt
 
 from chappy.gui.modes.identify.panel.panel_models import (
     ConfirmedGroupItemPayload,
+    ConfirmedLineItemPayload,
     ConfirmedLineRow,
     ConfirmedRegionRow,
-    ConfirmedSystemItemPayload,
     IdentifyWorkflowItemPayload,
-    TemporarySystemItemPayload,
+    TemporaryLineItemPayload,
 )
 
 if TYPE_CHECKING:
@@ -41,8 +41,8 @@ class IdentifyWorkflowSelectionController:
         selected_ids: list[str] = []
         for item in tree.selectedItems():
             payload = self.item_payload(item)
-            if isinstance(payload, TemporarySystemItemPayload):
-                selected_ids.append(payload.primary_system_id)
+            if isinstance(payload, TemporaryLineItemPayload):
+                selected_ids.append(payload.primary_temporary_line_id)
         return selected_ids
 
     def selected_temporary_primary_id_set(self, tree: QTreeWidget) -> set[str]:
@@ -72,12 +72,12 @@ class IdentifyWorkflowSelectionController:
                 is_group=True,
             )
 
-        if isinstance(payload, ConfirmedSystemItemPayload):
+        if isinstance(payload, ConfirmedLineItemPayload):
             range_pair = self._resolve_item_range(payload, confirmed_regions=confirmed_regions)
             if range_pair is None or not all(math.isfinite(value) for value in range_pair):
                 return None
             return IdentifyWorkflowFocusTarget(
-                identifier=payload.system_id,
+                identifier=payload.line_id,
                 min_wavelength=float(range_pair[0]),
                 max_wavelength=float(range_pair[1]),
                 is_group=False,
@@ -90,7 +90,7 @@ class IdentifyWorkflowSelectionController:
         payload = item.data(0, Qt.ItemDataRole.UserRole)
         if isinstance(
             payload,
-            (TemporarySystemItemPayload, ConfirmedGroupItemPayload, ConfirmedSystemItemPayload),
+            (TemporaryLineItemPayload, ConfirmedGroupItemPayload, ConfirmedLineItemPayload),
         ):
             return payload
         return None
@@ -103,7 +103,7 @@ class IdentifyWorkflowSelectionController:
         while nodes:
             node = nodes.pop()
             payload = self.item_payload(node)
-            if isinstance(payload, ConfirmedSystemItemPayload):
+            if isinstance(payload, ConfirmedLineItemPayload):
                 range_pair = self._resolve_item_range(payload, confirmed_regions=confirmed_regions)
                 if range_pair is not None:
                     ranges.append(range_pair)
@@ -112,24 +112,21 @@ class IdentifyWorkflowSelectionController:
         return ranges
 
     def _resolve_item_range(
-        self,
-        payload: ConfirmedSystemItemPayload,
-        *,
-        confirmed_regions: Sequence[ConfirmedRegionRow],
+        self, payload: ConfirmedLineItemPayload, *, confirmed_regions: Sequence[ConfirmedRegionRow]
     ) -> tuple[float, float] | None:
-        system_row = self._find_confirmed_line_row(payload.system_id, confirmed_regions)
-        if system_row is None:
+        line_row = self._find_confirmed_line_row(payload.line_id, confirmed_regions)
+        if line_row is None:
             return None
-        return self._normalise_range(system_row.lambda_start, system_row.lambda_end)
+        return self._normalise_range(line_row.lambda_start, line_row.lambda_end)
 
     @staticmethod
     def _find_confirmed_line_row(
-        system_id: str, confirmed_regions: Sequence[ConfirmedRegionRow]
+        line_id: str, confirmed_regions: Sequence[ConfirmedRegionRow]
     ) -> ConfirmedLineRow | None:
         for group in confirmed_regions:
-            for system in group.systems:
-                if system.system_id == system_id:
-                    return system
+            for line in group.lines:
+                if line.line_id == line_id:
+                    return line
         return None
 
     @staticmethod

@@ -18,9 +18,6 @@ if TYPE_CHECKING:
     from chappy.gui.spectrum.interaction.input.controllers.rect_zoom_input_controller import (
         RectZoomInputController,
     )
-    from chappy.gui.spectrum.interaction.input.controllers.velocity_pending_input_controller import (
-        VelocityPendingInputController,
-    )
 
 
 class SpectrumInteractionRuntime:
@@ -33,7 +30,6 @@ class SpectrumInteractionRuntime:
         mode_velocity_shortcut_emitter: Callable[[], None],
         mode_click_emitter: Callable[[tuple[float, float], int], None],
         rect_zoom_input_controller: RectZoomInputController,
-        velocity_pending_input_controller: VelocityPendingInputController,
         mask_selection_input_controller: MaskSelectionInputController,
     ) -> None:
         """Initialize the runtime."""
@@ -41,7 +37,6 @@ class SpectrumInteractionRuntime:
         self._mode_velocity_shortcut_emitter = mode_velocity_shortcut_emitter
         self._mode_click_emitter = mode_click_emitter
         self._rect_zoom_input_controller = rect_zoom_input_controller
-        self._velocity_pending_input_controller = velocity_pending_input_controller
         self._mask_selection_input_controller = mask_selection_input_controller
 
     def emit_interaction_intent(self, intent: SpectrumInteractionIntent) -> None:
@@ -52,27 +47,9 @@ class SpectrumInteractionRuntime:
         """Cancel the rectangle zoom interaction."""
         return self._rect_zoom_input_controller.cancel_interaction(reason=reason)
 
-    def resolve_velocity_toggle_wavelength(self) -> float | None:
-        """Resolve the wavelength used for velocity toggle commands."""
-        return self._velocity_pending_input_controller.resolve_toggle_wavelength()
-
-    def enter_velocity_pending(
-        self, wavelength: float | None, modifiers: int | None, *, trigger: str
-    ) -> None:
-        """Enter velocity pending mode."""
-        self._velocity_pending_input_controller.enter(wavelength, modifiers, trigger=trigger)
-
-    def cancel_velocity_pending(self, *, reason: str) -> None:
-        """Cancel velocity pending mode."""
-        self._velocity_pending_input_controller.cancel(reason=reason)
-
     def emit_mode_velocity_shortcut(self) -> None:
         """Route a velocity shortcut to the active mode owner."""
         self._mode_velocity_shortcut_emitter()
-
-    def set_target_wavelength(self, wavelength: float) -> None:
-        """Update the latest target wavelength."""
-        self._velocity_pending_input_controller.set_target_wavelength(wavelength)
 
     def emit_mode_click(self, position: tuple[float, float], modifiers: int) -> None:
         """Route a raw mode click to the active mode owner."""
@@ -81,12 +58,6 @@ class SpectrumInteractionRuntime:
     def cancel_mask_selection(self, *, reason: str) -> bool:
         """Cancel mask selection."""
         return self._mask_selection_input_controller.cancel_interaction(reason=reason)
-
-    def complete_velocity_pending(
-        self, wavelength: float, modifiers: int | None, *, trigger: str
-    ) -> None:
-        """Complete velocity pending mode."""
-        self._velocity_pending_input_controller.complete(wavelength, modifiers, trigger=trigger)
 
     def begin_rect_zoom_interaction(self, position: tuple[float, float], modifiers: int) -> None:
         """Begin rectangle zoom interaction."""

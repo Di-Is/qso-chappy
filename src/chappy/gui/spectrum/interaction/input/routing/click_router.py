@@ -7,15 +7,7 @@ from dataclasses import dataclass
 from PySide6.QtCore import Qt
 
 from chappy.gui.spectrum.interaction.input.mapping.qt_input_mapper import KeyMouseIntentMapper
-from chappy.gui.spectrum.interaction.support.commands import CancelVelocityPending
 from chappy.presentation.interaction.interaction_contracts import InteractionChannel
-
-
-@dataclass(frozen=True, slots=True)
-class SetTargetWavelength:
-    """Command to update the latest wavelength under the pointer."""
-
-    wavelength: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,15 +15,6 @@ class CancelMaskSelection:
     """Command to cancel active mask selection."""
 
     reason: str
-
-
-@dataclass(frozen=True, slots=True)
-class CompleteVelocityPending:
-    """Command to complete identify velocity pending mode."""
-
-    wavelength: float
-    modifiers: int
-    trigger: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,15 +41,7 @@ class RouteModeClick:
     source: str
 
 
-type ClickCommand = (
-    SetTargetWavelength
-    | CancelMaskSelection
-    | CompleteVelocityPending
-    | CancelVelocityPending
-    | BeginRectZoom
-    | ShowContextMenu
-    | RouteModeClick
-)
+type ClickCommand = CancelMaskSelection | BeginRectZoom | ShowContextMenu | RouteModeClick
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +51,6 @@ class ClickRouteState:
     identify_click_enabled: bool
     optimize_shift_click_enabled: bool
     active_channel: InteractionChannel | None
-    velocity_pending: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,19 +68,7 @@ class SpectrumClickRouter:
         self, *, position: tuple[float, float], button: str, modifiers: int, state: ClickRouteState
     ) -> ClickRouteResult:
         """Route a click to commands."""
-        commands: list[ClickCommand] = [SetTargetWavelength(wavelength=float(position[0]))]
-
-        if state.velocity_pending:
-            if button == "left":
-                commands.append(
-                    CompleteVelocityPending(
-                        wavelength=float(position[0]), modifiers=modifiers, trigger="mouse"
-                    )
-                )
-                return ClickRouteResult(True, tuple(commands))
-            if button == "right":
-                commands.append(CancelVelocityPending(reason="context-menu"))
-                return ClickRouteResult(True, tuple(commands))
+        commands: list[ClickCommand] = []
 
         if button == "right" and state.active_channel is InteractionChannel.MASK_SELECTION:
             commands.append(CancelMaskSelection(reason="context-menu"))

@@ -79,14 +79,14 @@ def sample_project() -> SpectroscopyProject:
 
     region = AbsorptionRegion(
         region_id="grp-ident",
-        line_ids=["sys-1"],
+        line_ids=["line-1"],
         display_color="#abcdef",
         analysis_range=(1000.0, 1020.0),
     )
     project.absorption_regions[region.region_id] = region
 
     line = AbsorptionLine(
-        line_id="sys-1",
+        line_id="line-1",
         species="CIV",
         transition_name="C IV 1548",
         rest_wavelength=1548.19,
@@ -123,7 +123,7 @@ def test_hdf5_roundtrip_preserves_project(
 
     try:
         project_io.save_project(sample_project, str(temp_path))
-        reloaded = project_io.load_project(str(temp_path))
+        reloaded = project_io.load_project(str(temp_path)).project
 
         assert len(reloaded.model.components) == len(sample_project.model.components)
         assert reloaded.model.mask_definitions == sample_project.model.mask_definitions
@@ -149,13 +149,13 @@ def test_hdf5_roundtrip_preserves_project(
 
         # Absorption structures restored
         assert set(reloaded.absorption_regions.keys()) == {"grp-ident"}
-        assert set(reloaded.absorption_lines.keys()) == {"sys-1"}
-        reloaded_line = reloaded.absorption_lines["sys-1"]
+        assert set(reloaded.absorption_lines.keys()) == {"line-1"}
+        reloaded_line = reloaded.absorption_lines["line-1"]
         assert reloaded_line.needs_optimization is True
         assert reloaded_line.transition_name == "C IV 1548"
 
-        # Identify state persisted (work_phase always normalizes to candidate_add)
-        assert reloaded.identify_state.work_phase == "candidate_add"
+        # Identify state persisted (work_phase always normalizes to temporary_line_add)
+        assert reloaded.identify_state.work_phase == "temporary_line_add"
         assert pytest.approx(reloaded.identify_state.reference_z, rel=1e-9) == 0.987
         assert (
             pytest.approx(reloaded.identify_state.new_candidate_analysis_half_width.kms, rel=1e-9)
@@ -188,7 +188,7 @@ def test_hdf5_roundtrip_preserves_analysis_revision_and_artifact(
 
     try:
         project_io.save_project(sample_project, str(temp_path))
-        reloaded = project_io.load_project(str(temp_path))
+        reloaded = project_io.load_project(str(temp_path)).project
 
         state = reloaded.region_analysis_state("grp-ident")
         assert state is not None
@@ -225,7 +225,7 @@ def test_save_as_preserves_analysis_state(
 
     project_io.save_project(sample_project, str(save_as_path))
 
-    reloaded = project_io.load_project(str(save_as_path))
+    reloaded = project_io.load_project(str(save_as_path)).project
     state = reloaded.region_analysis_state("grp-ident")
     assert state is not None
     assert state.current_revision == original_state.current_revision
@@ -276,9 +276,9 @@ def test_hdf5_load_normalizes_legacy_grouping_work_phase(
                 "identify_json", data=json.dumps(payload), dtype=h5py.string_dtype()
             )
 
-        reloaded = project_io.load_project(str(temp_path))
+        reloaded = project_io.load_project(str(temp_path)).project
 
-        assert reloaded.identify_state.work_phase == "candidate_add"
+        assert reloaded.identify_state.work_phase == "temporary_line_add"
     finally:
         temp_path.unlink(missing_ok=True)
 
@@ -292,10 +292,10 @@ def test_hdf5_roundtrip_preserves_line_and_region_details(
 
     try:
         project_io.save_project(sample_project, str(temp_path))
-        reloaded = project_io.load_project(str(temp_path))
+        reloaded = project_io.load_project(str(temp_path)).project
 
-        original_line = sample_project.absorption_lines["sys-1"]
-        reloaded_line = reloaded.absorption_lines["sys-1"]
+        original_line = sample_project.absorption_lines["line-1"]
+        reloaded_line = reloaded.absorption_lines["line-1"]
         assert reloaded_line.multiplet_ids == original_line.multiplet_ids
 
         original_region = sample_project.absorption_regions["grp-ident"]
@@ -310,7 +310,7 @@ def test_hdf5_roundtrip_preserves_legacy_mlt_absorption_line(
     project_io: ProjectIOUseCase, sample_project: SpectroscopyProject
 ) -> None:
     """Schema 2.4 projects keep materialized legacy ``-mlt`` lines without DB lookup."""
-    line = sample_project.absorption_lines.pop("sys-1")
+    line = sample_project.absorption_lines.pop("line-1")
     line.line_id = "41a9625cec8cf0f0"
     line.transition_name = "Lyα-mlt"
     line.species = "H I"
@@ -326,7 +326,7 @@ def test_hdf5_roundtrip_preserves_legacy_mlt_absorption_line(
 
     try:
         project_io.save_project(sample_project, str(temp_path))
-        reloaded = project_io.load_project(str(temp_path))
+        reloaded = project_io.load_project(str(temp_path)).project
 
         restored = reloaded.absorption_lines[line.line_id]
         assert restored.transition_name == "Lyα-mlt"
@@ -441,7 +441,7 @@ def test_hdf5_roundtrip_preserves_tie_sets_with_mask_and_origin(
 
     try:
         project_io.save_project(project, str(temp_path))
-        reloaded = project_io.load_project(str(temp_path))
+        reloaded = project_io.load_project(str(temp_path)).project
 
         tie_sets_by_id = {tie_set.tie_id: tie_set for tie_set in reloaded.model.iter_tie_sets()}
         assert set(tie_sets_by_id) == {"multiplet-1", "user-1"}
@@ -517,7 +517,7 @@ def test_hdf5_roundtrip_preserves_nested_tie_set_relationship(
 
     try:
         project_io.save_project(project, str(temp_path))
-        reloaded = project_io.load_project(str(temp_path))
+        reloaded = project_io.load_project(str(temp_path)).project
 
         tie_sets_by_id = {tie_set.tie_id: tie_set for tie_set in reloaded.model.iter_tie_sets()}
         reloaded_inner = tie_sets_by_id["multiplet-1"]
@@ -602,7 +602,7 @@ def test_hdf5_roundtrip_attaches_the_correct_inner_when_tie_ids_collide(
 
     try:
         project_io.save_project(project, str(temp_path))
-        reloaded = project_io.load_project(str(temp_path))
+        reloaded = project_io.load_project(str(temp_path)).project
 
         tie_sets_by_uid = {tie_set.uid: tie_set for tie_set in reloaded.model.iter_tie_sets()}
         assert set(tie_sets_by_uid) == {inner_uid, decoy_uid, outer_uid}

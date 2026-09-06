@@ -14,7 +14,7 @@ from PySide6.QtWidgets import QApplication
 
 from chappy.core.constants import LIGHT_SPEED_KMS
 from chappy.core.editing_mode import EditingMode
-from chappy.core.identify_state import CandidateLineContext
+from chappy.core.identify_state import TemporaryLineContext
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.core.spectrum import Spectrum
 from chappy.gui.shell.main_window import MainWindow
@@ -91,7 +91,7 @@ def _apply_analysis_demo_fixture(app: QApplication, window: MainWindow) -> None:
     app.processEvents()
 
 
-def _create_system(  # noqa: PLR0913
+def _create_line(  # noqa: PLR0913
     project: SpectroscopyProject,
     region: AbsorptionRegion | None = None,
     *,
@@ -246,8 +246,8 @@ def _doppler_tau0(
     return float(constant * oscillator_strength * wavelength_cm * column_density / b_cm_s)
 
 
-def _create_spec_system(project: SpectroscopyProject, spec: _LineSpec) -> AbsorptionLine:
-    return _create_system(
+def _create_spec_line(project: SpectroscopyProject, spec: _LineSpec) -> AbsorptionLine:
+    return _create_line(
         project,
         species=spec.species,
         transition_name=spec.transition_name,
@@ -276,7 +276,7 @@ def create_analysis_demo_project(*, debug: bool = False) -> SpectroscopyProject:
 
     created_lines: list[AbsorptionLine] = []
     for line_spec in line_specs:
-        line = _create_spec_system(project, line_spec)
+        line = _create_spec_line(project, line_spec)
         created_lines.append(line)
 
     line_ids = [line.line_id for line in created_lines]
@@ -318,17 +318,17 @@ def create_identify_demo_project() -> SpectroscopyProject:
         ),
         _LineSpec("C IV", "C IV λ1551", 1550.77, 1.292, 150.0, "C IV λ1551", 0.09522, 2.64e8),
     )
-    created_lines = [_create_spec_system(project, spec) for spec in line_specs]
+    created_lines = [_create_spec_line(project, spec) for spec in line_specs]
     primary_region = project.create_region_with_lines([line.line_id for line in created_lines])
     project.update_region_analysis_range(primary_region.region_id)
 
     temporary_center = _CIV_1548_REST * (1.0 + _IDENTIFY_DEMO_EXTRA_REDSHIFT)
-    project.identify_state.add_candidate_line(
+    project.identify_state.add_temporary_line(
         "C IV",
         temporary_center - 1.0,
         temporary_center + 1.0,
         creation_method="doc-fixture",
-        context=CandidateLineContext(
+        context=TemporaryLineContext(
             line_id="doc_civ_1548",
             rest_wavelength=_CIV_1548_REST,
             multiplet_id="",

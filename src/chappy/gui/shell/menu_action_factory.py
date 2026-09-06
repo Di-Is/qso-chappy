@@ -282,12 +282,14 @@ class MenuActionFactory(QObject):
         self._create_registered_action(
             ShellActionId.AUTO_ADJUST_FLUX, options=self._ActionBuildOptions(enabled=False)
         )
-        self._create_registered_action(
+        identify_velocity_action = self._create_registered_action(
             ShellActionId.TOGGLE_VELOCITY_PLOT_IDENTIFY,
             options=self._ActionBuildOptions(
                 enabled=False, visible=False, include_in_shortcuts_doc=True
             ),
         )
+        # Identify's velocity toggle has no menu entry, so the window must own its V shortcut.
+        self.main_window.addAction(identify_velocity_action)
         self._create_registered_action(
             ShellActionId.TOGGLE_VELOCITY_PLOT_ANALYSIS,
             options=self._ActionBuildOptions(

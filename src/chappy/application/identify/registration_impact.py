@@ -1,4 +1,4 @@
-"""Side-effect-free impact preview for Identify candidate registration."""
+"""Side-effect-free impact preview for Identify temporary-line registration."""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ from chappy.core.velocity_ranges import LineAnalysisHalfWidth
 
 from .models import (
     BuildRegionPreviewsRequest,
-    CandidateLineSnapshot,
     ExistingRegionSnapshot,
     IdentifyRegistrationPlan,
+    TemporaryLineSnapshot,
 )
 from .registration_usecase import BuildIdentifyRegistrationPlanUseCase
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
-    from chappy.core.identify_state import CandidateLine
+    from chappy.core.identify_state import TemporaryLine
     from chappy.core.velocity_ranges import MultipletGroupingVelocityTolerance
 
 
@@ -39,8 +39,8 @@ class IdentifyRegistrationImpactSessionPort(Protocol):
     """Read-only Identify session state required for exact impact preview."""
 
     @property
-    def candidate_lines(self) -> Sequence[CandidateLine]:
-        """Return current candidates in storage order."""
+    def temporary_lines(self) -> Sequence[TemporaryLine]:
+        """Return current temporary lines in storage order."""
         ...
 
 
@@ -50,7 +50,7 @@ class IdentifyRegistrationImpactRequest:
 
     project: IdentifyRegistrationImpactProjectPort
     session: IdentifyRegistrationImpactSessionPort
-    candidates: tuple[CandidateLineSnapshot, ...]
+    temporary_lines: tuple[TemporaryLineSnapshot, ...]
     existing_regions: tuple[ExistingRegionSnapshot, ...]
     region_line_memberships: tuple[tuple[str, tuple[str, ...]], ...]
     multiplet_grouping_tolerance: MultipletGroupingVelocityTolerance
@@ -70,7 +70,7 @@ class IdentifyRegistrationImpactPreviewUseCase:
         self._require_exact_region_targets(request)
         return self._planner.build(
             BuildRegionPreviewsRequest(
-                candidates=request.candidates,
+                temporary_lines=request.temporary_lines,
                 existing_regions=request.existing_regions,
                 multiplet_grouping_tolerance=request.multiplet_grouping_tolerance,
                 unknown_label=request.unknown_label,
@@ -79,25 +79,25 @@ class IdentifyRegistrationImpactPreviewUseCase:
 
     @staticmethod
     def _require_exact_sources(request: IdentifyRegistrationImpactRequest) -> None:
-        """Require unique requested candidates to equal current session objects."""
-        requested_ids = tuple(candidate.system_id for candidate in request.candidates)
+        """Require unique requested lines to equal current session objects."""
+        requested_ids = tuple(
+            temporary_line.temporary_line_id for temporary_line in request.temporary_lines
+        )
         if len(set(requested_ids)) != len(requested_ids):
-            msg = "Identify registration candidate identities must be unique."
+            msg = "Identify registration temporary-line identities must be unique."
             raise ValueError(msg)
 
-        session_candidates = {
-            candidate.system_id: _candidate_snapshot(candidate)
-            for candidate in request.session.candidate_lines
+        session_temporary_lines = {
+            temporary_line.temporary_line_id: _temporary_line_snapshot(temporary_line)
+            for temporary_line in request.session.temporary_lines
         }
-        for candidate in request.candidates:
-            current = session_candidates.get(candidate.system_id)
+        for temporary_line in request.temporary_lines:
+            current = session_temporary_lines.get(temporary_line.temporary_line_id)
             if current is None:
-                msg = (
-                    f"Identify registration candidate is no longer present: {candidate.system_id}"
-                )
+                msg = f"Identify registration temporary line is no longer present: {temporary_line.temporary_line_id}"
                 raise ValueError(msg)
-            if current != candidate:
-                msg = f"Identify registration candidate source is stale: {candidate.system_id}"
+            if current != temporary_line:
+                msg = f"Identify registration temporary-line source is stale: {temporary_line.temporary_line_id}"
                 raise ValueError(msg)
 
     @staticmethod
@@ -136,24 +136,24 @@ class IdentifyRegistrationImpactPreviewUseCase:
                 raise ValueError(msg)
 
 
-def _candidate_snapshot(candidate: CandidateLine) -> CandidateLineSnapshot:
-    """Convert one live session candidate into its exact scientific DTO."""
-    return CandidateLineSnapshot(
-        system_id=candidate.system_id,
-        species=candidate.species,
-        lambda_min=candidate.lambda_min,
-        lambda_max=candidate.lambda_max,
-        creation_method=candidate.creation_method,
-        line_id=candidate.line_id,
-        rest_wavelength=candidate.rest_wavelength,
-        center_z=candidate.center_z,
-        multiplet_id=candidate.multiplet_id,
-        multiplet_label=candidate.multiplet_label,
-        transition_name=candidate.transition_name,
-        oscillator_strength=candidate.oscillator_strength,
-        gamma_value=candidate.gamma_value,
-        analysis_half_width=LineAnalysisHalfWidth(candidate.analysis_half_width_kms),
-        tie_group_key=candidate.tie_group_key,
+def _temporary_line_snapshot(temporary_line: TemporaryLine) -> TemporaryLineSnapshot:
+    """Convert one live session temporary line into its exact scientific DTO."""
+    return TemporaryLineSnapshot(
+        temporary_line_id=temporary_line.temporary_line_id,
+        species=temporary_line.species,
+        lambda_min=temporary_line.lambda_min,
+        lambda_max=temporary_line.lambda_max,
+        creation_method=temporary_line.creation_method,
+        line_id=temporary_line.line_id,
+        rest_wavelength=temporary_line.rest_wavelength,
+        center_z=temporary_line.center_z,
+        multiplet_id=temporary_line.multiplet_id,
+        multiplet_label=temporary_line.multiplet_label,
+        transition_name=temporary_line.transition_name,
+        oscillator_strength=temporary_line.oscillator_strength,
+        gamma_value=temporary_line.gamma_value,
+        analysis_half_width=LineAnalysisHalfWidth(temporary_line.analysis_half_width_kms),
+        tie_group_key=temporary_line.tie_group_key,
     )
 
 

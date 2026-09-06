@@ -7,9 +7,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from chappy.application.identify import (
-    BuildVelocitySliceCandidatesUseCase,
-    VelocitySliceCandidateRequest,
+    BuildVelocitySliceTemporaryLinesUseCase,
     VelocitySliceSelection,
+    VelocitySliceTemporaryLineRequest,
 )
 from chappy.presentation.identify import (
     IdentifyVelocityPlotContext,
@@ -22,12 +22,14 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
 
     from chappy.core.atomic_data import AtomicLine, AtomicLineData
-    from chappy.core.identify_state import CandidateLine, IdentifySessionState
+    from chappy.core.identify_state import IdentifySessionState, TemporaryLine
     from chappy.core.velocity_ranges import NewCandidateAnalysisHalfWidth
     from chappy.presentation.identify import IdentifyVelocitySelectionPort
 
 
-type VelocityCandidateCreationResult = tuple[list[tuple[CandidateLine, PreviewEntry]], int, bool]
+type VelocityTemporaryLineCreationResult = tuple[
+    list[tuple[TemporaryLine, PreviewEntry]], int, bool
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,8 +58,9 @@ class IdentifyVelocityWorkflowPorts:
     baseline_line_provider: Callable[[], AtomicLine | None]
     current_lines_provider: Callable[[], list[AtomicLine]]
     atomic_data_provider: Callable[[], AtomicLineData]
-    candidate_creation_callback: Callable[
-        [list[PreviewEntry], float, NewCandidateAnalysisHalfWidth], VelocityCandidateCreationResult
+    temporary_line_creation_callback: Callable[
+        [list[PreviewEntry], float, NewCandidateAnalysisHalfWidth],
+        VelocityTemporaryLineCreationResult,
     ]
     status_callback: Callable[[str], None]
     refresh_workflow_callback: Callable[[], None]
@@ -67,12 +70,12 @@ class IdentifyVelocityWorkflowPorts:
 
 
 class IdentifyVelocityWorkflow:
-    """Build velocity plot context and create candidates from selected slices."""
+    """Build velocity plot context and create temporary lines from selected slices."""
 
     def __init__(
         self,
         ports: IdentifyVelocityWorkflowPorts,
-        slice_usecase: BuildVelocitySliceCandidatesUseCase,
+        slice_usecase: BuildVelocitySliceTemporaryLinesUseCase,
     ) -> None:
         """Initialize the workflow."""
         self._ports = ports
@@ -86,6 +89,10 @@ class IdentifyVelocityWorkflow:
     def reset(self) -> None:
         """Clear velocity active state without emitting user messages."""
         self._active = False
+
+    def report_invalid_wavelength(self) -> None:
+        """Tell the user that a valid wavelength position must be specified."""
+        self._ports.status_callback(self._messages().invalid_wavelength)
 
     def request_velocity_plot(
         self, observed_wavelength: float
@@ -143,7 +150,7 @@ class IdentifyVelocityWorkflow:
     def confirm_velocity_plot_selection(
         self, *, center_z: float | None, slices: Sequence[IdentifyVelocitySelectionPort]
     ) -> None:
-        """Create temporary systems from checked velocity slices."""
+        """Create temporary lines from checked velocity slices."""
         messages = self._messages()
         if not slices:
             self._ports.status_callback(messages.select_one)
@@ -162,7 +169,7 @@ class IdentifyVelocityWorkflow:
         analysis_half_width = session.new_candidate_analysis_half_width
 
         entry_models = self._slice_usecase.build(
-            VelocitySliceCandidateRequest(
+            VelocitySliceTemporaryLineRequest(
                 center_z=center_value,
                 new_candidate_analysis_half_width=analysis_half_width,
                 slices=tuple(
@@ -185,11 +192,13 @@ class IdentifyVelocityWorkflow:
 
         session.reference_z = center_value
 
-        created_systems, duplicate_count, limit_reached = self._ports.candidate_creation_callback(
-            entries, center_value, analysis_half_width
+        created_lines, duplicate_count, limit_reached = (
+            self._ports.temporary_line_creation_callback(
+                entries, center_value, analysis_half_width
+            )
         )
         self._emit_creation_result(
-            created_systems=created_systems,
+            created_lines=created_lines,
             duplicate_count=duplicate_count,
             limit_reached=limit_reached,
         )
@@ -197,22 +206,22 @@ class IdentifyVelocityWorkflow:
     def _emit_creation_result(
         self,
         *,
-        created_systems: list[tuple[CandidateLine, PreviewEntry]],
+        created_lines: list[tuple[TemporaryLine, PreviewEntry]],
         duplicate_count: int,
         limit_reached: bool,
     ) -> None:
-        """Emit status and refresh callbacks for velocity candidate creation."""
+        """Emit status and refresh callbacks for velocity temporary-line creation."""
         messages = self._messages()
-        created_count = len(created_systems)
+        created_count = len(created_lines)
         if created_count:
             self._ports.refresh_workflow_callback()
             self._ports.refresh_candidates_callback()
 
             if created_count == 1:
-                system, _entry = created_systems[0]
+                line, _entry = created_lines[0]
                 self._ports.status_callback(
                     messages.add_one_template.format(
-                        species=system.species, start=system.lambda_min, end=system.lambda_max
+                        species=line.species, start=line.lambda_min, end=line.lambda_max
                     )
                 )
             else:

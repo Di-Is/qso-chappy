@@ -12,9 +12,9 @@ import pytest
 from PySide6.QtCore import Qt
 
 from chappy.gui.modes.identify.panel.panel_models import (
-    CandidateLineRow,
+    TemporaryLineRow,
     RegionPreviewRow,
-    TemporarySystemItemPayload,
+    TemporaryLineItemPayload,
 )
 from chappy.gui.modes.identify.panel.temporary_section import IdentifyTemporarySection
 
@@ -29,18 +29,18 @@ def section(qtbot: "QtBot") -> IdentifyTemporarySection:
     return IdentifyTemporarySection()
 
 
-def _make_temporary_system_row(
-    system_ids: tuple[str, ...],
+def _make_temporary_line_row(
+    temporary_line_ids: tuple[str, ...],
     species: str = "H I",
     lambda_start: float = 5000.0,
     lambda_end: float = 5010.0,
     creation_method: str = "manual",
     transition_name: str | None = None,
     redshift: float | None = None,
-) -> CandidateLineRow:
-    """Create a CandidateLineRow for testing."""
-    return CandidateLineRow(
-        system_ids=system_ids,
+) -> TemporaryLineRow:
+    """Create a TemporaryLineRow for testing."""
+    return TemporaryLineRow(
+        temporary_line_ids=temporary_line_ids,
         species=species,
         lambda_start=lambda_start,
         lambda_end=lambda_end,
@@ -50,42 +50,42 @@ def _make_temporary_system_row(
     )
 
 
-class TestCandidateLineRowDataStructure:
-    """Tests for CandidateLineRow data structure changes."""
+class TestTemporaryLineRowDataStructure:
+    """Tests for TemporaryLineRow data structure changes."""
 
-    def test_temporary_system_row_has_system_ids_tuple(self) -> None:
-        """CandidateLineRow should have system_ids as tuple[str, ...]."""
-        row = _make_temporary_system_row(system_ids=("id1", "id2"), species="Mg II")
+    def test_temporary_line_row_has_temporary_line_ids_tuple(self) -> None:
+        """TemporaryLineRow should have temporary_line_ids as tuple[str, ...]."""
+        row = _make_temporary_line_row(temporary_line_ids=("id1", "id2"), species="Mg II")
 
-        assert isinstance(row.system_ids, tuple)
-        assert row.system_ids == ("id1", "id2")
+        assert isinstance(row.temporary_line_ids, tuple)
+        assert row.temporary_line_ids == ("id1", "id2")
 
-    def test_single_system_has_single_element_tuple(self) -> None:
-        """Single system should have a single-element tuple."""
-        row = _make_temporary_system_row(system_ids=("single_id",), species="H I")
+    def test_single_line_has_single_element_tuple(self) -> None:
+        """Single line should have a single-element tuple."""
+        row = _make_temporary_line_row(temporary_line_ids=("single_id",), species="H I")
 
-        assert len(row.system_ids) == 1
-        assert row.system_ids[0] == "single_id"
+        assert len(row.temporary_line_ids) == 1
+        assert row.temporary_line_ids[0] == "single_id"
 
     def test_primary_id_is_first_element(self) -> None:
         """Primary ID (for operations) should be the first element."""
-        row = _make_temporary_system_row(
-            system_ids=("primary", "secondary", "third"), species="Mg II"
+        row = _make_temporary_line_row(
+            temporary_line_ids=("primary", "secondary", "third"), species="Mg II"
         )
 
         # Convention: first element is the primary ID
-        primary_id = row.system_ids[0]
+        primary_id = row.temporary_line_ids[0]
         assert primary_id == "primary"
 
 
-class TestCandidateLineDisplay:
-    """Tests for temporary system display in temporary section."""
+class TestTemporaryLineDisplay:
+    """Tests for temporary line display in temporary section."""
 
     def test_single_temporary_displayed_normally(self, section: IdentifyTemporarySection) -> None:
-        """Single system should be displayed normally."""
+        """Single line should be displayed normally."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("sys1",),
+            _make_temporary_line_row(
+                temporary_line_ids=("line1",),
                 species="H I",
                 lambda_start=1215.0,
                 lambda_end=1220.0,
@@ -93,7 +93,7 @@ class TestCandidateLineDisplay:
             )
         ]
 
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         # Verify tree has 1 item
         tree = section._temporary_tree
@@ -102,8 +102,8 @@ class TestCandidateLineDisplay:
     def test_multiplet_displayed_as_single_row(self, section: IdentifyTemporarySection) -> None:
         """Multiplet (multiple IDs) should be displayed as a single row."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("mg2_2796", "mg2_2803"),
+            _make_temporary_line_row(
+                temporary_line_ids=("mg2_2796", "mg2_2803"),
                 species="Mg II",
                 lambda_start=6990.0,
                 lambda_end=7015.0,
@@ -111,7 +111,7 @@ class TestCandidateLineDisplay:
             )
         ]
 
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         # Should still be 1 item (multiplet is pre-grouped)
         tree = section._temporary_tree
@@ -120,10 +120,12 @@ class TestCandidateLineDisplay:
     def test_user_data_contains_primary_id(self, section: IdentifyTemporarySection) -> None:
         """UserRole data should contain primary ID (first element) for operations."""
         rows = [
-            _make_temporary_system_row(system_ids=("primary_id", "secondary_id"), species="Mg II")
+            _make_temporary_line_row(
+                temporary_line_ids=("primary_id", "secondary_id"), species="Mg II"
+            )
         ]
 
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -132,8 +134,8 @@ class TestCandidateLineDisplay:
         from PySide6.QtCore import Qt
 
         payload = item.data(0, Qt.ItemDataRole.UserRole)
-        assert isinstance(payload, TemporarySystemItemPayload)
-        assert payload.primary_system_id == "primary_id"
+        assert isinstance(payload, TemporaryLineItemPayload)
+        assert payload.primary_temporary_line_id == "primary_id"
 
 
 class TestMultipletDisplayIntegration:
@@ -144,8 +146,8 @@ class TestMultipletDisplayIntegration:
     ) -> None:
         """Multiplet should show combined wavelengths like 'Mg II 2796/2803'."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("mg2_2796", "mg2_2803"),
+            _make_temporary_line_row(
+                temporary_line_ids=("mg2_2796", "mg2_2803"),
                 species="Mg II",
                 lambda_start=6990.0,
                 lambda_end=7015.0,
@@ -153,7 +155,7 @@ class TestMultipletDisplayIntegration:
             )
         ]
 
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -168,14 +170,14 @@ class TestMultipletDisplayIntegration:
     ) -> None:
         """Multiplet row should show tooltip with member count (Risk-15)."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("id1", "id2", "id3"),
+            _make_temporary_line_row(
+                temporary_line_ids=("id1", "id2", "id3"),
                 species="Test Species",
                 transition_name="Test Triplet",
             )
         ]
 
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
@@ -184,27 +186,25 @@ class TestMultipletDisplayIntegration:
         # Tooltip should indicate this is a multiplet with 3 members
         tooltip = item.toolTip(0)
         # Risk-15 decides on simple info: "3 lines grouped" or similar
-        # For multiplets (system_ids > 1), tooltip must contain member count
-        if len(rows[0].system_ids) > 1:
+        # For multiplets (temporary_line_ids > 1), tooltip must contain member count
+        if len(rows[0].temporary_line_ids) > 1:
             assert "3" in tooltip, f"Tooltip should contain '3' for triplet, got: {tooltip}"
 
-    def test_single_system_has_no_multiplet_tooltip(
-        self, section: IdentifyTemporarySection
-    ) -> None:
-        """Single system should not have multiplet-related tooltip."""
+    def test_single_line_has_no_multiplet_tooltip(self, section: IdentifyTemporarySection) -> None:
+        """Single line should not have multiplet-related tooltip."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("single_id",), species="H I", transition_name="H I 1216"
+            _make_temporary_line_row(
+                temporary_line_ids=("single_id",), species="H I", transition_name="H I 1216"
             )
         ]
 
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         tree = section._temporary_tree
         item = tree.topLevelItem(0)
         assert item is not None
 
-        # Single system tooltip should be empty or not mention "grouped"
+        # Single line tooltip should be empty or not mention "grouped"
         tooltip = item.toolTip(0)
         assert "grouped" not in tooltip.lower()
 
@@ -213,20 +213,20 @@ class TestSelectionStateRestoration:
     """Tests for selection state restoration after refresh (Risk-14)."""
 
     def test_selection_restored_after_refresh(self, section: IdentifyTemporarySection) -> None:
-        """Selection should be restored after set_temporary_systems refresh."""
+        """Selection should be restored after set_temporary_lines refresh."""
         from PySide6.QtCore import Qt
 
         # Initial rows - use different redshifts to control sort order
         initial_rows = [
-            _make_temporary_system_row(
-                system_ids=("id1",),
+            _make_temporary_line_row(
+                temporary_line_ids=("id1",),
                 species="H I",
                 lambda_start=1215.0,
                 lambda_end=1220.0,
                 redshift=1.0,
             ),
-            _make_temporary_system_row(
-                system_ids=("id2",),
+            _make_temporary_line_row(
+                temporary_line_ids=("id2",),
                 species="C IV",
                 lambda_start=1548.0,
                 lambda_end=1555.0,
@@ -234,7 +234,7 @@ class TestSelectionStateRestoration:
             ),
         ]
 
-        section.set_temporary_systems(initial_rows)
+        section.set_temporary_lines(initial_rows)
 
         # Select the second item (id2)
         tree = section._temporary_tree
@@ -246,19 +246,19 @@ class TestSelectionStateRestoration:
         selected = tree.selectedItems()
         assert len(selected) > 0
         selected_payload = selected[0].data(0, Qt.ItemDataRole.UserRole)
-        assert isinstance(selected_payload, TemporarySystemItemPayload)
-        assert selected_payload.primary_system_id == "id2"
+        assert isinstance(selected_payload, TemporaryLineItemPayload)
+        assert selected_payload.primary_temporary_line_id == "id2"
 
         # Refresh with same data (simulating coordinator refresh)
-        section.set_temporary_systems(initial_rows)
+        section.set_temporary_lines(initial_rows)
 
         # Selection MUST be restored (strict check)
         selected_after = tree.selectedItems()
         assert len(selected_after) > 0, "Selection was lost after refresh"
 
         restored_payload = selected_after[0].data(0, Qt.ItemDataRole.UserRole)
-        assert isinstance(restored_payload, TemporarySystemItemPayload)
-        assert restored_payload.primary_system_id == "id2"
+        assert isinstance(restored_payload, TemporaryLineItemPayload)
+        assert restored_payload.primary_temporary_line_id == "id2"
 
     def test_selection_cleared_when_item_removed(self, section: IdentifyTemporarySection) -> None:
         """Selection should be cleared if selected item is removed."""
@@ -266,11 +266,11 @@ class TestSelectionStateRestoration:
 
         # Initial rows
         initial_rows = [
-            _make_temporary_system_row(system_ids=("id1",), species="H I", redshift=1.0),
-            _make_temporary_system_row(system_ids=("id2",), species="C IV", redshift=2.0),
+            _make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=1.0),
+            _make_temporary_line_row(temporary_line_ids=("id2",), species="C IV", redshift=2.0),
         ]
 
-        section.set_temporary_systems(initial_rows)
+        section.set_temporary_lines(initial_rows)
 
         # Select the second item (id2)
         tree = section._temporary_tree
@@ -280,9 +280,9 @@ class TestSelectionStateRestoration:
 
         # Refresh with id2 removed
         updated_rows = [
-            _make_temporary_system_row(system_ids=("id1",), species="H I", redshift=1.0)
+            _make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=1.0)
         ]
-        section.set_temporary_systems(updated_rows)
+        section.set_temporary_lines(updated_rows)
 
         # Tree should have 1 item
         assert tree.topLevelItemCount() == 1
@@ -292,8 +292,8 @@ class TestSelectionStateRestoration:
         selected = tree.selectedItems()
         if selected:
             selected_payload = selected[0].data(0, Qt.ItemDataRole.UserRole)
-            assert isinstance(selected_payload, TemporarySystemItemPayload)
-            assert selected_payload.primary_system_id != "id2"
+            assert isinstance(selected_payload, TemporaryLineItemPayload)
+            assert selected_payload.primary_temporary_line_id != "id2"
 
 
 class TestGroupedBundlingDisplay:
@@ -306,8 +306,8 @@ class TestGroupedBundlingDisplay:
         from PySide6.QtCore import Qt
 
         rows = [
-            _make_temporary_system_row(
-                system_ids=("mg2_2796", "mg2_2803"),
+            _make_temporary_line_row(
+                temporary_line_ids=("mg2_2796", "mg2_2803"),
                 species="Mg II",
                 lambda_start=6990.0,
                 lambda_end=7015.0,
@@ -322,12 +322,12 @@ class TestGroupedBundlingDisplay:
                 warning=False,
                 is_existing_group=False,
                 old_member_count=None,
-                new_systems_count=1,
-                member_system_ids=["mg2_2796", "mg2_2803"],
+                new_lines_count=1,
+                member_temporary_line_ids=["mg2_2796", "mg2_2803"],
             )
         ]
 
-        section.set_temporary_systems(rows, previews)
+        section.set_temporary_lines(rows, previews)
 
         tree = section._temporary_tree
         assert tree.topLevelItemCount() == 1
@@ -346,8 +346,8 @@ class TestGroupedBundlingDisplay:
     ) -> None:
         """Appending to an existing region shows the target name and overlap warning."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("sys1",), species="C IV", transition_name="C IV 1548"
+            _make_temporary_line_row(
+                temporary_line_ids=("line1",), species="C IV", transition_name="C IV 1548"
             )
         ]
         previews = [
@@ -358,12 +358,12 @@ class TestGroupedBundlingDisplay:
                 warning=True,
                 is_existing_group=True,
                 old_member_count=1,
-                new_systems_count=1,
-                member_system_ids=["sys1"],
+                new_lines_count=1,
+                member_temporary_line_ids=["line1"],
             )
         ]
 
-        section.set_temporary_systems(rows, previews)
+        section.set_temporary_lines(rows, previews)
 
         heading = section._temporary_tree.topLevelItem(0)
         assert heading is not None
@@ -377,8 +377,8 @@ class TestGroupedBundlingDisplay:
         from PySide6.QtCore import Qt
 
         rows = [
-            _make_temporary_system_row(system_ids=("id1",), species="H I", redshift=1.0),
-            _make_temporary_system_row(system_ids=("id2",), species="C IV", redshift=2.0),
+            _make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=1.0),
+            _make_temporary_line_row(temporary_line_ids=("id2",), species="C IV", redshift=2.0),
         ]
         previews = [
             RegionPreviewRow(
@@ -388,37 +388,37 @@ class TestGroupedBundlingDisplay:
                 warning=False,
                 is_existing_group=False,
                 old_member_count=None,
-                new_systems_count=2,
-                member_system_ids=["id1", "id2"],
+                new_lines_count=2,
+                member_temporary_line_ids=["id1", "id2"],
             )
         ]
-        section.set_temporary_systems(rows, previews)
+        section.set_temporary_lines(rows, previews)
 
         heading = section._temporary_tree.topLevelItem(0)
         assert heading is not None
         heading.child(1).setSelected(True)
 
-        section.set_temporary_systems(rows, previews)
+        section.set_temporary_lines(rows, previews)
 
         selected = section._temporary_tree.selectedItems()
         assert len(selected) == 1
         payload = selected[0].data(0, Qt.ItemDataRole.UserRole)
-        assert isinstance(payload, TemporarySystemItemPayload)
-        assert payload.primary_system_id == "id2"
+        assert isinstance(payload, TemporaryLineItemPayload)
+        assert payload.primary_temporary_line_id == "id2"
 
     def test_register_button_label_and_disabled_tooltip(
         self, section: IdentifyTemporarySection
     ) -> None:
         """Register labels distinguish all groups from selected groups."""
-        section.set_temporary_systems([])
+        section.set_temporary_lines([])
         assert not section._register_button.isEnabled()
         assert section._register_button.toolTip() != ""
 
         rows = [
-            _make_temporary_system_row(system_ids=("id1",), species="H I", redshift=1.0),
-            _make_temporary_system_row(system_ids=("id2",), species="C IV", redshift=2.0),
+            _make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=1.0),
+            _make_temporary_line_row(temporary_line_ids=("id2",), species="C IV", redshift=2.0),
         ]
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
         assert section._register_button.isEnabled()
         assert section._temporary_label.text() == "To register: 2 groups / 2 lines"
         assert section._register_button.text() == "Register all (2 groups)"
@@ -434,13 +434,13 @@ class TestGroupedBundlingDisplay:
     ) -> None:
         """A consolidated multiplet is one group with all member lines counted."""
         rows = [
-            _make_temporary_system_row(
-                system_ids=("doublet-a", "doublet-b"), species="C IV", redshift=1.0
+            _make_temporary_line_row(
+                temporary_line_ids=("doublet-a", "doublet-b"), species="C IV", redshift=1.0
             ),
-            _make_temporary_system_row(system_ids=("single",), species="H I", redshift=2.0),
+            _make_temporary_line_row(temporary_line_ids=("single",), species="H I", redshift=2.0),
         ]
 
-        section.set_temporary_systems(rows)
+        section.set_temporary_lines(rows)
 
         assert section._temporary_label.text() == "To register: 2 groups / 3 lines"
 
@@ -448,8 +448,8 @@ class TestGroupedBundlingDisplay:
         self, section: IdentifyTemporarySection, qtbot: QtBot
     ) -> None:
         """Clear All is a low-emphasis menu action and registration is the sole primary."""
-        section.set_temporary_systems(
-            [_make_temporary_system_row(system_ids=("id1",), species="H I", redshift=1.0)]
+        section.set_temporary_lines(
+            [_make_temporary_line_row(temporary_line_ids=("id1",), species="H I", redshift=1.0)]
         )
 
         assert section._delete_button.property("variant") == "secondary"

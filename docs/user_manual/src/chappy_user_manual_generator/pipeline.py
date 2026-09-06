@@ -15,7 +15,7 @@ from PySide6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication, QSettings, Qt
 from PySide6.QtWidgets import QCheckBox
 
 from chappy.core.editing_mode import EditingMode
-from chappy.gui.modes.analysis.overview.panel import OrganizeSidePanel
+from chappy.gui.modes.analysis.overview.panel import StructureSidePanel
 from chappy.gui.modes.identify.presets.preset_store import IdentifyPresetStore
 from chappy.gui.protocols.intent_types import ToggleVelocityPlotIntent
 from chappy.gui.shell.composition import create_main_window
@@ -459,7 +459,7 @@ def _prepare_destination(window: ScenarioWindow, destination: CaptureDestination
         return
 
     window.back_to_analysis_overview()
-    panel = window.findChild(OrganizeSidePanel, "organizeSidePanel")
+    panel = window.findChild(StructureSidePanel, "structureSidePanel")
     if panel is not None:
         panel.set_structure_editor_visible(
             destination.panel is PanelDestination.ANALYSIS_STRUCTURE

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from chappy.application.project_mapper import (
+    ProjectLoadResult,
     create_project_from_spectrum,
     project_from_document,
     project_to_document,
@@ -136,14 +137,14 @@ class ProjectIOUseCase:
         """
         return self._spectrum_reader.get_spectrum_info(path)
 
-    def load_project(self, path: str) -> SpectroscopyProject:
+    def load_project(self, path: str) -> ProjectLoadResult:
         """Load a project from a repository path.
 
         Args:
             path: Project file path.
 
         Returns:
-            Loaded project.
+            Loaded project and any automatic topology repairs.
         """
         self._validate_project_extension(path)
         document = self._project_repository.load(path)

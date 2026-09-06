@@ -5,12 +5,12 @@ abstract: "Desktop application for analysing absorption lines in quasar spectra:
 type: software
 authors:
   - alias: Di-Is
-    email: rohoxbox@gmail.com
+    email: rhoxbox@gmail.com
 repository-code: "https://github.com/Di-Is/qso-chappy"
 url: "https://github.com/Di-Is/qso-chappy"
 license: MIT
-version: 0.1.0
-date-released: "2026-08-29"
+version: 0.1.2
+date-released: "2026-09-06"
 doi: 10.5281/zenodo.22162939
 keywords:
   - astronomy

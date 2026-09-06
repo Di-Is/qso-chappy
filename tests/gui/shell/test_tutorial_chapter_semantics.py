@@ -19,9 +19,10 @@ from chappy.gui.common.tutorial import (
     TutorialTargetRole,
 )
 from chappy.gui.shell.tutorial_chapters import (
-    build_full_walkthrough_chapters,
-    build_short_walkthrough_chapters,
+    build_advanced_walkthrough_chapters,
+    build_essential_walkthrough_chapters,
 )
+from tests.helpers.tutorial_chapters import all_walkthrough_chapters, chapter_steps_by_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,13 +31,9 @@ class ExpectedTarget:
     role: TutorialTargetRole
 
 
-def _walkthrough_steps() -> dict[str, tuple[TutorialStep, ...]]:
-    return {chapter.chapter_id: chapter.steps for chapter in build_full_walkthrough_chapters()}
-
-
 def _step_with_text(chapter_id: str, action_fragment: str) -> TutorialStep:
     matches = [
-        step for step in _walkthrough_steps()[chapter_id] if action_fragment in step.action_source
+        step for step in chapter_steps_by_id()[chapter_id] if action_fragment in step.action_source
     ]
     assert len(matches) == 1, (chapter_id, action_fragment, len(matches))
     return matches[0]
@@ -333,7 +330,15 @@ def _step_with_text(chapter_id: str, action_fragment: str) -> TutorialStep:
             "Fix logN",
             (
                 ExpectedTarget("analysisDetailParameterTree", TutorialTargetRole.INTERACT),
+                ExpectedTarget("analysisDetailResultsCard", TutorialTargetRole.OBSERVE),
+            ),
+        ),
+        (
+            "joint_fit",
+            "Click [Fit] once more",
+            (
                 ExpectedTarget("analysisDetailFitButton", TutorialTargetRole.INTERACT),
+                ExpectedTarget("analysisDetailParameterTree", TutorialTargetRole.OBSERVE),
                 ExpectedTarget("analysisDetailResultsCard", TutorialTargetRole.OBSERVE),
             ),
         ),
@@ -377,7 +382,7 @@ def test_walkthrough_problem_steps_highlight_every_required_area(
 
 def test_every_targeted_walkthrough_step_has_exactly_one_primary() -> None:
     """Each target group has one unambiguous bubble anchor."""
-    for steps in _walkthrough_steps().values():
+    for steps in chapter_steps_by_id().values():
         for step in steps:
             primary_count = sum(
                 target.prominence is TutorialTargetProminence.PRIMARY for target in step.targets
@@ -385,20 +390,17 @@ def test_every_targeted_walkthrough_step_has_exactly_one_primary() -> None:
             assert primary_count == (1 if step.targets else 0)
 
 
-def test_short_walkthrough_covers_the_minimal_loop() -> None:
-    chapter_ids = [chapter.chapter_id for chapter in build_short_walkthrough_chapters()]
+def test_essential_walkthrough_covers_the_minimal_loop() -> None:
+    chapter_ids = [chapter.chapter_id for chapter in build_essential_walkthrough_chapters()]
 
     assert chapter_ids == ["getting_started", "identify", "analysis", "analysis_detail", "save"]
 
 
-def test_full_walkthrough_extends_the_short_one_with_the_low_z_absorber_flow() -> None:
-    chapter_ids = [chapter.chapter_id for chapter in build_full_walkthrough_chapters()]
+def test_advanced_walkthrough_covers_the_low_z_absorber_flow() -> None:
+    chapter_ids = [chapter.chapter_id for chapter in build_advanced_walkthrough_chapters()]
 
     assert chapter_ids == [
-        "getting_started",
-        "identify",
-        "analysis",
-        "analysis_detail",
+        "advanced_intro",
         "preset_build",
         "velocity_identify",
         "analysis_structure",
@@ -408,51 +410,72 @@ def test_full_walkthrough_extends_the_short_one_with_the_low_z_absorber_flow() -
     ]
 
 
-def test_shared_chapters_have_a_single_definition() -> None:
-    """Shared chapter structure differs only in the two walkthrough-specific texts."""
-    full_chapters = {chapter.chapter_id: chapter for chapter in build_full_walkthrough_chapters()}
-    short_chapters = {
-        chapter.chapter_id: chapter for chapter in build_short_walkthrough_chapters()
+def test_the_two_walkthroughs_share_no_chapter_except_save() -> None:
+    """The advanced walkthrough continues from the essential one instead of repeating it."""
+    essential_ids = [chapter.chapter_id for chapter in build_essential_walkthrough_chapters()]
+    advanced_ids = [chapter.chapter_id for chapter in build_advanced_walkthrough_chapters()]
+
+    assert len(essential_ids) == len(set(essential_ids))
+    assert len(advanced_ids) == len(set(advanced_ids))
+    assert set(essential_ids) & set(advanced_ids) == {"save"}
+    assert set(essential_ids) | set(advanced_ids) == {
+        "getting_started",
+        "identify",
+        "analysis",
+        "analysis_detail",
+        "advanced_intro",
+        "preset_build",
+        "velocity_identify",
+        "analysis_structure",
+        "joint_fit",
+        "continuum",
+        "save",
     }
 
-    for chapter_id in ("identify", "analysis", "analysis_detail"):
-        assert short_chapters[chapter_id] == full_chapters[chapter_id]
 
-    short_getting_started = short_chapters["getting_started"]
-    full_getting_started = full_chapters["getting_started"]
-    assert short_getting_started.steps[1:] == full_getting_started.steps[1:]
+def test_advanced_intro_opens_the_advanced_walkthrough_without_a_prerequisite() -> None:
+    """The entry chapter must run even when the essential walkthrough was never taken."""
+    chapter = build_advanced_walkthrough_chapters()[0]
+
+    assert chapter.chapter_id == "advanced_intro"
+    assert len(chapter.steps) == 2
+    assert chapter.prerequisite is None
+    assert chapter.destination.mode is None
+    assert chapter.destination.surface is None
+    assert chapter.destination.panel is None
+
+
+def test_save_chapter_differs_only_in_its_closing_recap() -> None:
+    """Both walkthroughs end on the same save chapter, with a walkthrough-specific recap."""
+    essential_save = build_essential_walkthrough_chapters()[-1]
+    advanced_save = build_advanced_walkthrough_chapters()[-1]
+
+    assert essential_save.chapter_id == advanced_save.chapter_id == "save"
+    assert essential_save.title_source == advanced_save.title_source
+    assert essential_save.destination == advanced_save.destination
+    assert essential_save.prerequisite == advanced_save.prerequisite
+    assert len(essential_save.steps) == len(advanced_save.steps) == 2
+    assert essential_save.steps[0] == advanced_save.steps[0]
+
+    assert essential_save.steps[-1].action_source != advanced_save.steps[-1].action_source
     assert (
-        replace(
-            short_getting_started.steps[0],
-            action_source=full_getting_started.steps[0].action_source,
-        )
-        == full_getting_started.steps[0]
+        replace(essential_save.steps[-1], action_source=advanced_save.steps[-1].action_source)
+        == advanced_save.steps[-1]
     )
 
-    short_save = short_chapters["save"]
-    full_save = full_chapters["save"]
-    assert short_save.steps[0] == full_save.steps[0]
-    assert (
-        replace(short_save.steps[1], action_source=full_save.steps[1].action_source)
-        == full_save.steps[1]
-    )
+
+def test_each_walkthrough_closes_on_its_own_recap() -> None:
+    essential_conclusion = build_essential_walkthrough_chapters()[-1].steps[-1].action_source
+    advanced_conclusion = build_advanced_walkthrough_chapters()[-1].steps[-1].action_source
+
+    assert "core workflow" in essential_conclusion
+    assert "advanced workflow" not in essential_conclusion
+    assert "advanced workflow" in advanced_conclusion
+    assert "custom preset" in advanced_conclusion
 
 
-def test_shared_chapter_copy_matches_each_walkthrough_scope() -> None:
-    short_chapters = {
-        chapter.chapter_id: chapter for chapter in build_short_walkthrough_chapters()
-    }
-    full_chapters = {chapter.chapter_id: chapter for chapter in build_full_walkthrough_chapters()}
-
-    assert "short tour" in short_chapters["getting_started"].steps[0].action_source
-    assert "full analysis workflow" in full_chapters["getting_started"].steps[0].action_source
-    assert "core workflow" in short_chapters["save"].steps[-1].action_source
-    assert "edit regions as needed" not in short_chapters["save"].steps[-1].action_source
-    assert "edit regions as needed" in full_chapters["save"].steps[-1].action_source
-
-
-def test_both_walkthroughs_teach_undo_and_redo_after_rectangle_zoom() -> None:
-    """Both paths must exercise reversible navigation before later workflows diverge."""
+def test_getting_started_teaches_undo_and_redo_after_rectangle_zoom() -> None:
+    """The essential walkthrough must exercise reversible navigation before later workflows."""
     expected_fragments = (
         "then drag a rectangle",
         "Click [Undo]",
@@ -460,27 +483,26 @@ def test_both_walkthroughs_teach_undo_and_redo_after_rectangle_zoom() -> None:
         "type an exact wavelength range",
     )
 
-    for builder in (build_short_walkthrough_chapters, build_full_walkthrough_chapters):
-        getting_started = next(
-            chapter for chapter in builder() if chapter.chapter_id == "getting_started"
+    getting_started = next(
+        chapter
+        for chapter in build_essential_walkthrough_chapters()
+        if chapter.chapter_id == "getting_started"
+    )
+    matching_indices = tuple(
+        next(
+            index
+            for index, step in enumerate(getting_started.steps)
+            if fragment in step.action_source
         )
-        matching_indices = tuple(
-            next(
-                index
-                for index, step in enumerate(getting_started.steps)
-                if fragment in step.action_source
-            )
-            for fragment in expected_fragments
-        )
-        assert matching_indices == tuple(sorted(matching_indices))
+        for fragment in expected_fragments
+    )
+    assert matching_indices == tuple(sorted(matching_indices))
 
 
 def test_wavelength_entry_instructions_match_the_unlabelled_field_layout() -> None:
     """Tutorial copy identifies wavelength fields by position, not absent labels."""
     action_sources = (
-        step.action_source
-        for chapter in build_full_walkthrough_chapters()
-        for step in chapter.steps
+        step.action_source for chapter in all_walkthrough_chapters() for step in chapter.steps
     )
 
     for action_source in action_sources:
@@ -492,7 +514,6 @@ def test_wavelength_entry_instructions_match_the_unlabelled_field_layout() -> No
     ("chapter_id", "action_fragment", "expected_mode"),
     [
         ("identify", "Click [Analysis]", EditingMode.ANALYSIS),
-        ("preset_build", "Click [Identify]", EditingMode.IDENTIFY),
         ("velocity_identify", "Click [Analysis]", EditingMode.ANALYSIS),
         ("joint_fit", "Click [Continuum]", EditingMode.CONTINUUM),
     ],
@@ -508,7 +529,7 @@ def test_walkthrough_mode_transitions_wait_for_the_expected_mode(
 
 def test_each_chapter_asks_its_checkpoint_once_on_the_step_that_earns_it() -> None:
     """A trailing navigation step must not carry the question about the work before it."""
-    for chapter in build_full_walkthrough_chapters():
+    for chapter in all_walkthrough_chapters():
         checkpoint_steps = [step for step in chapter.steps if step.checkpoint_source is not None]
         assert len(checkpoint_steps) <= 1
         for step in checkpoint_steps:
@@ -516,16 +537,16 @@ def test_each_chapter_asks_its_checkpoint_once_on_the_step_that_earns_it() -> No
 
 
 def test_joint_fit_asks_about_the_fit_then_hands_over_to_continuum() -> None:
-    joint_fit_steps = _walkthrough_steps()["joint_fit"]
+    joint_fit_steps = chapter_steps_by_id()["joint_fit"]
 
-    fit_step = _step_with_text("joint_fit", "Fix logN")
-    assert fit_step.checkpoint_source is not None
-    assert any(target.object_name == "analysisDetailResultsCard" for target in fit_step.targets)
+    refit_step = _step_with_text("joint_fit", "Click [Fit] once more")
+    assert refit_step.checkpoint_source is not None
+    assert any(target.object_name == "analysisDetailResultsCard" for target in refit_step.targets)
     assert joint_fit_steps[-1].advance is AdvanceTrigger.MODE_CHANGE
 
 
 def test_joint_fit_opens_velocity_plot_before_placing_any_component() -> None:
-    steps = _walkthrough_steps()["joint_fit"]
+    steps = chapter_steps_by_id()["joint_fit"]
     open_velocity = _step_with_text("joint_fit", "combined region is too wide")
     fe2_main = _step_with_text(
         "joint_fit", "Shift+click the deepest trough on the Fe II 2382.8 slice"
@@ -554,7 +575,7 @@ def test_joint_fit_opens_velocity_plot_before_placing_any_component() -> None:
 
 
 def test_velocity_identify_keeps_checkpoint_on_register_then_hands_over() -> None:
-    steps = _walkthrough_steps()["velocity_identify"]
+    steps = chapter_steps_by_id()["velocity_identify"]
     register = _step_with_text("velocity_identify", "Click [Register]")
 
     assert register.checkpoint_source is not None
@@ -563,41 +584,61 @@ def test_velocity_identify_keeps_checkpoint_on_register_then_hands_over() -> Non
     assert steps[-1].checkpoint_source is None
 
 
-def test_preset_build_enters_identify_by_hand_without_a_chapter_destination() -> None:
+def test_no_mode_change_step_waits_for_the_already_active_mode() -> None:
+    """Both tours open in Identify, and a switch into the active mode emits no signal."""
+    for build_chapters in (
+        build_essential_walkthrough_chapters,
+        build_advanced_walkthrough_chapters,
+    ):
+        active = EditingMode.IDENTIFY
+        for chapter in build_chapters():
+            if chapter.destination.mode is not None:
+                active = chapter.destination.mode
+            for index, step in enumerate(chapter.steps):
+                if step.advance is not AdvanceTrigger.MODE_CHANGE:
+                    continue
+                assert step.advance_mode is not None
+                assert step.advance_mode is not active, (
+                    f"{chapter.chapter_id}[{index}] waits for a switch to {active.value},"
+                    " which is already active"
+                )
+                active = step.advance_mode
+
+
+def test_preset_build_declares_identify_as_its_chapter_destination() -> None:
+    """The advanced walkthrough already sits in Identify, so the entry must not be a mode click."""
     chapter = next(
-        chapter
-        for chapter in build_full_walkthrough_chapters()
-        if chapter.chapter_id == "preset_build"
+        chapter for chapter in all_walkthrough_chapters() if chapter.chapter_id == "preset_build"
     )
 
-    assert chapter.destination.mode is None
+    assert chapter.destination.mode is EditingMode.IDENTIFY
     assert chapter.destination.surface is None
     assert chapter.destination.panel is None
-    assert chapter.steps[0].advance is AdvanceTrigger.MODE_CHANGE
-    assert chapter.steps[0].advance_mode is EditingMode.IDENTIFY
+    assert chapter.steps[0].advance is not AdvanceTrigger.MODE_CHANGE
+    assert "identifyManagePresetButton" in {
+        target.object_name for target in chapter.steps[0].targets
+    }
 
 
 def test_organize_opens_the_merged_region_by_hand_before_joint_fit() -> None:
-    steps = _walkthrough_steps()["analysis_structure"]
+    steps = chapter_steps_by_id()["analysis_structure"]
     back_step = steps[-2]
     open_step = steps[-1]
 
     assert "[Back to Overview]" in back_step.action_source
     assert tuple(target.object_name for target in back_step.targets) == (
-        "organizeSidePanelBackButton",
+        "structureSidePanelBackButton",
     )
     assert "[Open region]" in open_step.action_source
     assert open_step.requires is TutorialCompletion.TUTORIAL_MULTI_ION_REGION_OPENED
     assert open_step.checkpoint_source is not None
 
     joint_fit = next(
-        chapter
-        for chapter in build_full_walkthrough_chapters()
-        if chapter.chapter_id == "joint_fit"
+        chapter for chapter in all_walkthrough_chapters() if chapter.chapter_id == "joint_fit"
     )
     analysis_detail = next(
         chapter
-        for chapter in build_full_walkthrough_chapters()
+        for chapter in all_walkthrough_chapters()
         if chapter.chapter_id == "analysis_detail"
     )
     assert joint_fit.destination == analysis_detail.destination
@@ -606,7 +647,7 @@ def test_organize_opens_the_merged_region_by_hand_before_joint_fit() -> None:
 
 def test_analysis_reviews_readiness_then_opens_the_region_by_hand() -> None:
     """Reading the status has no outcome of its own, so it shares the [Open region] step."""
-    analysis_steps = _walkthrough_steps()["analysis"]
+    analysis_steps = chapter_steps_by_id()["analysis"]
 
     assert len(analysis_steps) == 1
     step = analysis_steps[0]
@@ -621,7 +662,7 @@ def test_analysis_reviews_readiness_then_opens_the_region_by_hand() -> None:
 
 
 def test_analysis_detail_asks_about_the_fit_on_the_fit_step() -> None:
-    detail_steps = _walkthrough_steps()["analysis_detail"]
+    detail_steps = chapter_steps_by_id()["analysis_detail"]
 
     assert len(detail_steps) == 4
     last = detail_steps[-1]
@@ -633,7 +674,7 @@ def test_analysis_detail_asks_about_the_fit_on_the_fit_step() -> None:
 
 def test_component_addition_is_one_step_from_selection_to_the_button() -> None:
     """Selecting a line has no outcome of its own, so it shares the [Add Component] step."""
-    detail_steps = _walkthrough_steps()["analysis_detail"]
+    detail_steps = chapter_steps_by_id()["analysis_detail"]
 
     add_steps = [step for step in detail_steps if "[Add Component]" in step.action_source]
     assert len(add_steps) == 1
@@ -657,7 +698,7 @@ def test_identify_navigation_leaves_every_zoom_route_usable() -> None:
     )
     assert all(target.role is TutorialTargetRole.INTERACT for target in step.targets)
     assert step.operation is None
-    assert step.requires is TutorialCompletion.CIV_ABSORBER_IN_VIEW
+    assert step.requires is None
     assert step.advance is AdvanceTrigger.NEXT_BUTTON
 
 
@@ -681,7 +722,7 @@ def test_identify_gates_the_preset_and_reference_line_the_later_chapters_name() 
 
 
 def test_identify_asks_about_the_registration_then_hands_over_to_analysis() -> None:
-    identify_steps = _walkthrough_steps()["identify"]
+    identify_steps = chapter_steps_by_id()["identify"]
 
     assert len(identify_steps) == 7
     register = _step_with_text("identify", "Click [Register]")

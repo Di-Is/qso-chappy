@@ -17,6 +17,7 @@ from .models import (
     StructureMutationResult,
     StructureRegionDelta,
 )
+from .region_line_topology import find_region_line_topology_issues
 from .topology import StructureTopologyProjectPort
 from .topology_validation import StructureTopologyValidation, StructureTopologyValidator
 
@@ -245,43 +246,14 @@ class AtomicStructureMutationExecutor:
     @staticmethod
     def _validate_after_topology(project: AtomicStructureProjectPort) -> None:
         """Require every current line to have one consistent region assignment."""
-        listed_line_ids: set[str] = set()
-        for region_id, region in project.absorption_regions.items():
-            if region.region_id != region_id:
-                msg = f"Absorption region mapping key disagrees with object identity: {region_id}"
-                raise ValueError(msg)
-            if len(region.line_ids) != len(set(region.line_ids)):
-                msg = f"Absorption region contains duplicate line identities: {region_id}"
-                raise ValueError(msg)
-            for line_id in region.line_ids:
-                line = project.absorption_lines.get(line_id)
-                if line is None:
-                    msg = (
-                        "Absorption region references a missing line after structure mutation: "
-                        f"{region_id}/{line_id}"
-                    )
-                    raise ValueError(msg)
-                if line.region_id != region_id:
-                    msg = (
-                        "Absorption line region assignment disagrees with its owning region: "
-                        f"{line_id}"
-                    )
-                    raise ValueError(msg)
-                if line_id in listed_line_ids:
-                    msg = f"Absorption line is listed by more than one region: {line_id}"
-                    raise ValueError(msg)
-                listed_line_ids.add(line_id)
-
-        for line_id, line in project.absorption_lines.items():
-            if line.line_id != line_id:
-                msg = f"Absorption line mapping key disagrees with object identity: {line_id}"
-                raise ValueError(msg)
-
-        unlisted_line_ids = set(project.absorption_lines) - listed_line_ids
-        if unlisted_line_ids:
+        issues = find_region_line_topology_issues(
+            project.absorption_regions, project.absorption_lines
+        )
+        if issues:
+            issue = issues[0]
             msg = (
-                "Every absorption line must be listed by exactly one region after structure "
-                f"mutation: {', '.join(sorted(unlisted_line_ids))}"
+                "Invalid region-line topology after structure mutation: "
+                f"{issue.kind.value} ({issue.region_id}/{issue.line_id})"
             )
             raise ValueError(msg)
 

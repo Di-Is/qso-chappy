@@ -18,7 +18,7 @@ from chappy.application.history import (
     ResolutionStateSnapshot,
     ScientificHistoryApplyExecutor,
 )
-from chappy.application.organize import ResolutionUpdateUseCase
+from chappy.application.spectrum import ResolutionUpdateUseCase
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.analysis import AnalysisRevision, FitSummary
 from chappy.core.history import CommandHistory, HistoryEvent

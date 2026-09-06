@@ -12,15 +12,15 @@ from chappy.application.history.apply.usecase import HistoryApplyUseCase
 from chappy.application.identify import (
     AtomicIdentifyRegistrationUseCase,
     AtomicRegisterSelectedLinesRequest,
-    CandidateLineSnapshot,
+    TemporaryLineSnapshot,
 )
-from chappy.application.organize import OrganizeOperationUseCase
+from chappy.application.structure.structure_operation_usecase import StructureOperationUseCase
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.change_set import ChangeSet
 from chappy.core.components.absorber import AbsorberComponent
 from chappy.core.events import RegionTopologyChanged
 from chappy.core.history import CommandHistory
-from chappy.core.identify_state import CandidateLineContext
+from chappy.core.identify_state import TemporaryLineContext
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.core.spectrum_model import SpectrumModel
 from chappy.core.velocity_ranges import (
@@ -108,13 +108,13 @@ def test_failing_gui_event_listener_does_not_block_later_listener(qtbot: QtBot) 
     succeeding.close()
 
 
-def test_direct_organize_commit_reaches_topology_signal(qtbot: QtBot) -> None:
-    """A direct organize operation should publish through the model adapter."""
+def test_direct_structure_commit_reaches_topology_signal(qtbot: QtBot) -> None:
+    """A direct structure operation should publish through the model adapter."""
     project = _project_with_regions(("primary", "secondary"))
     adapter = SpectrumModelEventAdapter(project.model)
     spy = QSignalSpy(adapter.region_topology_changed)
 
-    result = OrganizeOperationUseCase().merge_regions(
+    result = StructureOperationUseCase().merge_regions(
         project, group_ids=["primary", "secondary"], history_recorder=None
     )
     qtbot.wait(0)
@@ -128,12 +128,12 @@ def test_direct_organize_commit_reaches_topology_signal(qtbot: QtBot) -> None:
 def test_identify_registration_commit_reaches_topology_signal(qtbot: QtBot) -> None:
     """An Identify registration should publish through the same model adapter."""
     project = SpectroscopyProject(name="identify-topology-signal")
-    candidate = project.identify_state.add_candidate_line(
+    temporary_line = project.identify_state.add_temporary_line(
         "C IV",
         1000.0,
         1005.0,
         creation_method="manual",
-        context=CandidateLineContext(
+        context=TemporaryLineContext(
             line_id="civ-1548",
             rest_wavelength=1000.0,
             center_z=0.0,
@@ -148,23 +148,23 @@ def test_identify_registration_commit_reaches_topology_signal(qtbot: QtBot) -> N
     request = AtomicRegisterSelectedLinesRequest(
         project=project,
         session=project.identify_state,
-        candidates=(
-            CandidateLineSnapshot(
-                system_id=candidate.system_id,
-                species=candidate.species,
-                lambda_min=candidate.lambda_min,
-                lambda_max=candidate.lambda_max,
-                creation_method=candidate.creation_method,
-                line_id=candidate.line_id,
-                rest_wavelength=candidate.rest_wavelength,
-                center_z=candidate.center_z,
-                multiplet_id=candidate.multiplet_id,
-                multiplet_label=candidate.multiplet_label,
-                transition_name=candidate.transition_name,
-                oscillator_strength=candidate.oscillator_strength,
-                gamma_value=candidate.gamma_value,
-                analysis_half_width=LineAnalysisHalfWidth(candidate.analysis_half_width_kms),
-                tie_group_key=candidate.tie_group_key,
+        temporary_lines=(
+            TemporaryLineSnapshot(
+                temporary_line_id=temporary_line.temporary_line_id,
+                species=temporary_line.species,
+                lambda_min=temporary_line.lambda_min,
+                lambda_max=temporary_line.lambda_max,
+                creation_method=temporary_line.creation_method,
+                line_id=temporary_line.line_id,
+                rest_wavelength=temporary_line.rest_wavelength,
+                center_z=temporary_line.center_z,
+                multiplet_id=temporary_line.multiplet_id,
+                multiplet_label=temporary_line.multiplet_label,
+                transition_name=temporary_line.transition_name,
+                oscillator_strength=temporary_line.oscillator_strength,
+                gamma_value=temporary_line.gamma_value,
+                analysis_half_width=LineAnalysisHalfWidth(temporary_line.analysis_half_width_kms),
+                tie_group_key=temporary_line.tie_group_key,
             ),
         ),
         existing_regions=(),
@@ -185,7 +185,7 @@ def test_identify_registration_commit_reaches_topology_signal(qtbot: QtBot) -> N
     adapter.close()
 
 
-def test_organize_undo_redo_each_reaches_topology_signal(qtbot: QtBot) -> None:
+def test_structure_undo_redo_each_reaches_topology_signal(qtbot: QtBot) -> None:
     """Both history directions should publish the executor-owned topology event."""
     project = _project_with_regions(("primary", "secondary"))
     history = CommandHistory()
@@ -198,7 +198,7 @@ def test_organize_undo_redo_each_reaches_topology_signal(qtbot: QtBot) -> None:
         )
     )
     recorder = HistoryRecorder(history, lambda: project)
-    assert OrganizeOperationUseCase().merge_regions(
+    assert StructureOperationUseCase().merge_regions(
         project, group_ids=["primary", "secondary"], history_recorder=recorder
     )
     adapter = SpectrumModelEventAdapter(project.model)

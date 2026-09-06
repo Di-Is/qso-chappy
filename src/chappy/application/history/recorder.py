@@ -13,24 +13,16 @@ from chappy.application.history.continuum_commands import (
     ContinuumResetCommand,
 )
 from chappy.application.history.identify_commands import (
-    IdentifyAddCandidateCommand,
-    IdentifyClearCandidatesCommand,
+    IdentifyAddTemporaryLineCommand,
+    IdentifyClearTemporaryLinesCommand,
     IdentifyRegisterSelectedCommand,
-    IdentifyRemoveCandidateCommand,
+    IdentifyRemoveTemporaryLineCommand,
 )
 from chappy.application.history.model_commands import (
     LineAnalysisHalfWidthHistoryCommand,
     ModelComponentHistoryCommand,
     ModelOptimizeApplyCommand,
     ModelParameterEditCommand,
-)
-from chappy.application.history.organize_commands import (
-    MaskHistoryCommand,
-    OrganizeDeleteCommand,
-    OrganizeMergeCommand,
-    OrganizeMoveSystemsCommand,
-    OrganizeSplitCommand,
-    OrganizeUnlinkSystemsCommand,
 )
 from chappy.application.history.ports import (
     AbsorptionLineSnapshot,
@@ -40,11 +32,11 @@ from chappy.application.history.ports import (
     LineAnalysisHalfWidthStateSnapshot,
     LineOptimizationStateSnapshot,
     MaskDefinitionSnapshot,
-    OrganizeDeleteModelHistorySnapshot,
-    OrganizeMoveHistoryPayload,
-    OrganizeStructureStateSnapshot,
-    OrganizeUnlinkHistoryPayload,
     RangeSnapshot,
+    StructureDeleteModelHistorySnapshot,
+    StructureMoveHistoryPayload,
+    StructureStateSnapshot,
+    StructureUnlinkHistoryPayload,
     TieSetSnapshot,
 )
 from chappy.application.history.range_commands import RangeHistoryCommand
@@ -58,9 +50,17 @@ from chappy.application.history.snapshot_mapping import (
     absorber_component_snapshot,
     absorption_line_snapshot,
     absorption_region_snapshot,
-    candidate_snapshots_for_ids,
     model_link_snapshots,
+    temporary_line_snapshots_for_ids,
     tie_set_snapshots,
+)
+from chappy.application.history.structure_commands import (
+    MaskHistoryCommand,
+    StructureDeleteCommand,
+    StructureMergeCommand,
+    StructureMoveLinkedLinesCommand,
+    StructureSplitCommand,
+    StructureUnlinkLinkedLinesCommand,
 )
 from chappy.application.history.tie_set_commands import TieSetEditCommand
 from chappy.core.history import CommandHistory, HistoryEvent, OperationId
@@ -69,7 +69,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from contextlib import AbstractContextManager
 
-    from chappy.application.identify import CandidateLineSnapshot
+    from chappy.application.identify import TemporaryLineSnapshot
     from chappy.application.optimize import MaskMutationKind, ModelDeletionHistorySnapshot
     from chappy.core.components.absorber import AbsorberComponent
     from chappy.core.components.continuum import ContinuumComponent
@@ -260,12 +260,12 @@ class HistoryRecorder:
         """Convert one exact ordered point collection to immutable snapshots."""
         return tuple(ContinuumPointSnapshot.from_position(point) for point in points)
 
-    def record_group_move_systems(self, payload: OrganizeMoveHistoryPayload) -> None:
-        """Record one complete organize move payload."""
+    def record_structure_move_linked_lines(self, payload: StructureMoveHistoryPayload) -> None:
+        """Record one complete structure move payload."""
         if self._command_history.is_suppressed:
             return
         self._command_history.push(
-            HistoryEvent(command=OrganizeMoveSystemsCommand(payload=payload))
+            HistoryEvent(command=StructureMoveLinkedLinesCommand(payload=payload))
         )
         logger.info(
             "Recorded group move: %d lines to %s",
@@ -273,13 +273,13 @@ class HistoryRecorder:
             payload.destination_region_id,
         )
 
-    def record_group_split(
+    def record_structure_split(
         self,
         expanded_line_ids: tuple[str, ...],
         source_region_id: str,
         new_region_id: str,
-        before: OrganizeStructureStateSnapshot,
-        after: OrganizeStructureStateSnapshot,
+        before: StructureStateSnapshot,
+        after: StructureStateSnapshot,
     ) -> None:
         """Record group split operation to history.
 
@@ -294,7 +294,7 @@ class HistoryRecorder:
             return
         self._command_history.push(
             HistoryEvent(
-                command=OrganizeSplitCommand(
+                command=StructureSplitCommand(
                     expanded_line_ids=expanded_line_ids,
                     source_region_id=source_region_id,
                     new_region_id=new_region_id,
@@ -310,12 +310,12 @@ class HistoryRecorder:
             new_region_id,
         )
 
-    def record_group_merge(
+    def record_structure_merge(
         self,
         primary_region_id: str,
         secondary_region_ids: tuple[str, ...],
-        before: OrganizeStructureStateSnapshot,
-        after: OrganizeStructureStateSnapshot,
+        before: StructureStateSnapshot,
+        after: StructureStateSnapshot,
     ) -> None:
         """Record group merge operation to history.
 
@@ -329,7 +329,7 @@ class HistoryRecorder:
             return
         self._command_history.push(
             HistoryEvent(
-                command=OrganizeMergeCommand(
+                command=StructureMergeCommand(
                     primary_region_id=primary_region_id,
                     secondary_region_ids=secondary_region_ids,
                     before=before,
@@ -343,14 +343,14 @@ class HistoryRecorder:
             len(secondary_region_ids),
         )
 
-    def record_group_delete(
+    def record_structure_delete(
         self,
         target_region_ids: tuple[str, ...],
         target_line_ids: tuple[str, ...],
         deleted_lines: tuple[AbsorptionLineSnapshot, ...],
-        before: OrganizeStructureStateSnapshot,
-        after: OrganizeStructureStateSnapshot,
-        deleted_model_history: OrganizeDeleteModelHistorySnapshot | None,
+        before: StructureStateSnapshot,
+        after: StructureStateSnapshot,
+        deleted_model_history: StructureDeleteModelHistorySnapshot | None,
     ) -> None:
         """Record group delete operation to history.
 
@@ -366,13 +366,13 @@ class HistoryRecorder:
             return
         self._command_history.push(
             HistoryEvent(
-                command=OrganizeDeleteCommand(
+                command=StructureDeleteCommand(
                     target_region_ids=target_region_ids,
                     target_line_ids=target_line_ids,
                     deleted_lines=deleted_lines,
                     before=before,
                     after=after,
-                    model_command=self._organize_delete_model_command(deleted_model_history),
+                    model_command=self._structure_delete_model_command(deleted_model_history),
                 )
             )
         )
@@ -382,24 +382,24 @@ class HistoryRecorder:
             len(target_line_ids),
         )
 
-    def record_group_unlink(self, payload: OrganizeUnlinkHistoryPayload) -> None:
-        """Record one exact materialized line-system unlink."""
+    def record_structure_unlink(self, payload: StructureUnlinkHistoryPayload) -> None:
+        """Record one exact materialized linked-line unlink."""
         if self._command_history.is_suppressed:
             return
         self._command_history.push(
-            HistoryEvent(command=OrganizeUnlinkSystemsCommand(payload=payload))
+            HistoryEvent(command=StructureUnlinkLinkedLinesCommand(payload=payload))
         )
         logger.info("Recorded group unlink: %d lines", len(payload.line_ids))
 
-    def _organize_delete_model_command(
-        self, snapshot: OrganizeDeleteModelHistorySnapshot | None
+    def _structure_delete_model_command(
+        self, snapshot: StructureDeleteModelHistorySnapshot | None
     ) -> ModelComponentHistoryCommand | None:
-        """Build the nested exact model transition for an organize delete."""
+        """Build the nested exact model transition for an structure delete."""
         if snapshot is None:
             return None
         project = self._project_provider()
         if project is None:
-            msg = "Organize delete model history requires an active project."
+            msg = "Structure delete model history requires an active project."
             raise RuntimeError(msg)
         affected_uids = {tie_set.uid for tie_set in snapshot.tie_sets}
         tie_sets_after = tuple(
@@ -425,47 +425,55 @@ class HistoryRecorder:
             ),
         )
 
-    def record_ident_add_candidate(
-        self, session: IdentifySessionState, added_system_ids: list[str]
+    def record_ident_add_temporary_line(
+        self, session: IdentifySessionState, added_temporary_line_ids: list[str]
     ) -> None:
-        """Record candidate line addition.
+        """Record temporary line addition.
 
         Args:
             session: Identify session state.
-            added_system_ids: Added candidate system IDs.
+            added_temporary_line_ids: Added temporary line IDs.
         """
         if self._command_history.is_suppressed:
             return
-        snapshots = candidate_snapshots_for_ids(session, tuple(added_system_ids))
+        snapshots = temporary_line_snapshots_for_ids(session, tuple(added_temporary_line_ids))
         if not snapshots:
             return
         self._command_history.push(
-            HistoryEvent(command=IdentifyAddCandidateCommand(snapshots=snapshots))
+            HistoryEvent(command=IdentifyAddTemporaryLineCommand(snapshots=snapshots))
         )
-        logger.info("Recorded ident.add_candidate: %d candidates", len(added_system_ids))
+        logger.info(
+            "Recorded ident.add_temporary_line: %d temporary lines", len(added_temporary_line_ids)
+        )
 
-    def record_ident_remove_candidate(
-        self, removed_system_ids: list[str], snapshots: tuple[CandidateLineSnapshot, ...]
+    def record_ident_remove_temporary_line(
+        self, removed_temporary_line_ids: list[str], snapshots: tuple[TemporaryLineSnapshot, ...]
     ) -> None:
-        """Record candidate line removal.
+        """Record temporary line removal.
 
         Args:
-            removed_system_ids: Removed candidate system IDs.
+            removed_temporary_line_ids: Removed temporary line IDs.
             snapshots: Snapshots captured before removal.
         """
         if self._command_history.is_suppressed or not snapshots:
             return
         self._command_history.push(
             HistoryEvent(
-                command=IdentifyRemoveCandidateCommand(
-                    system_ids=tuple(sorted(removed_system_ids)), snapshots=snapshots
+                command=IdentifyRemoveTemporaryLineCommand(
+                    temporary_line_ids=tuple(sorted(removed_temporary_line_ids)),
+                    snapshots=snapshots,
                 )
             )
         )
-        logger.info("Recorded ident.remove_candidate: %d candidates", len(removed_system_ids))
+        logger.info(
+            "Recorded ident.remove_temporary_line: %d temporary lines",
+            len(removed_temporary_line_ids),
+        )
 
-    def record_ident_clear_candidates(self, snapshots: tuple[CandidateLineSnapshot, ...]) -> None:
-        """Record clearing all identify candidates.
+    def record_ident_clear_temporary_lines(
+        self, snapshots: tuple[TemporaryLineSnapshot, ...]
+    ) -> None:
+        """Record clearing all identify temporary lines.
 
         Args:
             snapshots: Snapshots captured before clearing.
@@ -473,17 +481,17 @@ class HistoryRecorder:
         if self._command_history.is_suppressed or not snapshots:
             return
         self._command_history.push(
-            HistoryEvent(command=IdentifyClearCandidatesCommand(snapshots=snapshots))
+            HistoryEvent(command=IdentifyClearTemporaryLinesCommand(snapshots=snapshots))
         )
-        logger.info("Recorded ident.clear_candidates: %d candidates", len(snapshots))
+        logger.info("Recorded ident.clear_temporary_lines: %d temporary lines", len(snapshots))
 
     def record_ident_register_selected(
         self,
         project: SpectroscopyProject,
         created_line_ids: list[str],
         created_region_ids: list[str],
-        removed_system_ids: list[str],
-        candidate_snapshots: tuple[CandidateLineSnapshot, ...],
+        removed_temporary_line_ids: list[str],
+        temporary_line_snapshots: tuple[TemporaryLineSnapshot, ...],
         affected_region_ids: list[str],
         before_affected_region_snapshots: tuple[AbsorptionRegionSnapshot, ...],
     ) -> None:
@@ -493,8 +501,8 @@ class HistoryRecorder:
             project: Current project.
             created_line_ids: Created line IDs.
             created_region_ids: Created region IDs.
-            removed_system_ids: Consumed candidate system IDs.
-            candidate_snapshots: Candidate snapshots before confirmation.
+            removed_temporary_line_ids: Consumed temporary line IDs.
+            temporary_line_snapshots: Temporary-line snapshots before confirmation.
             affected_region_ids: Region IDs needing range refresh.
             before_affected_region_snapshots: Exact existing-region state before commit.
         """
@@ -514,8 +522,8 @@ class HistoryRecorder:
             HistoryEvent(
                 command=IdentifyRegisterSelectedCommand(
                     created_line_ids=tuple(sorted(created_line_ids)),
-                    removed_system_ids=tuple(sorted(removed_system_ids)),
-                    candidate_snapshots=candidate_snapshots,
+                    removed_temporary_line_ids=tuple(sorted(removed_temporary_line_ids)),
+                    temporary_line_snapshots=temporary_line_snapshots,
                     affected_region_ids=tuple(sorted(affected_region_ids)),
                     line_snapshots=line_snapshots,
                     before_affected_region_snapshots=before_affected_region_snapshots,
@@ -774,9 +782,9 @@ class HistoryRecorder:
         ):
             return
         operation_ids = {
-            "create": OperationId.GROUP_MASK_CREATE,
-            "update": OperationId.GROUP_MASK_EDIT,
-            "remove": OperationId.GROUP_MASK_DELETE,
+            "create": OperationId.MASK_CREATE,
+            "update": OperationId.MASK_EDIT,
+            "remove": OperationId.MASK_DELETE,
         }
         try:
             operation_id = operation_ids[kind.value]

@@ -89,7 +89,7 @@ def test_canonical_entry_selection_is_volume_aware_without_global_casefold() -> 
 
 def test_unicode_case_lookup_still_requires_filesystem_identity() -> None:
     """Unicode-normalized candidates must not merge distinct case-sensitive entries."""
-    composed = "Caf\N{LATIN SMALL LETTER E WITH ACUTE}.H5"
+    composed = "Café.H5"
     decomposed = "Cafe\N{COMBINING ACUTE ACCENT}.h5"
 
     assert _case_lookup_key(composed) == _case_lookup_key(decomposed)

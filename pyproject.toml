@@ -1,12 +1,12 @@
 [project]
 name = "chappy"
-version = "0.1.1"
+version = "0.1.2"
 description = "chappy: Code for Handling Absorption Profiles with PYthon (absorption-line analysis client)"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Di-Is", email = "rohoxbox@gmail.com" }]
+authors = [{ name = "Di-Is", email = "rhoxbox@gmail.com" }]
 urls = { Homepage = "https://github.com/Di-Is/qso-chappy", Issues = "https://github.com/Di-Is/qso-chappy/issues" }
 dependencies = [
   "PySide6>=6.11.1",

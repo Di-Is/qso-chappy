@@ -9,7 +9,11 @@ from PySide6.QtCore import Qt
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication, QComboBox, QHeaderView, QLineEdit, QPushButton
 
+from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.analysis import AnalysisReadiness, FitSummary
+from chappy.core.spectroscopy_project import SpectroscopyProject
+from chappy.gui.modes.analysis.overview.panel import StructureSidePanel
+from chappy.gui.modes.analysis.overview.review_controller import AnalysisOverviewReviewController
 from chappy.gui.modes.analysis.overview.review_widget import AnalysisOverviewReviewWidget
 from chappy.gui.modes.analysis.overview.summary_panel import AnalysisOverviewSummaryPanel
 from chappy.gui.modes.analysis.overview.table_model import (
@@ -24,7 +28,6 @@ from chappy.presentation.analysis import (
     AnalysisRegionDisplay,
     AnalysisReviewPresenter,
     AnalysisReviewRow,
-    AnalysisUnavailableCause,
 )
 
 if TYPE_CHECKING:
@@ -72,9 +75,25 @@ class _Navigation:
         _ = region_ids, line_ids
 
 
+class _RecordingSummaryPanel(AnalysisOverviewSummaryPanel):
+    """Record selection/project pairs rendered by the real review widget."""
+
+    def __init__(self) -> None:
+        self.rendered_selections: list[
+            tuple[AnalysisReviewRow | None, SpectroscopyProject | None]
+        ] = []
+        super().__init__()
+
+    def render_selection(
+        self, row: AnalysisReviewRow | None, project: SpectroscopyProject | None
+    ) -> None:
+        """Record and render a selected row with its project."""
+        self.rendered_selections.append((row, project))
+        super().render_selection(row, project)
+
+
 def _row(region_id: str, readiness: AnalysisReadiness, label: str) -> AnalysisReviewRow:
     fit_results = {
-        AnalysisReadiness.UNAVAILABLE: AnalysisFitResultDisplay(AnalysisFitResultKind.UNAVAILABLE),
         AnalysisReadiness.NOT_ANALYZED: AnalysisFitResultDisplay(
             AnalysisFitResultKind.NOT_ANALYZED
         ),
@@ -83,14 +102,7 @@ def _row(region_id: str, readiness: AnalysisReadiness, label: str) -> AnalysisRe
             AnalysisFitResultKind.NUMERICAL, FitSummary(reduced_chi_squared=1.0)
         ),
     }
-    causes = {
-        AnalysisReadiness.UNAVAILABLE: (AnalysisUnavailableCause.NO_LINES,),
-        AnalysisReadiness.NOT_ANALYZED: (),
-        AnalysisReadiness.STALE: (),
-        AnalysisReadiness.LATEST: (),
-    }
     actions = {
-        AnalysisReadiness.UNAVAILABLE: AnalysisNextAction.RESOLVE_PREREQUISITES,
         AnalysisReadiness.NOT_ANALYZED: AnalysisNextAction.ANALYZE,
         AnalysisReadiness.STALE: AnalysisNextAction.REANALYZE,
         AnalysisReadiness.LATEST: AnalysisNextAction.OPEN_REGION,
@@ -99,13 +111,62 @@ def _row(region_id: str, readiness: AnalysisReadiness, label: str) -> AnalysisRe
         region=AnalysisRegionDisplay(region_id, label),
         analysis_status=readiness,
         fit_result=fit_results[readiness],
-        unavailable_causes=causes[readiness],
         next_action=actions[readiness],
     )
 
 
 def _sync(widget: AnalysisOverviewReviewWidget, rows: tuple[AnalysisReviewRow, ...]) -> None:
     widget.sync_rows(rows, AnalysisReviewPresenter().build_summary(rows))
+
+
+def _project_with_region(region_id: str) -> SpectroscopyProject:
+    project = SpectroscopyProject()
+    line_id = f"line-{region_id}"
+    project.absorption_lines[line_id] = AbsorptionLine(
+        line_id=line_id,
+        species="H I",
+        rest_wavelength=1215.67,
+        center_z=2.0,
+        window_kms=150.0,
+        multiplet_label="H I",
+        transition_name="Lyα",
+        oscillator_strength=0.4164,
+        gamma_value=6.265e8,
+        region_id=region_id,
+    )
+    project.absorption_regions[region_id] = AbsorptionRegion(
+        region_id=region_id, line_ids=[line_id]
+    )
+    return project
+
+
+def test_project_switch_never_renders_a_row_from_another_project(qtbot: QtBot) -> None:
+    """Project replacement synchronizes new rows before restoring selection."""
+    project_a = _project_with_region("region-a")
+    project_b = _project_with_region("region-b")
+    current_project = [project_a]
+    navigation = _Navigation(AnalysisNavigationState(overview_selection="region-a"))
+    summary = _RecordingSummaryPanel()
+    review = AnalysisOverviewReviewWidget(navigation, summary_panel=summary)
+    panel = StructureSidePanel(navigation=navigation, review=review, embed_review=False)
+    controller = AnalysisOverviewReviewController(
+        view=panel, project_provider=lambda: current_project[0], parent=panel
+    )
+    panel.review_refresh_requested.connect(controller.refresh)
+    qtbot.addWidget(summary)
+    qtbot.addWidget(panel)
+
+    panel.set_project(project_a)
+    assert review.selected_region_id() == "region-a"
+
+    current_project[0] = project_b
+    panel.set_project(project_b)
+
+    assert summary.rendered_selections
+    assert all(
+        row is None or (project is not None and row.region.region_id in project.absorption_regions)
+        for row, project in summary.rendered_selections
+    )
 
 
 def test_row_selection_is_id_based_and_does_not_open_detail(qtbot: QtBot) -> None:

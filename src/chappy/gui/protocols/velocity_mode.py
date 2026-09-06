@@ -16,7 +16,3 @@ class VelocityInteractionProvider(Protocol):
             True when the request was handled.
         """
         ...
-
-    def current_velocity_target_wavelength(self) -> float | None:
-        """Return the latest wavelength used for velocity prompt feedback."""
-        ...

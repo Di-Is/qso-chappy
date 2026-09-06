@@ -171,15 +171,16 @@ def test_restore_overview_surface_refreshes_overview() -> None:
     assert presentation.region_detail_refreshes == []
 
 
-def test_handle_focused_region_removed_refreshes_overview() -> None:
+def test_handle_focused_region_removed_leaves_the_overview_rebuild_to_the_panel() -> None:
     coordinator, navigation, _workspace, _policies, _guard, presentation = _coordinator()
     navigation.state = replace(
         navigation.state, surface=AnalysisSurface.REGION_DETAIL, focused_region_id="region-1"
     )
     coordinator.restore()
     presentation.region_detail_refreshes.clear()
+    presentation.overview_refreshes = 0
 
     coordinator.handle_focused_region_removed("region-1")
 
-    assert presentation.overview_refreshes == 1
+    assert presentation.overview_refreshes == 0
     assert presentation.region_detail_refreshes == []

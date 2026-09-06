@@ -35,7 +35,8 @@ _FE2_LINES = ((2382.765, 0.320), (2600.173, 0.239))
 _MG2_LINES = ((2796.352, 0.608), (2803.531, 0.303))
 
 
-def _window(qtbot) -> ChappyMain:
+def _window(qtbot, monkeypatch) -> ChappyMain:
+    monkeypatch.setenv("CHAPPY_DOC_AUTO_DISCARD", "1")
     dependencies = create_default_infrastructure_dependencies(translate_presets=str)
     window = create_main_window(
         ShellDependencies(
@@ -105,8 +106,8 @@ def _multi_ion_region(
     return region.region_id, fe2_component, mg2_component
 
 
-def test_the_gate_opens_for_a_tie_nested_over_per_ion_multiplet_ties(qtbot) -> None:
-    window = _window(qtbot)
+def test_the_gate_opens_for_a_tie_nested_over_per_ion_multiplet_ties(qtbot, monkeypatch) -> None:
+    window = _window(qtbot, monkeypatch)
     project = window.current_project
     assert project is not None
     region_id, fe2_component, mg2_component = _multi_ion_region(project)

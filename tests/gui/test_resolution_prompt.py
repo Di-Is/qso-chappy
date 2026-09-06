@@ -120,7 +120,7 @@ def test_loaded_hdf5_project_skips_resolution_prompt(
     project_path = tmp_path / "persisted.h5"
     project_io.save_project(project, str(project_path))
 
-    loaded_project = project_io.load_project(str(project_path))
+    loaded_project = project_io.load_project(str(project_path)).project
     window._require_project_session().set_project_file_path(str(project_path))
 
     prompt_calls: list[None] = []

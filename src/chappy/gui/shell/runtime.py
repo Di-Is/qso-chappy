@@ -119,7 +119,7 @@ class ShellRuntime(
         if coordinator is None:
             msg = "Dock layout coordinator is required for Analysis Structure deletion."
             raise RuntimeError(msg)
-        coordinator._execute_organize_delete()
+        coordinator._execute_structure_delete()
 
     def open_user_manual(self) -> None:
         """Open the user manual."""
@@ -166,7 +166,7 @@ class ShellRuntime(
         self._main_window.optimize_velocity_runtime.toggle_velocity_overlay()
 
     def toggle_velocity_plot_identify(self) -> None:
-        """Toggle Identify's velocity overlay or pending selection."""
+        """Toggle Identify's velocity plot at the wavelength under the cursor."""
         self._main_window.identify_velocity_runtime.handle_mode_velocity_shortcut()
 
     def open_initial_file(self, file_path: Path, *, error_file: str | None = None) -> None:

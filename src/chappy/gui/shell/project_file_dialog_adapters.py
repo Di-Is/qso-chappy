@@ -118,6 +118,18 @@ class ProjectMessageDialogAdapter(QObject):
         message_box.setInformativeText(message)
         message_box.exec()
 
+    def show_repair_notice(self, parent: QWidget, *, summary: str, details: str) -> None:
+        """Show a blocking warning describing automatic project repairs."""
+        message_box = QMessageBox(parent)
+        message_box.setIcon(QMessageBox.Icon.Warning)
+        message_box.setWindowTitle(self.tr("Project data was repaired"))
+        message_box.setText(summary)
+        message_box.setInformativeText(
+            self.tr("The project file can still be opened, but review the changes below.")
+        )
+        message_box.setDetailedText(details)
+        message_box.exec()
+
     def confirm_unsaved_changes(
         self, parent: QWidget, *, project_name: str | None, reason: str
     ) -> SavePromptChoice:

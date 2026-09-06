@@ -61,7 +61,7 @@ def _messages() -> IdentifyFocusMessages:
     return IdentifyFocusMessages(
         candidate_template="candidate {start:.2f} {end:.2f}",
         group_template="group {start:.1f} {end:.1f}",
-        system_template="system {start:.1f} {end:.1f}",
+        line_template="line {start:.1f} {end:.1f}",
     )
 
 
@@ -98,8 +98,8 @@ def test_focus_candidate_updates_range_and_status() -> None:
     assert status_messages == ["candidate 5000.00 5010.00"]
 
 
-def test_focus_group_and_system_apply_padded_ranges() -> None:
-    """Group and system focus should apply their distinct padding rules."""
+def test_focus_group_and_line_apply_padded_ranges() -> None:
+    """Group and line focus should apply their distinct padding rules."""
     view = _SpectrumView()
     status_messages: list[str] = []
     controller = IdentifySpectrumFocusController(
@@ -113,11 +113,11 @@ def test_focus_group_and_system_apply_padded_ranges() -> None:
     )
 
     controller.focus_group(5000.0, 5010.0)
-    controller.focus_system(5000.0, 5010.0)
+    controller.focus_line(5000.0, 5010.0)
 
     assert view.coordinator.updates == [
         _RangeUpdate(source="identify-focus", x_min=4999.0, x_max=5011.0, record_history=False),
         _RangeUpdate(source="identify-focus", x_min=4999.5, x_max=5010.5, record_history=False),
     ]
     assert view.coordinator.auto_flux_count == 2
-    assert status_messages == ["group 4999.0 5011.0", "system 4999.5 5010.5"]
+    assert status_messages == ["group 4999.0 5011.0", "line 4999.5 5010.5"]

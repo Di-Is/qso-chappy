@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from chappy.core.spectroscopy_project import SpectroscopyProject
     from chappy.gui.spectrum.spectrum_view import SpectrumView
 
-SYSTEM_RANGE_SIZE = 2
+LAMBDA_RANGE_SIZE = 2
 
 
 class SpectrumRegionFocusController:
@@ -76,7 +76,7 @@ class SpectrumRegionFocusController:
         if line is None:
             return None
 
-        if line.lambda_range and len(line.lambda_range) == SYSTEM_RANGE_SIZE:
+        if line.lambda_range and len(line.lambda_range) == LAMBDA_RANGE_SIZE:
             lower, upper = line.lambda_range
             if lower < upper:
                 return float(lower), float(upper)

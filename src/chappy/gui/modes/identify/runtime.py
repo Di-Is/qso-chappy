@@ -65,7 +65,7 @@ class IdentifyModeRuntime(IdentifyVelocityOverlayRuntimePort):
         workflow_provider: Callable[[], IdentifySharedSurfaceWorkflowPort | None],
         velocity_workflow_provider: Callable[[], IdentifyVelocityWorkflowPort],
         velocity_range_provider: Callable[[], IdentifyVelocityRangePort | None],
-        velocity_pending_callback: Callable[[], None],
+        cursor_wavelength_provider: Callable[[], float | None],
         velocity_overlay_port: VelocityOverlayPort,
         wavelength_field_availability_port: WavelengthFieldAvailabilityPort,
     ) -> None:
@@ -74,7 +74,7 @@ class IdentifyModeRuntime(IdentifyVelocityOverlayRuntimePort):
         self._shared_surface_controller = IdentifySharedSurfaceIntentController(
             workflow_provider=workflow_provider,
             velocity_toggle_callback=self._toggle_velocity_plot,
-            velocity_pending_callback=velocity_pending_callback,
+            cursor_wavelength_provider=cursor_wavelength_provider,
         )
         self._velocity_plot_controller = IdentifyVelocityPlotController(
             IdentifyVelocityPlotPorts(
@@ -94,7 +94,7 @@ class IdentifyModeRuntime(IdentifyVelocityOverlayRuntimePort):
         self._shared_surface_controller.handle_mode_click(wavelength, flux, modifiers)
 
     def handle_mode_velocity_shortcut(self) -> None:
-        """Resolve Identify's active-preview or pending velocity workflow."""
+        """Toggle the identify velocity plot at the wavelength under the cursor."""
         self._shared_surface_controller.handle_mode_velocity_shortcut()
 
     def handle_context_menu_intent(self, intent: ContextMenuActionIntent) -> None:

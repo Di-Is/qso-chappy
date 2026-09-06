@@ -6,7 +6,8 @@ convention: namespace.action format.
 
 Namespaces:
     - ident: Identify mode operations
-    - group: Organize mode / group operations (including masks)
+    - structure: Analysis Structure operations
+    - mask: Wavelength-mask operations
     - cont: Continuum mode operations
     - model: Model editing operations
     - draw: Display range operations
@@ -28,22 +29,22 @@ class OperationId(StrEnum):
     """
 
     # Identify mode operations (ident.*)
-    IDENT_ADD_CANDIDATE = "ident.add_candidate"
-    IDENT_REMOVE_CANDIDATE = "ident.remove_candidate"
-    IDENT_CLEAR_CANDIDATES = "ident.clear_candidates"
+    IDENT_ADD_TEMPORARY_LINE = "ident.add_temporary_line"
+    IDENT_REMOVE_TEMPORARY_LINE = "ident.remove_temporary_line"
+    IDENT_CLEAR_TEMPORARY_LINES = "ident.clear_temporary_lines"
     IDENT_REGISTER_SELECTED = "ident.register_selected"
 
-    # Group/Organize mode operations (group.*)
-    GROUP_MOVE_SYSTEMS = "group.move_systems"
-    GROUP_SPLIT = "group.split"
-    GROUP_MERGE = "group.merge"
-    GROUP_DELETE = "group.delete"
-    GROUP_UNLINK_SYSTEM = "group.unlink_system"
+    # Analysis Structure operations (structure.*)
+    STRUCTURE_MOVE_LINKED_LINES = "structure.move_linked_lines"
+    STRUCTURE_SPLIT = "structure.split"
+    STRUCTURE_MERGE = "structure.merge"
+    STRUCTURE_DELETE = "structure.delete"
+    STRUCTURE_UNLINK_LINKED_LINES = "structure.unlink_linked_lines"
 
-    # Mask operations (group.mask_*)
-    GROUP_MASK_CREATE = "group.mask_create"
-    GROUP_MASK_DELETE = "group.mask_delete"
-    GROUP_MASK_EDIT = "group.mask_edit"
+    # Mask operations (mask.*)
+    MASK_CREATE = "mask.create"
+    MASK_DELETE = "mask.delete"
+    MASK_EDIT = "mask.edit"
 
     # Continuum mode operations (cont.*)
     CONT_ADD_COMPONENT = "cont.add_component"

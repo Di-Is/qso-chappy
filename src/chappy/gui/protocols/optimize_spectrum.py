@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     )
 
 
-class OptimizeSystemInfo(TypedDict, total=False):
+class OptimizeLineInfo(TypedDict, total=False):
     """Supplementary information describing an optimize absorber component."""
 
     rest_wavelength: float
@@ -37,7 +37,7 @@ class SpectrumModeIntegrationPort(Protocol):
 
     def get_line_info_for_component(
         self, component: AbsorberComponent | None
-    ) -> OptimizeSystemInfo | None:
+    ) -> OptimizeLineInfo | None:
         """Return line information for an optimize component."""
         ...
 

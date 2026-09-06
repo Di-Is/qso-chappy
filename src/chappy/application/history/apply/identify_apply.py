@@ -1,4 +1,4 @@
-"""Identify candidate registration history application."""
+"""Identify temporary-line registration history application."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from chappy.application.history import HistoryApplyError, HistoryApplyErrorCode
 from chappy.application.history.snapshot_mapping import (
     absorption_line_snapshot,
     absorption_region_snapshot,
-    candidate_line_snapshot,
+    temporary_line_snapshot,
 )
 from chappy.application.structure import (
     StructureInvalidationScope,
@@ -18,7 +18,7 @@ from chappy.application.structure import (
 )
 from chappy.core.change_set import ChangeSet as DomainChangeSet
 
-from .organize_apply import structure_history_delta
+from .structure_apply import structure_history_delta
 
 if TYPE_CHECKING:
     from chappy.application.history import (
@@ -31,22 +31,24 @@ if TYPE_CHECKING:
         StructureTopologySnapshot,
         StructureTopologySnapshotService,
     )
-    from chappy.core.identify_state import CandidateLine, IdentifySessionState
+    from chappy.core.identify_state import IdentifySessionState, TemporaryLine
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
 
 @dataclass(frozen=True, slots=True)
 class IdentifyRegistrationHistorySnapshot:
-    """Exact project topology and candidate session state for rollback."""
+    """Exact project topology and temporary-line session state for rollback."""
 
     topology: StructureTopologySnapshot
-    candidates: tuple[CandidateLine, ...]
+    temporary_lines: tuple[TemporaryLine, ...]
 
 
 def validate_identify_registration_command(command: IdentifyRegisterSelectedCommand) -> None:
     """Validate complete registration identities and affected-region snapshots."""
     created_line_ids = tuple(snapshot.line_id for snapshot in command.line_snapshots)
-    candidate_ids = tuple(snapshot.system_id for snapshot in command.candidate_snapshots)
+    temporary_line_ids = tuple(
+        snapshot.temporary_line_id for snapshot in command.temporary_line_snapshots
+    )
     before_ids = tuple(snapshot.region_id for snapshot in command.before_affected_region_snapshots)
     after_ids = tuple(snapshot.region_id for snapshot in command.after_affected_region_snapshots)
     if (
@@ -54,10 +56,10 @@ def validate_identify_registration_command(command: IdentifyRegisterSelectedComm
         or len(set(command.created_line_ids)) != len(command.created_line_ids)
         or set(created_line_ids) != set(command.created_line_ids)
         or len(set(created_line_ids)) != len(created_line_ids)
-        or not command.removed_system_ids
-        or len(set(command.removed_system_ids)) != len(command.removed_system_ids)
-        or set(candidate_ids) != set(command.removed_system_ids)
-        or len(set(candidate_ids)) != len(candidate_ids)
+        or not command.removed_temporary_line_ids
+        or len(set(command.removed_temporary_line_ids)) != len(command.removed_temporary_line_ids)
+        or set(temporary_line_ids) != set(command.removed_temporary_line_ids)
+        or len(set(temporary_line_ids)) != len(temporary_line_ids)
         or not command.affected_region_ids
         or len(set(command.affected_region_ids)) != len(command.affected_region_ids)
         or len(set(before_ids)) != len(before_ids)
@@ -90,7 +92,7 @@ def require_identify_registration_temporal_state(
     *,
     before: bool,
 ) -> None:
-    """Require exact selected candidates, created lines, and affected regions."""
+    """Require exact selected temporary lines, created lines, and affected regions."""
     expected_regions = (
         command.before_affected_region_snapshots
         if before
@@ -151,26 +153,32 @@ def require_identify_registration_temporal_state(
             )
             raise HistoryApplyError(code, "Identify registration created line state is not exact.")
 
-    candidates_by_id = {candidate.system_id: candidate for candidate in session.candidate_lines}
+    temporary_lines_by_id = {
+        temporary_line.temporary_line_id: temporary_line
+        for temporary_line in session.temporary_lines
+    }
     if before:
         if any(
-            (candidate := candidates_by_id.get(snapshot.system_id)) is None
-            or candidate_line_snapshot(candidate) != snapshot
-            for snapshot in command.candidate_snapshots
+            (temporary_line := temporary_lines_by_id.get(snapshot.temporary_line_id)) is None
+            or temporary_line_snapshot(temporary_line) != snapshot
+            for snapshot in command.temporary_line_snapshots
         ):
             raise HistoryApplyError(
                 HistoryApplyErrorCode.TARGET_NOT_FOUND,
-                "Identify registration candidate source state is not exact.",
+                "Identify registration temporary-line source state is not exact.",
             )
-    elif any(system_id in candidates_by_id for system_id in command.removed_system_ids):
+    elif any(
+        temporary_line_id in temporary_lines_by_id
+        for temporary_line_id in command.removed_temporary_line_ids
+    ):
         raise HistoryApplyError(
             HistoryApplyErrorCode.INVALID_STATE,
-            "Identify registration consumed candidate still exists in the after-state.",
+            "Identify registration consumed temporary line still exists in the after-state.",
         )
 
 
 class IdentifyApply:
-    """Apply Identify candidate registration history."""
+    """Apply Identify temporary-line registration history."""
 
     def __init__(
         self,
@@ -190,7 +198,7 @@ class IdentifyApply:
         context: HistoryCommandContext,
         is_undo: bool,
     ) -> tuple[HistoryApplyResult, DomainChangeSet]:
-        """Apply Identify registration topology and candidates atomically."""
+        """Apply Identify registration topology and temporary lines atomically."""
         source_is_before = not is_undo
         before_region_ids: tuple[str, ...] = ()
         before_memberships: dict[str, tuple[str, ...]] = {}
@@ -216,7 +224,7 @@ class IdentifyApply:
             }
             return IdentifyRegistrationHistorySnapshot(
                 topology=self._structure_topology.capture(project),
-                candidates=session.snapshot_candidate_lines_for_transaction(),
+                temporary_lines=session.snapshot_temporary_lines_for_transaction(),
             )
 
         def mutate() -> StructureMutationResult[HistoryApplyResult]:
@@ -240,7 +248,7 @@ class IdentifyApply:
 
         def restore_runtime(snapshot: IdentifyRegistrationHistorySnapshot) -> None:
             self._structure_topology.restore(project, snapshot.topology)
-            session.replace_candidate_lines_for_transaction(snapshot.candidates)
+            session.replace_temporary_lines_for_transaction(snapshot.temporary_lines)
 
         execution = self._structure_executor.execute(
             project,

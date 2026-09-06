@@ -9,10 +9,6 @@ from chappy.application.identify.atomic_registration_usecase import (
     RegistrationHistoryCallback,
     RegistrationHistoryScope,
 )
-from chappy.application.identify.candidate_usecase import (
-    BuildVelocityPreviewUseCase,
-    CreateCandidateFromVelocityUseCase,
-)
 from chappy.application.identify.detection_usecase import DetectCandidateLinesUseCase
 from chappy.application.identify.grouping import UnionFind
 from chappy.application.identify.models import (
@@ -24,10 +20,7 @@ from chappy.application.identify.models import (
     BuildRegionPreviewsRequest,
     BuildRegionPreviewsResult,
     BuildRegistrationOutcomeRequest,
-    CandidateCreationEntry,
-    CandidateCreationResult,
-    CandidateLineSnapshot,
-    CreatedCandidate,
+    CreatedTemporaryLine,
     DetectCandidateLinesRequest,
     DetectCandidateLinesResult,
     DetectedRegionSnapshot,
@@ -44,10 +37,13 @@ from chappy.application.identify.models import (
     RegisteredLineState,
     RegistrationErrorCode,
     RegistrationOutcome,
-    VelocityCandidateRequest,
+    TemporaryLineCreationEntry,
+    TemporaryLineCreationResult,
+    TemporaryLineSnapshot,
     VelocityPreview,
-    VelocitySliceCandidateRequest,
     VelocitySliceSelection,
+    VelocitySliceTemporaryLineRequest,
+    VelocityTemporaryLineRequest,
 )
 from chappy.application.identify.registration_impact import (
     IdentifyRegistrationImpactPreviewUseCase,
@@ -65,7 +61,13 @@ from chappy.application.identify.registration_usecase import (
     RegisterSelectedLinesResult,
     RegisterSelectedLinesUseCase,
 )
-from chappy.application.identify.velocity_slice_usecase import BuildVelocitySliceCandidatesUseCase
+from chappy.application.identify.temporary_line_usecase import (
+    BuildVelocityPreviewUseCase,
+    CreateTemporaryLineFromVelocityUseCase,
+)
+from chappy.application.identify.velocity_slice_usecase import (
+    BuildVelocitySliceTemporaryLinesUseCase,
+)
 
 __all__ = [
     "AbsorptionLineRegistrationRequest",
@@ -87,12 +89,9 @@ __all__ = [
     "BuildRegistrationOutcomeRequest",
     "BuildRegistrationOutcomeUseCase",
     "BuildVelocityPreviewUseCase",
-    "BuildVelocitySliceCandidatesUseCase",
-    "CandidateCreationEntry",
-    "CandidateCreationResult",
-    "CandidateLineSnapshot",
-    "CreateCandidateFromVelocityUseCase",
-    "CreatedCandidate",
+    "BuildVelocitySliceTemporaryLinesUseCase",
+    "CreateTemporaryLineFromVelocityUseCase",
+    "CreatedTemporaryLine",
     "DetectCandidateLinesRequest",
     "DetectCandidateLinesResult",
     "DetectCandidateLinesUseCase",
@@ -119,9 +118,12 @@ __all__ = [
     "RegistrationHistoryCallback",
     "RegistrationHistoryScope",
     "RegistrationOutcome",
+    "TemporaryLineCreationEntry",
+    "TemporaryLineCreationResult",
+    "TemporaryLineSnapshot",
     "UnionFind",
-    "VelocityCandidateRequest",
     "VelocityPreview",
-    "VelocitySliceCandidateRequest",
     "VelocitySliceSelection",
+    "VelocitySliceTemporaryLineRequest",
+    "VelocityTemporaryLineRequest",
 ]

@@ -44,7 +44,7 @@ class VelocityShortcutInputController:
     def _trigger_mode_velocity_shortcut(self) -> bool:
         """Route the shortcut to a mode owner when channel state allows it."""
         active_channel = self._owner.active_input_channel()
-        if active_channel not in (None, InteractionChannel.VELOCITY):
+        if active_channel is not None:
             self._logger.debug(
                 "Velocity shortcut ignored due to active channel (OPTIMIZE mode)",
                 extra={"channel": active_channel},
@@ -58,16 +58,12 @@ class VelocityShortcutInputController:
         active_channel = self._owner.active_input_channel()
         if active_channel is InteractionChannel.RECT_ZOOM:
             self._owner.cancel_rect_zoom_interaction(reason="velocity-shortcut")
-        elif active_channel not in (None, InteractionChannel.VELOCITY):
+        elif active_channel is not None:
             self._logger.debug(
                 "Velocity shortcut ignored due to active channel",
                 extra={"channel": active_channel},
             )
             return False
-
-        if self._owner.is_velocity_pending():
-            self._owner.cancel_velocity_pending(reason="shortcut-toggle")
-            return True
 
         self._owner.emit_mode_velocity_shortcut()
         return True

@@ -152,18 +152,18 @@ def format_region_display(
         msg = "lines must not be empty"
         raise ValueError(msg)
 
-    system_count = len(group_lines_by_multiplet(lines))
+    linked_line_count = len(group_lines_by_multiplet(lines))
     range_part = ""
     if analysis_range is not None:
         range_part = f"@ {analysis_range[0]:.1f}-{analysis_range[1]:.1f} "
 
     species_set = {line.species for line in lines}
     species_part = "|".join(sorted(species_set))
-    display_name = f"{species_part} {range_part}({system_count})".strip()
+    display_name = f"{species_part} {range_part}({linked_line_count})".strip()
 
     detail_names = {line.multiplet_label or line.transition_name for line in lines}
     detail_part = "|".join(sorted(detail_names))
-    tooltip = f"{detail_part} {range_part}({system_count})".strip()
+    tooltip = f"{detail_part} {range_part}({linked_line_count})".strip()
 
     return RegionDisplayInfo(display_name=display_name, tooltip=tooltip)
 

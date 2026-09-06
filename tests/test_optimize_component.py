@@ -15,7 +15,7 @@ from chappy.core.components.optimize import (
     FitCancelledError,
     FitOutcome,
     OptimizeComponent,
-    SystemConstraints,
+    LineConstraints,
     classify_fit_outcome,
 )
 import chappy.core.components.optimize as optimize_module
@@ -435,11 +435,11 @@ def test_update_model_parameters_propagates_covering_factor_for_full_mask_tie_se
     assert second.get_parameter_value("covering_factor") == pytest.approx(0.42)
 
 
-def test_system_constraints_calculate_z_bounds() -> None:
-    """System constraints calculate redshift bounds from wavelength span."""
-    constraints = SystemConstraints(
+def test_line_constraints_calculate_z_bounds() -> None:
+    """Line constraints calculate redshift bounds from wavelength span."""
+    constraints = LineConstraints(
         component_id="test_comp",
-        system_id="test_system",
+        line_id="test_line",
         rest_wavelength=1215.67,
         lambda_range=(4500.0, 4600.0),
     )
@@ -450,11 +450,11 @@ def test_system_constraints_calculate_z_bounds() -> None:
     assert z_max == pytest.approx(4600.0 / 1215.67 - 1.0)
 
 
-def test_system_constraints_raises_on_invalid_wavelength() -> None:
-    """System constraints reject invalid rest wavelength values."""
-    constraints = SystemConstraints(
+def test_line_constraints_raises_on_invalid_wavelength() -> None:
+    """Line constraints reject invalid rest wavelength values."""
+    constraints = LineConstraints(
         component_id="test_comp",
-        system_id="test_system",
+        line_id="test_line",
         rest_wavelength=-100.0,
         lambda_range=(4500.0, 4600.0),
     )
@@ -463,21 +463,18 @@ def test_system_constraints_raises_on_invalid_wavelength() -> None:
         constraints.calculate_z_bounds()
 
 
-def test_system_constraints_raises_on_none_range() -> None:
-    """System constraints reject missing wavelength ranges."""
-    constraints = SystemConstraints(
-        component_id="test_comp",
-        system_id="test_system",
-        rest_wavelength=1215.67,
-        lambda_range=None,
+def test_line_constraints_raises_on_none_range() -> None:
+    """Line constraints reject missing wavelength ranges."""
+    constraints = LineConstraints(
+        component_id="test_comp", line_id="test_line", rest_wavelength=1215.67, lambda_range=None
     )
 
     with pytest.raises(ValueError, match="No wavelength range"):
         constraints.calculate_z_bounds()
 
 
-def test_fit_model_applies_system_constraints_to_redshift() -> None:
-    """Constrained redshift fitting keeps the component inside the system span."""
+def test_fit_model_applies_line_constraints_to_redshift() -> None:
+    """Constrained redshift fitting keeps the component inside the line span."""
     rest_wavelength = 1215.67
     target_redshift = 2.742
     wavelength = np.linspace(4500.0, 4600.0, 180)
@@ -495,16 +492,16 @@ def test_fit_model_applies_system_constraints_to_redshift() -> None:
         error_value=0.03,
     )
     constraints = [
-        SystemConstraints(
+        LineConstraints(
             component_id=fitted.id,
-            system_id="lya_system",
+            line_id="lya_line",
             rest_wavelength=rest_wavelength,
             lambda_range=(4500.0, 4600.0),
         )
     ]
 
     result = OptimizeComponent(max_function_evaluations=120).fit_model(
-        model, system_constraints=constraints
+        model, line_constraints=constraints
     )
 
     z_min = 4500.0 / rest_wavelength - 1.0
@@ -515,7 +512,7 @@ def test_fit_model_applies_system_constraints_to_redshift() -> None:
 
 
 def test_fit_model_uses_default_redshift_bounds_without_constraints() -> None:
-    """Unconstrained redshift fitting can fit a line outside a system-only span."""
+    """Unconstrained redshift fitting can fit a line outside a constrained span."""
     rest_wavelength = 1215.67
     target_redshift = 2.64
     wavelength = np.linspace(4410.0, 4440.0, 140)
@@ -541,8 +538,8 @@ def test_fit_model_uses_default_redshift_bounds_without_constraints() -> None:
     assert fitted_redshift < constrained_min
 
 
-def test_fit_model_keeps_non_redshift_parameters_with_system_constraints() -> None:
-    """System constraints do not prevent fitting non-redshift parameters."""
+def test_fit_model_keeps_non_redshift_parameters_with_line_constraints() -> None:
+    """Line constraints do not prevent fitting non-redshift parameters."""
     rest_wavelength = 1215.67
     wavelength = np.linspace(4500.0, 4600.0, 180)
     redshift = 4505.0 / rest_wavelength - 1.0
@@ -560,24 +557,24 @@ def test_fit_model_keeps_non_redshift_parameters_with_system_constraints() -> No
         error_value=0.03,
     )
     constraints = [
-        SystemConstraints(
+        LineConstraints(
             component_id=fitted.id,
-            system_id="lya_system",
+            line_id="lya_line",
             rest_wavelength=rest_wavelength,
             lambda_range=(4500.0, 4600.0),
         )
     ]
 
     result = OptimizeComponent(max_function_evaluations=120).fit_model(
-        model, system_constraints=constraints
+        model, line_constraints=constraints
     )
 
     assert result.success is True
     assert fitted.get_parameter_value("column_density") == pytest.approx(13.2, abs=0.08)
 
 
-def test_fit_model_rejects_invalid_system_constraint() -> None:
-    """Invalid system constraints should not fall back to parameter bounds."""
+def test_fit_model_rejects_invalid_line_constraint() -> None:
+    """Invalid line constraints should not fall back to parameter bounds."""
     rest_wavelength = 1215.67
     target_redshift = 2.64
     wavelength = np.linspace(4410.0, 4440.0, 140)
@@ -595,9 +592,9 @@ def test_fit_model_rejects_invalid_system_constraint() -> None:
         error_value=0.03,
     )
     constraints = [
-        SystemConstraints(
+        LineConstraints(
             component_id=fitted.id,
-            system_id="broken_system",
+            line_id="broken_line",
             rest_wavelength=rest_wavelength,
             lambda_range=None,
         )
@@ -605,12 +602,12 @@ def test_fit_model_rejects_invalid_system_constraint() -> None:
 
     with pytest.raises(ValueError, match="No wavelength range"):
         OptimizeComponent(max_function_evaluations=120).fit_model(
-            model, system_constraints=constraints
+            model, line_constraints=constraints
         )
 
 
-def test_fit_model_accepts_multiple_system_constraints() -> None:
-    """Multiple system constraints can be supplied to one fit call."""
+def test_fit_model_accepts_multiple_line_constraints() -> None:
+    """Multiple line constraints can be supplied to one fit call."""
     rest_wavelength = 1215.67
     target_redshift = 2.742
     wavelength = np.linspace(4500.0, 4600.0, 180)
@@ -659,12 +656,12 @@ def test_fit_model_accepts_multiple_system_constraints() -> None:
     model.add_component(constrained_fit)
     model.add_component(free_fit)
     constraints = [
-        SystemConstraints("component-a", "sys-a", rest_wavelength, (4500.0, 4600.0)),
-        SystemConstraints("component-b", "sys-b", 1302.17, (4500.0, 4600.0)),
+        LineConstraints("component-a", "line-a", rest_wavelength, (4500.0, 4600.0)),
+        LineConstraints("component-b", "line-b", 1302.17, (4500.0, 4600.0)),
     ]
 
     result = OptimizeComponent(max_function_evaluations=120).fit_model(
-        model, target_component_ids={constrained_fit.id}, system_constraints=constraints
+        model, target_component_ids={constrained_fit.id}, line_constraints=constraints
     )
 
     z_min = 4500.0 / rest_wavelength - 1.0

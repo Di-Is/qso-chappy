@@ -88,3 +88,7 @@ unused_code_report.json
 
 # Release-time bundled user manual (generated, shipped in wheels only)
 src/chappy/manual/
+
+
+# APM dependencies
+apm_modules/

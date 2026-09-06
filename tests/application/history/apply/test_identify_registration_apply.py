@@ -16,10 +16,10 @@ from chappy.application.history import (
 from chappy.application.history.snapshot_mapping import (
     absorption_line_snapshot,
     absorption_region_snapshot,
-    candidate_line_from_snapshot,
-    candidate_line_snapshot,
+    temporary_line_from_snapshot,
+    temporary_line_snapshot,
 )
-from chappy.application.identify import CandidateLineSnapshot
+from chappy.application.identify import TemporaryLineSnapshot
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.analysis import (
     AnalysisArtifact,
@@ -59,10 +59,10 @@ def _line(line_id: str, region_id: str) -> AbsorptionLine:
     )
 
 
-def _candidate() -> CandidateLineSnapshot:
-    """Build the consumed candidate snapshot."""
-    return CandidateLineSnapshot(
-        system_id="candidate",
+def _temporary_line() -> TemporaryLineSnapshot:
+    """Build the consumed temporary-line snapshot."""
+    return TemporaryLineSnapshot(
+        temporary_line_id="temporary-line",
         species="C IV",
         lambda_min=1547.0,
         lambda_max=1549.0,
@@ -122,8 +122,8 @@ def _fixture(
         )
     command = IdentifyRegisterSelectedCommand(
         created_line_ids=("created",),
-        removed_system_ids=("candidate",),
-        candidate_snapshots=(_candidate(),),
+        removed_temporary_line_ids=("temporary-line",),
+        temporary_line_snapshots=(_temporary_line(),),
         affected_region_ids=(region_id,),
         line_snapshots=(absorption_line_snapshot(project.absorption_lines["created"]),),
         before_affected_region_snapshots=before_regions,
@@ -148,7 +148,7 @@ def _exact_state(project: SpectroscopyProject) -> tuple[object, ...]:
         tuple(
             (key, absorption_line_snapshot(line)) for key, line in project.absorption_lines.items()
         ),
-        tuple(candidate_line_snapshot(item) for item in project.identify_state.candidate_lines),
+        tuple(temporary_line_snapshot(item) for item in project.identify_state.temporary_lines),
         project.stored_region_analysis_states_for_transaction(),
         project.modified,
         project.model.snapshot_derived_state_for_transaction(),
@@ -156,13 +156,15 @@ def _exact_state(project: SpectroscopyProject) -> tuple[object, ...]:
 
 
 @pytest.mark.parametrize("created_region", [False, True])
-def test_registration_undo_redo_revision_and_candidate_matrix(created_region: bool) -> None:
+def test_registration_undo_redo_revision_and_temporary_line_matrix(created_region: bool) -> None:
     """Undo/Redo stales survivors and resets only recreated regions."""
     project, history, _usecase, region_id, artifact = _fixture(created_region=created_region)
 
     assert history.undo().success
     assert "created" not in project.absorption_lines
-    assert [item.system_id for item in project.identify_state.candidate_lines] == ["candidate"]
+    assert [item.temporary_line_id for item in project.identify_state.temporary_lines] == [
+        "temporary-line"
+    ]
     if created_region:
         assert region_id not in project.absorption_regions
     else:
@@ -172,7 +174,7 @@ def test_registration_undo_redo_revision_and_candidate_matrix(created_region: bo
         assert state.artifact is artifact
 
     assert history.redo().success
-    assert project.identify_state.candidate_lines == []
+    assert project.identify_state.temporary_lines == []
     assert "created" in project.absorption_lines
     state = project.region_analysis_state(region_id)
     assert state is not None
@@ -180,36 +182,40 @@ def test_registration_undo_redo_revision_and_candidate_matrix(created_region: bo
     assert state.artifact is (None if created_region else artifact)
 
 
-def test_registration_failure_restores_candidates_topology_and_stack(
+def test_registration_failure_restores_temporary_lines_topology_and_stack(
     monkeypatch: MonkeyPatch,
 ) -> None:
-    """A mid-command failure rolls candidate session and project back together."""
+    """A mid-command failure rolls temporary-line session and project back together."""
     project, history, usecase, _region_id, _artifact = _fixture(created_region=False)
     history_before = history.get_state()
     line_ids_before = tuple(project.absorption_lines)
-    original_apply = usecase._organize_applier.apply_absorption_region_states_partial_exact
+    original_apply = usecase._structure_applier.apply_absorption_region_states_partial_exact
 
     def fail_after_apply(snapshots: tuple[AbsorptionRegionSnapshot, ...]) -> ChangeSet:
         result = original_apply(snapshots)
         raise RuntimeError("injected Identify history failure")
 
     monkeypatch.setattr(
-        usecase._organize_applier, "apply_absorption_region_states_partial_exact", fail_after_apply
+        usecase._structure_applier,
+        "apply_absorption_region_states_partial_exact",
+        fail_after_apply,
     )
     with pytest.raises(RuntimeError, match="injected Identify history failure"):
         history.undo()
 
     assert tuple(project.absorption_lines) == line_ids_before
-    assert project.identify_state.candidate_lines == []
+    assert project.identify_state.temporary_lines == []
     assert history.get_state() == history_before
 
 
-@pytest.mark.parametrize("drift", ["candidate", "line", "region"])
+@pytest.mark.parametrize("drift", ["temporary_line", "line", "region"])
 def test_registration_exact_preflight_rejects_stale_after_state(drift: str) -> None:
-    """Undo rejects stale candidates, created lines, and affected regions before mutation."""
+    """Undo rejects stale temporary lines, created lines, and regions before mutation."""
     project, history, _usecase, region_id, _artifact = _fixture(created_region=False)
-    if drift == "candidate":
-        project.identify_state.restore_candidate_line(candidate_line_from_snapshot(_candidate()))
+    if drift == "temporary_line":
+        project.identify_state.restore_temporary_line(
+            temporary_line_from_snapshot(_temporary_line())
+        )
     elif drift == "line":
         project.absorption_lines["created"].species = "stale"
     else:

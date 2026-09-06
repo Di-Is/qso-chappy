@@ -30,7 +30,6 @@ from chappy.presentation.analysis import (
     AnalysisNextAction,
     AnalysisRegionDisplay,
     AnalysisReviewRow,
-    AnalysisUnavailableCause,
 )
 
 
@@ -42,7 +41,6 @@ def _row(
     reduced_chi_squared: float = 1.0,
 ) -> AnalysisReviewRow:
     fit_results = {
-        AnalysisReadiness.UNAVAILABLE: AnalysisFitResultDisplay(AnalysisFitResultKind.UNAVAILABLE),
         AnalysisReadiness.NOT_ANALYZED: AnalysisFitResultDisplay(
             AnalysisFitResultKind.NOT_ANALYZED
         ),
@@ -51,14 +49,7 @@ def _row(
             AnalysisFitResultKind.NUMERICAL, FitSummary(reduced_chi_squared=reduced_chi_squared)
         ),
     }
-    causes = {
-        AnalysisReadiness.UNAVAILABLE: (AnalysisUnavailableCause.NO_LINES,),
-        AnalysisReadiness.NOT_ANALYZED: (),
-        AnalysisReadiness.STALE: (),
-        AnalysisReadiness.LATEST: (),
-    }
     actions = {
-        AnalysisReadiness.UNAVAILABLE: AnalysisNextAction.RESOLVE_PREREQUISITES,
         AnalysisReadiness.NOT_ANALYZED: AnalysisNextAction.ANALYZE,
         AnalysisReadiness.STALE: AnalysisNextAction.REANALYZE,
         AnalysisReadiness.LATEST: AnalysisNextAction.OPEN_REGION,
@@ -67,7 +58,6 @@ def _row(
         region=AnalysisRegionDisplay(region_id, label or region_id),
         analysis_status=readiness,
         fit_result=fit_results[readiness],
-        unavailable_causes=causes[readiness],
         next_action=actions[readiness],
     )
 
@@ -106,9 +96,6 @@ def test_static_translation_source_maps_cover_every_typed_value() -> None:
     assert set(table_model_module._FIT_RESULT_LABEL_SOURCES) == (
         set(AnalysisFitResultKind) - {AnalysisFitResultKind.NUMERICAL}
     )
-    assert set(table_model_module._UNAVAILABLE_CAUSE_LABEL_SOURCES) == set(
-        AnalysisUnavailableCause
-    )
     assert set(table_model_module._ACTION_LABEL_SOURCES) == set(AnalysisNextAction)
 
 
@@ -125,20 +112,17 @@ def test_japanese_catalog_translates_all_table_headers_and_typed_labels(
         "フィット結果",
         "次の操作",
     ]
-    assert [model.data(model.index(row, 1)) for row in range(4)] == [
-        "解析不可",
+    assert [model.data(model.index(row, 1)) for row in range(3)] == [
         "未解析",
         "結果が古い",
         "最新",
     ]
-    assert [model.data(model.index(row, 2)) for row in range(4)] == [
-        "解析不可",
+    assert [model.data(model.index(row, 2)) for row in range(3)] == [
         "—",
         "結果が古い",
         "換算χ²: 1",
     ]
-    assert [model.data(model.index(row, 3)) for row in range(4)] == [
-        "前提条件を解決",
+    assert [model.data(model.index(row, 3)) for row in range(3)] == [
         "解析",
         "再解析",
         "領域を開く",
@@ -151,10 +135,10 @@ def test_japanese_catalog_translates_all_table_headers_and_typed_labels(
         "解析状態",
         "次の操作",
     ]
-    assert model.data(model.index(2, 1)) == "結果が古い"
+    assert model.data(model.index(1, 1)) == "結果が古い"
 
 
-def test_japanese_catalog_covers_every_fit_result_cause_and_action_mapping(
+def test_japanese_catalog_covers_every_fit_result_and_action_mapping(
     japanese_translator: None,
 ) -> None:
     del japanese_translator
@@ -163,7 +147,6 @@ def test_japanese_catalog_covers_every_fit_result_cause_and_action_mapping(
             region=AnalysisRegionDisplay(f"numerical-{index}", f"numerical-{index}"),
             analysis_status=AnalysisReadiness.LATEST,
             fit_result=AnalysisFitResultDisplay(AnalysisFitResultKind.NUMERICAL, summary),
-            unavailable_causes=(),
             next_action=AnalysisNextAction.OPEN_REGION,
         )
         for index, summary in enumerate(
@@ -175,14 +158,12 @@ def test_japanese_catalog_covers_every_fit_result_cause_and_action_mapping(
         )
     )
     fit_rows = {
-        AnalysisFitResultKind.UNAVAILABLE: _row("unavailable", AnalysisReadiness.UNAVAILABLE),
         AnalysisFitResultKind.NOT_ANALYZED: _row("not-analyzed", AnalysisReadiness.NOT_ANALYZED),
         AnalysisFitResultKind.STALE: _row("stale", AnalysisReadiness.STALE),
         AnalysisFitResultKind.NUMERICAL: numerical_rows[0],
     }
 
     assert {kind: table_model_module._fit_result_label(row) for kind, row in fit_rows.items()} == {
-        AnalysisFitResultKind.UNAVAILABLE: "解析不可",
         AnalysisFitResultKind.NOT_ANALYZED: "—",
         AnalysisFitResultKind.STALE: "結果が古い",
         AnalysisFitResultKind.NUMERICAL: "換算χ²: 1.25",
@@ -192,15 +173,7 @@ def test_japanese_catalog_covers_every_fit_result_cause_and_action_mapping(
         "χ²: 2.5",
         "フィット結果: 7",
     ]
-    assert {
-        cause: table_model_module._tr(table_model_module._UNAVAILABLE_CAUSE_LABEL_SOURCES[cause])
-        for cause in AnalysisUnavailableCause
-    } == {
-        AnalysisUnavailableCause.NO_LINES: "ラインがありません",
-        AnalysisUnavailableCause.MISSING_LINE_REFERENCE: "ライン参照が欠損しています",
-    }
     assert {action: table_model_module._action_label(action) for action in AnalysisNextAction} == {
-        AnalysisNextAction.RESOLVE_PREREQUISITES: "前提条件を解決",
         AnalysisNextAction.ANALYZE: "解析",
         AnalysisNextAction.REANALYZE: "再解析",
         AnalysisNextAction.OPEN_REGION: "領域を開く",
@@ -232,16 +205,7 @@ def test_baseline_data_roles_and_compact_projection_are_semantic() -> None:
     assert "Result stale" in str(model.data(model.index(0, 1)))
 
 
-def test_status_column_tooltip_lists_unavailable_causes() -> None:
-    model = AnalysisReviewTableModel()
-    model.sync_rows((_row("region-a", AnalysisReadiness.UNAVAILABLE),))
-
-    status_index = model.index(0, model.column_index(AnalysisReviewColumn.STATUS) or 0)
-
-    assert model.data(status_index, int(Qt.ItemDataRole.ToolTipRole)) == "No lines"
-
-
-def test_status_column_tooltip_is_empty_for_available_regions() -> None:
+def test_status_column_tooltip_is_empty() -> None:
     model = AnalysisReviewTableModel()
     model.sync_rows((_row("region-a", AnalysisReadiness.STALE),))
 
@@ -359,19 +323,16 @@ def test_filter_exception_rejects_empty_identity() -> None:
 @pytest.mark.parametrize(
     ("review_sort", "expected"),
     [
-        (
-            AnalysisReviewSort(AnalysisReviewColumn.STATUS),
-            ["unavailable", "stale", "latest-high", "latest-low"],
-        ),
+        (AnalysisReviewSort(AnalysisReviewColumn.STATUS), ["stale", "latest-high", "latest-low"]),
         (
             AnalysisReviewSort(AnalysisReviewColumn.FIT_RESULT),
-            ["unavailable", "stale", "latest-low", "latest-high"],
+            ["stale", "latest-low", "latest-high"],
         ),
         (
             AnalysisReviewSort(
                 AnalysisReviewColumn.FIT_RESULT, AnalysisReviewSortDirection.DESCENDING
             ),
-            ["latest-high", "latest-low", "stale", "unavailable"],
+            ["latest-high", "latest-low", "stale"],
         ),
     ],
 )
@@ -381,7 +342,6 @@ def test_proxy_applies_typed_semantic_sort(
     proxy = _proxy_with_rows(
         _row("latest-high", AnalysisReadiness.LATEST, reduced_chi_squared=3.0),
         _row("stale", AnalysisReadiness.STALE),
-        _row("unavailable", AnalysisReadiness.UNAVAILABLE),
         _row("latest-low", AnalysisReadiness.LATEST, reduced_chi_squared=0.5),
     )
 

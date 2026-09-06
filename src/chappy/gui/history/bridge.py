@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from chappy.application.history import RangeSnapshot
-    from chappy.application.organize import ResolutionChangeNotifier
+    from chappy.application.spectrum import ResolutionChangeNotifier
     from chappy.core.history import CommandHistory, RedoResult, UndoResult
     from chappy.core.spectroscopy_project import SpectroscopyProject
     from chappy.gui.history.refresh_adapter import (
@@ -147,7 +147,7 @@ class HistoryBridge(QObject):
         logger.debug("ContinuumEditor connected to HistoryBridge")
 
     def set_dock_layout_coordinator(self, coordinator: DockLayoutRefreshPort) -> None:
-        """Set the dock layout coordinator for organize operations.
+        """Set the dock layout coordinator for structure operations.
 
         Args:
             coordinator: The dock layout coordinator instance.

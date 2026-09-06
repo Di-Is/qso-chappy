@@ -11,7 +11,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     InteractionStateSnapshot,
     MaskSelectionContext,
     RectZoomContext,
-    VelocityContext,
 )
 
 if TYPE_CHECKING:
@@ -24,7 +23,6 @@ type SpectrumInteractionSnapshot = (
     | InteractionStateSnapshot[AbsorberDragContext]
     | InteractionStateSnapshot[MaskSelectionContext]
     | InteractionStateSnapshot[ContinuumContext]
-    | InteractionStateSnapshot[VelocityContext]
 )
 
 
@@ -36,19 +34,6 @@ class MaskSnapshotController(Protocol):
         ...
 
 
-class VelocitySnapshotController(Protocol):
-    """Controller capable of applying velocity interaction snapshots."""
-
-    def apply_snapshot(
-        self,
-        snapshot: InteractionStateSnapshot[VelocityContext],
-        *,
-        snapshot_callback: Callable[[InteractionStateSnapshot[VelocityContext]], None],
-    ) -> None:
-        """Apply a velocity snapshot and publish the result through the callback."""
-        ...
-
-
 class SpectrumInteractionStateCoordinator:
     """Validate, cache, and dispatch interactor state snapshots."""
 
@@ -57,18 +42,15 @@ class SpectrumInteractionStateCoordinator:
         *,
         snapshot_publisher: Callable[[SpectrumInteractionSnapshot], None],
         mask_controller: MaskSnapshotController,
-        velocity_controller: VelocitySnapshotController,
     ) -> None:
         """Initialize the state coordinator.
 
         Args:
             snapshot_publisher: Callback used for snapshots that should notify observers.
             mask_controller: Controller that owns mask snapshot side effects.
-            velocity_controller: Controller that owns velocity snapshot side effects.
         """
         self._snapshot_publisher = snapshot_publisher
         self._mask_controller = mask_controller
-        self._velocity_controller = velocity_controller
         self._latest_snapshot: SpectrumInteractionSnapshot | None = None
 
     @property
@@ -108,13 +90,6 @@ class SpectrumInteractionStateCoordinator:
                 snapshot, InteractionChannel.CONTINUUM, ContinuumContext
             )
             self._apply_continuum_snapshot(continuum_snapshot)
-            return
-
-        if snapshot.channel is InteractionChannel.VELOCITY:
-            velocity_snapshot = self._coerce_interaction_snapshot_context(
-                snapshot, InteractionChannel.VELOCITY, VelocityContext
-            )
-            self._apply_velocity_snapshot(velocity_snapshot)
             return
 
         msg = f"Unsupported interaction snapshot channel: {snapshot.channel.value}"
@@ -165,15 +140,6 @@ class SpectrumInteractionStateCoordinator:
     ) -> None:
         """Apply a continuum editing snapshot and notify observers."""
         self._publish_snapshot(snapshot)
-
-    def _apply_velocity_snapshot(
-        self, snapshot: InteractionStateSnapshot[VelocityContext]
-    ) -> None:
-        """Apply a velocity interaction snapshot through the velocity controller."""
-        self._latest_snapshot = snapshot
-        self._velocity_controller.apply_snapshot(
-            snapshot, snapshot_callback=self._snapshot_publisher
-        )
 
     def _publish_snapshot(self, snapshot: SpectrumInteractionSnapshot) -> None:
         """Cache and publish a snapshot."""

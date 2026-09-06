@@ -4,8 +4,8 @@ This module tests the format_region_display() function which generates
 dynamic display names for AbsorptionRegion based on their content.
 
 Format:
-- Basic: "{species set} @ {wave_range} ({system_count})"
-- Tooltip: "{multiplet_label/transition_name} @ {wave_range} ({system_count})"
+- Basic: "{species set} @ {wave_range} ({linked_line_count})"
+- Tooltip: "{multiplet_label/transition_name} @ {wave_range} ({linked_line_count})"
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ class TestFormatRegionDisplayBasic:
         assert "(1)" in result.tooltip
 
     def test_doublet_produces_correct_display(self) -> None:
-        """Mg II doublet produces correct display name with single system count."""
+        """Mg II doublet produces a display name with one linked-line count."""
         # Given: Mg II 2796 + Mg II 2803 doublet (mutual multiplet_ids)
         line1 = _make_line(
             "mg2_2796",
@@ -90,20 +90,20 @@ class TestFormatRegionDisplayBasic:
         # When: format_region_display is called
         result = format_region_display([line1, line2], analysis_range)
 
-        # Then: display_name shows Mg II with count=1 (one system)
+        # Then: display_name shows Mg II with count=1 (one linked line)
         assert result.display_name == "Mg II @ 4000.0-4200.0 (1)"
         # Tooltip shows transition_name from AbsorptionLine
         assert "Mg II" in result.tooltip
         assert "(1)" in result.tooltip
 
 
-class TestFormatRegionDisplayMultipleSystems:
-    """Tests for multiple systems in a region."""
+class TestFormatRegionDisplayMultipleLinkedLines:
+    """Tests for multiple linked lines in a region."""
 
-    def test_two_systems_same_species_shows_count_2(self) -> None:
+    def test_two_linked_lines_same_species_shows_count_2(self) -> None:
         """Two Mg II doublets (different redshifts) show count=2."""
         # Given: Two independent Mg II doublets
-        # System 1: z=1.5
+        # Linked line 1: z=1.5
         line1a = _make_line(
             "mg2_2796_z1",
             species="Mg II",
@@ -118,7 +118,7 @@ class TestFormatRegionDisplayMultipleSystems:
             center_z=1.5,
             multiplet_ids=["mg2_2796_z1"],
         )
-        # System 2: z=2.0
+        # Linked line 2: z=2.0
         line2a = _make_line(
             "mg2_2796_z2",
             species="Mg II",
@@ -139,7 +139,7 @@ class TestFormatRegionDisplayMultipleSystems:
         lines = [line1a, line1b, line2a, line2b]
         result = format_region_display(lines, analysis_range)
 
-        # Then: display_name shows Mg II with count=2 (two systems)
+        # Then: display_name shows Mg II with count=2 (two linked lines)
         assert result.display_name == "Mg II @ 4000.0-4200.0 (2)"
 
 

@@ -15,8 +15,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     InteractionPhase,
     InteractionStateSnapshot,
     RectZoomContext,
-    VelocityContext,
-    VelocityInteractionPayload,
 )
 from chappy.gui.spectrum.interaction.channels.absorber_drag.interaction_controller import (
     AbsorberDragInteractionController,
@@ -31,9 +29,6 @@ from chappy.gui.spectrum.interaction.channels.rect_zoom.interaction_controller i
 )
 from chappy.gui.spectrum.interaction.channels.rect_zoom.state_controller import (
     RectZoomStateController,
-)
-from chappy.gui.spectrum.interaction.channels.velocity.state_controller import (
-    VelocityStateController,
 )
 from chappy.gui.protocols.intent_types import (
     EndAbsorberDragIntent,
@@ -231,24 +226,6 @@ def test_absorber_drag_begin_requires_absorber_context() -> None:
         controller.process_event(begin_event)
 
 
-class _VelocitySnapshotEmitterSpy:
-    """Capture velocity snapshots for emitter assertions."""
-
-    def __init__(self) -> None:
-        self.snapshots: list[InteractionStateSnapshot[VelocityContext]] = []
-
-    def emit(self, snapshot: InteractionStateSnapshot[VelocityContext]) -> None:
-        """Capture a velocity snapshot."""
-        self.snapshots.append(snapshot)
-
-
-def _build_velocity_controller() -> tuple[VelocityStateController, _VelocitySnapshotEmitterSpy]:
-    """Construct a velocity controller with a spying emitter."""
-    emitter = _VelocitySnapshotEmitterSpy()
-    controller = VelocityStateController(velocity_snapshot_emitter=emitter)
-    return controller, emitter
-
-
 def test_absorber_drag_cancel_emits_cancel_snapshot() -> None:
     """Ensure absorber drag cancellation emits a cancelled snapshot."""
     controller, snapshots, intents = _build_absorber_controller()
@@ -295,125 +272,6 @@ def test_absorber_drag_cancel_event_uses_reason() -> None:
     assert snapshots[-1].context.cancel_reason == "missing-coordinate"
 
 
-def test_velocity_event_sequence() -> None:
-    """Verify velocity pending/commit flow propagates snapshots and emitter callbacks."""
-    controller, emitter = _build_velocity_controller()
-
-    pending_event = InteractionEvent(
-        channel=InteractionChannel.VELOCITY,
-        kind=InteractionEventKind.VELOCITY_PENDING,
-        position=(5100.0, 0.15),
-        modifiers=0,
-        payload=VelocityInteractionPayload(trigger="keyboard-v"),
-    )
-    assert controller.process_event(pending_event)
-    assert controller.phase is InteractionPhase.ARMED
-    assert len(emitter.snapshots) == 1
-    pending_snapshot = emitter.snapshots[-1]
-    assert pending_snapshot.phase is InteractionPhase.ARMED
-    context = pending_snapshot.context
-    assert isinstance(context, VelocityContext)
-    assert context.target_wavelength == pytest.approx(5100.0)
-    assert context.trigger == "keyboard-v"
-
-    commit_event = InteractionEvent(
-        channel=InteractionChannel.VELOCITY,
-        kind=InteractionEventKind.VELOCITY_COMMIT,
-        position=(5125.0, 0.16),
-        modifiers=0,
-        payload=VelocityInteractionPayload(trigger="mouse-click"),
-    )
-    assert controller.process_event(commit_event)
-    assert controller.phase is InteractionPhase.IDLE
-    assert len(emitter.snapshots) == 2
-    activation_snapshot = emitter.snapshots[-1]
-    assert activation_snapshot.phase is InteractionPhase.IDLE
-    activation_context = activation_snapshot.context
-    assert isinstance(activation_context, VelocityContext)
-    assert activation_context.confirmed_wavelength == pytest.approx(5125.0)
-    assert activation_context.trigger == "mouse-click"
-
-
-def test_velocity_commit_requires_confirmed_wavelength() -> None:
-    """Velocity commit without a wavelength should raise a ValueError."""
-    controller, _emitter = _build_velocity_controller()
-
-    pending_event = InteractionEvent(
-        channel=InteractionChannel.VELOCITY,
-        kind=InteractionEventKind.VELOCITY_PENDING,
-        position=(5000.0, 0.1),
-        modifiers=0,
-    )
-    assert controller.process_event(pending_event)
-
-    commit_event = InteractionEvent(
-        channel=InteractionChannel.VELOCITY,
-        kind=InteractionEventKind.VELOCITY_COMMIT,
-        position=None,
-        modifiers=0,
-    )
-
-    with pytest.raises(ValueError):
-        controller.process_event(commit_event)
-    assert controller.phase is InteractionPhase.ARMED
-
-
-def test_velocity_commit_requires_velocity_snapshot_context() -> None:
-    """An active velocity interaction cannot continue with a mismatched snapshot context."""
-    controller, _emitter = _build_velocity_controller()
-    pending_event = InteractionEvent(
-        channel=InteractionChannel.VELOCITY,
-        kind=InteractionEventKind.VELOCITY_PENDING,
-        position=(5000.0, 0.1),
-        modifiers=0,
-    )
-    assert controller.process_event(pending_event)
-    controller._latest_snapshot = InteractionStateSnapshot(
-        interaction_id=controller._active_interaction_id,
-        channel=InteractionChannel.VELOCITY,
-        phase=InteractionPhase.ARMED,
-        context=RectZoomContext(start=(5000.0, 0.1), current=(5010.0, 0.2), end=None, bounds=None),
-    )
-
-    commit_event = InteractionEvent(
-        channel=InteractionChannel.VELOCITY,
-        kind=InteractionEventKind.VELOCITY_COMMIT,
-        position=(5010.0, 0.2),
-        modifiers=0,
-    )
-
-    with pytest.raises(InteractionStateError, match="Velocity snapshot context type mismatch"):
-        controller.process_event(commit_event)
-
-
-def test_velocity_cancel_records_reason() -> None:
-    """Velocity cancel should store the provided reason in the snapshot."""
-    controller, emitter = _build_velocity_controller()
-    pending_event = InteractionEvent(
-        channel=InteractionChannel.VELOCITY,
-        kind=InteractionEventKind.VELOCITY_PENDING,
-        position=(5300.0, 0.2),
-        modifiers=1,
-    )
-    assert controller.process_event(pending_event)
-
-    cancel_event = InteractionEvent(
-        channel=InteractionChannel.VELOCITY,
-        kind=InteractionEventKind.VELOCITY_CANCEL,
-        position=None,
-        modifiers=1,
-        payload=VelocityInteractionPayload(reason="escape-key"),
-    )
-    assert controller.process_event(cancel_event)
-    assert controller.phase is InteractionPhase.CANCELLED
-    assert len(emitter.snapshots) == 2
-    cancel_snapshot = emitter.snapshots[-1]
-    assert cancel_snapshot.phase is InteractionPhase.CANCELLED
-    cancel_context = cancel_snapshot.context
-    assert isinstance(cancel_context, VelocityContext)
-    assert cancel_context.cancel_reason == "escape-key"
-
-
 def test_rect_zoom_cancel_event() -> None:
     """RECT_ZOOM_CANCEL event should cancel active rectangle zoom."""
     controller, overlay, snapshots, intents = _build_controller()
@@ -443,10 +301,10 @@ def test_unsupported_event_raises() -> None:
     controller, _overlay, snapshots, _intents = _build_controller()
 
     # Create an event with an unsupported kind for RECT_ZOOM channel
-    # (using a velocity event kind on rect zoom channel)
+    # (using a mask selection event kind on rect zoom channel)
     unsupported_event = InteractionEvent(
         channel=InteractionChannel.RECT_ZOOM,
-        kind=InteractionEventKind.VELOCITY_PENDING,
+        kind=InteractionEventKind.MASK_SELECTION_BEGIN,
         position=(4100.0, 0.2),
         modifiers=0,
     )

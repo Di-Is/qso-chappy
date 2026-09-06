@@ -86,9 +86,9 @@ class IdentifyDetectionWorkflow:
                 error=spectrum.error,
                 continuum_flux=self._resolve_continuum_flux(project, spectrum.wavelength),
                 parameters=self._build_detection_parameters(project),
-                existing_line_ranges=tuple(self._compute_system_ranges(project)),
-                candidate_ranges=tuple(
-                    (system.lambda_min, system.lambda_max) for system in session.candidate_lines
+                existing_line_ranges=tuple(self._compute_line_ranges(project)),
+                temporary_line_ranges=tuple(
+                    (line.lambda_min, line.lambda_max) for line in session.temporary_lines
                 ),
             )
         )
@@ -154,7 +154,7 @@ class IdentifyDetectionWorkflow:
             return None
         return flux.astype(float, copy=False)
 
-    def _compute_system_ranges(self, project: SpectroscopyProject) -> list[tuple[float, float]]:
+    def _compute_line_ranges(self, project: SpectroscopyProject) -> list[tuple[float, float]]:
         ranges: list[tuple[float, float]] = []
         for line in project.list_absorption_lines():
             if line.lambda_range:

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
     from chappy.application.history import AbsorptionRegionSnapshot
-    from chappy.application.identify import CandidateLineSnapshot
+    from chappy.application.identify import TemporaryLineSnapshot
     from chappy.core.editing_mode import EditingMode
     from chappy.core.identify_state import IdentifySessionState
     from chappy.core.spectroscopy_project import SpectroscopyProject
@@ -40,20 +40,22 @@ class IdentifyHistoryRecorder(Protocol):
         """Return a rollback scope for one atomic scientific command."""
         ...
 
-    def record_ident_add_candidate(
-        self, session: IdentifySessionState, _added_system_ids: list[str]
+    def record_ident_add_temporary_line(
+        self, session: IdentifySessionState, _added_temporary_line_ids: list[str]
     ) -> None:
-        """Record identify candidate-line creation."""
+        """Record identify temporary-line creation."""
         ...
 
-    def record_ident_remove_candidate(
-        self, _removed_system_ids: list[str], snapshots: tuple[CandidateLineSnapshot, ...]
+    def record_ident_remove_temporary_line(
+        self, _removed_temporary_line_ids: list[str], snapshots: tuple[TemporaryLineSnapshot, ...]
     ) -> None:
-        """Record identify candidate-line removal."""
+        """Record identify temporary-line removal."""
         ...
 
-    def record_ident_clear_candidates(self, snapshots: tuple[CandidateLineSnapshot, ...]) -> None:
-        """Record clearing identify candidate lines."""
+    def record_ident_clear_temporary_lines(
+        self, snapshots: tuple[TemporaryLineSnapshot, ...]
+    ) -> None:
+        """Record clearing identify temporary lines."""
         ...
 
     def record_ident_register_selected(
@@ -61,8 +63,8 @@ class IdentifyHistoryRecorder(Protocol):
         project: SpectroscopyProject,
         created_line_ids: list[str],
         created_region_ids: list[str],
-        _removed_system_ids: list[str],
-        candidate_snapshots: tuple[CandidateLineSnapshot, ...],
+        _removed_temporary_line_ids: list[str],
+        temporary_line_snapshots: tuple[TemporaryLineSnapshot, ...],
         affected_region_ids: list[str],
         before_affected_region_snapshots: tuple[AbsorptionRegionSnapshot, ...],
     ) -> None:
@@ -124,3 +126,4 @@ class IdentifyShellPorts:
     history_recorder_provider: Callable[[], IdentifyHistoryRecorder | None]
     velocity_runtime_provider: Callable[[], IdentifyVelocityOverlayRuntimePort]
     preset_dialog_provider: Callable[[], IdentifyPresetDialogPort]
+    undo_shortcut_provider: Callable[[], str]

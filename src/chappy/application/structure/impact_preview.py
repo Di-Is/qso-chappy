@@ -30,7 +30,7 @@ class StructureImpactOperation(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class MoveStructureRequest:
-    """Request to move expanded line systems to an existing or new region."""
+    """Request to move expanded linked lines to an existing or new region."""
 
     line_ids: tuple[str, ...]
     target_region_id: str | None
@@ -38,7 +38,7 @@ class MoveStructureRequest:
 
 @dataclass(frozen=True, slots=True)
 class SplitStructureRequest:
-    """Request to move expanded line systems into one new region."""
+    """Request to move expanded linked lines into one new region."""
 
     line_ids: tuple[str, ...]
 
@@ -52,14 +52,14 @@ class MergeStructureRequest:
 
 @dataclass(frozen=True, slots=True)
 class UnlinkStructureRequest:
-    """Request to clear one materialized multiplet system's links."""
+    """Request to clear one materialized linked-line group's links."""
 
     line_id: str
 
 
 @dataclass(frozen=True, slots=True)
 class DeleteStructureRequest:
-    """Request to delete regions and multiplet-expanded line systems."""
+    """Request to delete regions and multiplet-expanded linked lines."""
 
     region_ids: tuple[str, ...] = ()
     line_ids: tuple[str, ...] = ()
@@ -319,7 +319,7 @@ class StructureImpactPreviewUseCase:
     def preview_unlink(
         self, project: StructureImpactProjectPort, request: UnlinkStructureRequest
     ) -> StructureImpactPreview:
-        """Preview clearing all links in one canonical materialized line system."""
+        """Preview clearing all links in one canonical linked-line group."""
         operation = StructureImpactOperation.UNLINK
         if not request.line_id:
             msg = "Unlink line identity cannot be empty."

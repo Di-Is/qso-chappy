@@ -150,7 +150,6 @@ class AnalysisSurfaceCoordinator:
         if self._panel_state is not PanelState.REGION_DETAIL:
             return
         self._commit(policy_for_panel_state(PanelState.OVERVIEW_SUMMARY))
-        self._presentation.refresh_overview()
         self._workspace.focus_bottom_page()
         self._workspace.announce(
             QCoreApplication.translate(

@@ -17,23 +17,23 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from chappy.application.organize import OrganizeOperationUseCase
+from chappy.application.structure.structure_operation_usecase import StructureOperationUseCase
 from chappy.core.absorption_display import format_region_display
 from chappy.core.editing_mode import EditingMode
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.gui.common.range_selector import RangeSelectorWidget
 from chappy.gui.modes.analysis.contracts import BottomPage
 from chappy.gui.modes.analysis.overview.adapters import (
-    OrganizeHistoryRecorder,
-    OrganizeOperationAdapter,
+    StructureHistoryRecorder,
+    StructureOperationAdapter,
 )
 from chappy.gui.modes.analysis.overview.delete_confirmation import confirm_structure_delete
 from chappy.gui.modes.analysis.overview.interaction_coordinator import (
-    OrganizeInteractionCoordinator,
-    OrganizeInteractionPorts,
+    StructureInteractionCoordinator,
+    StructureInteractionPorts,
 )
-from chappy.gui.modes.analysis.overview.operation_controller import OrganizeOperationController
-from chappy.gui.modes.analysis.overview.panel import OrganizeSidePanel
+from chappy.gui.modes.analysis.overview.operation_controller import StructureOperationController
+from chappy.gui.modes.analysis.overview.panel import StructureSidePanel
 from chappy.gui.modes.analysis.overview.review_controller import AnalysisOverviewReviewController
 from chappy.gui.modes.analysis.overview.review_widget import AnalysisOverviewReviewWidget
 from chappy.gui.modes.analysis.overview.summary_panel import AnalysisOverviewSummaryPanel
@@ -115,7 +115,7 @@ class DockLayoutUiParts:
     view_stack: ViewStack | None = None
     mode_context_bar: ModeContextBar | None = None
     status_controller: StatusBarController | None = None
-    organize_history_recorder: OrganizeHistoryRecorder | None = None
+    structure_history_recorder: StructureHistoryRecorder | None = None
     is_velocity_plot_visible: Callable[[], bool] | None = None
     toggle_velocity_plot_optimize: Callable[[], None] | None = None
     refresh_visible_optimize_velocity_overlay: Callable[[], None] | None = None
@@ -164,7 +164,7 @@ class DockLayoutCoordinator(QObject):
         self.identify_panel: IdentifySidePanel | None = None
         self.range_selector: RangeSelectorWidget | None = None
         self.mode_panel: ModeSidePanelHost | None = None
-        self.organize_panel: OrganizeSidePanel | None = None
+        self.structure_panel: StructureSidePanel | None = None
         self.analysis_workspace: AnalysisWorkspace | None = None
         self._overview_review_controller: AnalysisOverviewReviewController | None = None
         self._analysis_bottom_pane: AnalysisBottomPane | None = None
@@ -175,18 +175,18 @@ class DockLayoutCoordinator(QObject):
         self._language_switcher.language_changed.connect(self._on_language_changed)
         self._optimize_integration: OptimizeSpectrumIntegration | None = None
         self._optimize_context_menu = OptimizeContextMenuController(self)
-        self._organize_operations = OrganizeOperationController(
-            operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase()),
+        self._structure_operations = StructureOperationController(
+            operation_adapter=StructureOperationAdapter(StructureOperationUseCase()),
             status_callback=self._emit_status,
             parent=self,
         )
-        self._organize_interactions = OrganizeInteractionCoordinator(
-            operations=self._organize_operations,
-            ports=OrganizeInteractionPorts(
+        self._structure_interactions = StructureInteractionCoordinator(
+            operations=self._structure_operations,
+            ports=StructureInteractionPorts(
                 project_provider=self._current_project,
-                history_recorder_provider=self._organize_history_recorder,
+                history_recorder_provider=self._structure_history_recorder,
                 focus_range_callback=self._focus_wavelength_range,
-                status_callback=self._emit_organize_status,
+                status_callback=self._emit_structure_status,
                 delete_confirmation=lambda impact, project: confirm_structure_delete(
                     self.main_window,
                     impact,
@@ -310,22 +310,17 @@ class DockLayoutCoordinator(QObject):
             raise RuntimeError(msg)
         return view_stack.spectrum_view
 
-    def selected_organize_line_ids(self) -> list[str]:
-        """Return selected organize line IDs."""
-        return list(self._organize_interactions.selection[1])
+    def selected_structure_line_ids(self) -> list[str]:
+        """Return selected structure line IDs."""
+        return list(self._structure_interactions.selection[1])
 
-    def refresh_organize_panel(self, *, preserve_selection: bool) -> None:
-        """Refresh the organize panel.
+    def refresh_structure_panel(self) -> None:
+        """Refresh the structure panel and reapply the current structure selection."""
+        structure_panel = self._required_structure_panel()
 
-        Args:
-            preserve_selection: Whether to restore the previous organize selection after refresh.
-        """
-        organize_panel = self._required_organize_panel()
-
-        selection = self._organize_interactions.selection if preserve_selection else None
-        organize_panel.refresh()
-        if selection is not None:
-            organize_panel.restore_selection(selection[0], selection[1])
+        region_ids, line_ids = self._structure_interactions.selection
+        structure_panel.refresh()
+        structure_panel.restore_selection(region_ids, line_ids)
 
     def refresh_optimize_panel_for_history(self, region_id: str | None) -> None:
         """Refresh the optimize panel after a history operation.
@@ -362,26 +357,26 @@ class DockLayoutCoordinator(QObject):
         review_widget = AnalysisOverviewReviewWidget(
             self._require_analysis_overview_navigation(), mode_panel, summary_panel=summary_panel
         )
-        self.organize_panel = OrganizeSidePanel(
+        self.structure_panel = StructureSidePanel(
             parent=mode_panel,
             navigation=self._require_analysis_overview_navigation(),
             review=review_widget,
             embed_review=False,
         )
         self._overview_review_controller = AnalysisOverviewReviewController(
-            view=self.organize_panel, project_provider=self._current_project, parent=self
+            view=self.structure_panel, project_provider=self._current_project, parent=self
         )
-        self.organize_panel.review_refresh_requested.connect(
+        self.structure_panel.review_refresh_requested.connect(
             self._overview_review_controller.refresh
         )
-        self.organize_panel.region_open_requested.connect(self._open_analysis_region)
-        self.organize_panel.region_delete_requested.connect(self._delete_analysis_region)
-        self.organize_panel.back_requested.connect(self._back_to_analysis_overview)
+        self.structure_panel.region_open_requested.connect(self._open_analysis_region)
+        self.structure_panel.region_delete_requested.connect(self._delete_analysis_region)
+        self.structure_panel.back_requested.connect(self._back_to_analysis_overview)
         review_widget.structure_edit_requested.connect(
             lambda _region_id: self._open_analysis_structure()
         )
         self._overview_review_controller.refresh()
-        self._organize_interactions.connect_panel(self.organize_panel)
+        self._structure_interactions.connect_panel(self.structure_panel)
 
         self.absorber_editor = AbsorberEditor(
             parent=None, project=project, mode_state_store=mode_state_store
@@ -425,7 +420,7 @@ class DockLayoutCoordinator(QObject):
         self.analysis_workspace = AnalysisWorkspace(
             AnalysisWorkspacePages(
                 summary=summary_panel,
-                structure=self.organize_panel,
+                structure=self.structure_panel,
                 detail=self._region_detail_ui.panel,
                 review=review_widget,
                 parameters=self._region_detail_ui.parameter_tree_widget(),
@@ -713,15 +708,15 @@ class DockLayoutCoordinator(QObject):
         if self.identify_panel:
             self.identify_panel.set_project(project)
             self.identify_panel.attach_mode_state_store(self._require_mode_state_store())
-        if self.organize_panel:
-            self.organize_panel.set_project(project)
-            self._organize_interactions.set_panel(self.organize_panel)
-        self._organize_interactions.clear_selection_state()
+        if self.structure_panel:
+            self.structure_panel.set_project(project)
+            self._structure_interactions.set_panel(self.structure_panel)
+        self._structure_interactions.clear_selection_state()
 
     def _focus_wavelength_range(self, min_wave: float, max_wave: float) -> None:
         spectrum_view = self._require_spectrum_view()
         spectrum_view.coordinator.coordinate_range_update(
-            "organize-focus", min_wave, max_wave, record_history=False
+            "structure-focus", min_wave, max_wave, record_history=False
         )
         self._emit_shell_status_message(
             self.tr("Focused spectrum to {minimum:.1f}–{maximum:.1f} Å").format(
@@ -730,27 +725,27 @@ class DockLayoutCoordinator(QObject):
             2000,
         )
 
-    def _handle_organize_line_move(self, target_region_id: str, line_ids: list[str]) -> None:
-        self._sync_organize_panel_port()
-        self._organize_interactions.handle_line_move(target_region_id, line_ids)
+    def _handle_structure_line_move(self, target_region_id: str, line_ids: list[str]) -> None:
+        self._sync_structure_panel_port()
+        self._structure_interactions.handle_line_move(target_region_id, line_ids)
 
-    def _execute_organize_merge(self) -> bool:
-        self._sync_organize_panel_port()
-        return self._organize_interactions.execute_merge()
+    def _execute_structure_merge(self) -> bool:
+        self._sync_structure_panel_port()
+        return self._structure_interactions.execute_merge()
 
-    def _execute_organize_split(self) -> bool:
-        self._sync_organize_panel_port()
-        return self._organize_interactions.execute_split()
+    def _execute_structure_split(self) -> bool:
+        self._sync_structure_panel_port()
+        return self._structure_interactions.execute_split()
 
-    def _execute_organize_delete(self) -> bool:
-        self._sync_organize_panel_port()
-        return self._organize_interactions.execute_delete()
+    def _execute_structure_delete(self) -> bool:
+        self._sync_structure_panel_port()
+        return self._structure_interactions.execute_delete()
 
     def _delete_analysis_region(self, region_id: str) -> None:
-        """Delete one review-table region through the shared organize delete path."""
-        self._sync_organize_panel_port()
-        self._organize_interactions.handle_selection([region_id], [])
-        self._organize_interactions.execute_delete()
+        """Delete one review-table region through the shared structure delete path."""
+        self._sync_structure_panel_port()
+        self._structure_interactions.handle_selection([region_id], [])
+        self._structure_interactions.execute_delete()
 
     def _open_analysis_region(self, region_id: str) -> None:
         """Forward an explicit Overview intent to the Analysis surface owner."""
@@ -776,17 +771,17 @@ class DockLayoutCoordinator(QObject):
             raise RuntimeError(msg)
         callback()
 
-    def _sync_organize_panel_port(self) -> None:
-        """Synchronize the current organize panel reference with the mode coordinator."""
-        if self.organize_panel is not None:
-            self._organize_interactions.set_panel(self.organize_panel)
+    def _sync_structure_panel_port(self) -> None:
+        """Synchronize the current structure panel reference with the mode coordinator."""
+        if self.structure_panel is not None:
+            self._structure_interactions.set_panel(self.structure_panel)
 
-    def _required_organize_panel(self) -> OrganizeSidePanel:
-        """Return the required organize panel or fail on missing composition."""
-        if self.organize_panel is None:
-            msg = "Dock layout coordinator requires a organize panel."
+    def _required_structure_panel(self) -> StructureSidePanel:
+        """Return the required structure panel or fail on missing composition."""
+        if self.structure_panel is None:
+            msg = "Dock layout coordinator requires a structure panel."
             raise RuntimeError(msg)
-        return self.organize_panel
+        return self.structure_panel
 
     def _require_region_detail_ui(self) -> RegionDetailUi:
         """Return the required Region Detail UI facade or fail on missing composition."""
@@ -801,10 +796,10 @@ class DockLayoutCoordinator(QObject):
         project = provider() if provider is not None else self.main_window.current_project
         return project if isinstance(project, SpectroscopyProject) else None
 
-    def _organize_history_recorder(self) -> OrganizeHistoryRecorder | None:
-        """Return the organize history recorder exposed by the main window."""
-        candidate = self._ui_parts.organize_history_recorder or self.main_window._history_recorder
-        if isinstance(candidate, OrganizeHistoryRecorder):
+    def _structure_history_recorder(self) -> StructureHistoryRecorder | None:
+        """Return the structure history recorder exposed by the main window."""
+        candidate = self._ui_parts.structure_history_recorder or self.main_window._history_recorder
+        if isinstance(candidate, StructureHistoryRecorder):
             return candidate
         msg = "Main window history recorder does not implement Analysis Structure recording."
         raise RuntimeError(msg)
@@ -818,10 +813,10 @@ class DockLayoutCoordinator(QObject):
             message = f"{message} {undo_hint_text}"
         self._emit_shell_status_message(message, timeout_ms)
 
-    def _emit_organize_status(
+    def _emit_structure_status(
         self, message: str, timeout_ms: int = 2500, undo_hint: bool = False
     ) -> None:
-        """Emit a organize status message from the mode coordinator."""
+        """Emit a structure status message from the mode coordinator."""
         self._emit_status(message, timeout_ms, undo_hint=undo_hint)
 
     def _handle_optimize_export_feedback(self, message: str, timeout_ms: int, level: str) -> None:
@@ -847,8 +842,8 @@ class DockLayoutCoordinator(QObject):
             return
         self.mode_panel.activate_mode(mode)
 
-        if mode == EditingMode.ANALYSIS and self.organize_panel and self._region_detail_ui:
-            self._organize_interactions.refresh_active_panel()
+        if mode == EditingMode.ANALYSIS and self.structure_panel and self._region_detail_ui:
+            self._structure_interactions.refresh_active_panel()
             self._region_detail_ui.refresh()
             self.setup_optimize_integration()
 

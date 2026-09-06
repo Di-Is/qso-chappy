@@ -20,7 +20,7 @@ from chappy.application.identify import (
 )
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.atomic_data import AtomicLine, AtomicLineData
-from chappy.core.identify_state import CandidateLine, IdentifySessionState
+from chappy.core.identify_state import TemporaryLine, IdentifySessionState
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.gui.modes.identify.coordinator import IdentifyModeCoordinator
 from chappy.gui.modes.identify.workflows.registration_workflow import (
@@ -130,8 +130,8 @@ def _registration_messages() -> IdentifyRegistrationWorkflowMessages:
     """Return deterministic registration workflow messages."""
     return IdentifyRegistrationWorkflowMessages(
         cannot_register_without_project="No project",
-        no_candidates_to_register="No candidates",
-        candidate_lines_could_not_register="Failed",
+        no_temporary_lines_to_register="No candidates",
+        temporary_lines_could_not_register="Failed",
         registered_template="Registered {count}",
         registered_details_template=" ({details})",
         new_regions_template="{count} new region(s)",
@@ -139,6 +139,7 @@ def _registration_messages() -> IdentifyRegistrationWorkflowMessages:
         detail_separator=", ",
         multi_overlap_warning="Overlaps multiple existing regions.",
         missing_atomic_template="Missing {count}",
+        undo_hint="Undo (Ctrl+Z) reverts this registration.",
         unknown="Unknown",
     )
 
@@ -188,10 +189,12 @@ def _add_existing_region_with_lines(
         project.absorption_lines[line_id] = absorption_line
 
 
-def _make_candidate_line(system_id: str, lambda_min: float, lambda_max: float) -> CandidateLine:
-    """Create a candidate line for testing."""
-    return CandidateLine(
-        system_id=system_id,
+def _make_temporary_line(
+    temporary_line_id: str, lambda_min: float, lambda_max: float
+) -> TemporaryLine:
+    """Create a temporary line for testing."""
+    return TemporaryLine(
+        temporary_line_id=temporary_line_id,
         species="Test",
         lambda_min=lambda_min,
         lambda_max=lambda_max,
@@ -212,7 +215,7 @@ def test_multiplet_region_discrete_lines_no_overlap() -> None:
     """Verify that wavelengths between discrete lines are NOT considered overlapping.
 
     Given a region with lines at 1000Å and 1200Å (discrete, not continuous),
-    a new candidate at 1100Å (between them) should be treated as a new region.
+    a new temporary line at 1100Å (between them) should be treated as a new region.
     """
     project = _create_project()
     coordinator = _build_coordinator(project)
@@ -222,17 +225,17 @@ def test_multiplet_region_discrete_lines_no_overlap() -> None:
         project, "region-1", [("line-1", (995.0, 1005.0)), ("line-2", (1195.0, 1205.0))]
     )
 
-    # Create candidate at 1100Å (between the two lines, no overlap)
-    candidate = _make_candidate_line("candidate-1", 1095.0, 1105.0)
+    # Create a temporary line at 1100Å (between the two lines, no overlap)
+    temporary_line = _make_temporary_line("candidate-1", 1095.0, 1105.0)
 
     # Call build_region_previews
-    previews = coordinator.build_region_previews([candidate])
+    previews = coordinator.build_region_previews([temporary_line])
 
     # Should create a new region (not add to existing)
     assert len(previews) == 1
     preview = previews[0]
     assert preview.existing_group_id is None, (
-        "Candidate between discrete lines should NOT be merged into existing region"
+        "Temporary line between discrete lines should NOT be merged into existing region"
     )
     assert preview.group_id.startswith("preview-")
 
@@ -241,7 +244,7 @@ def test_multiplet_region_actual_overlap_detected() -> None:
     """Verify that actual wavelength overlap IS detected.
 
     Given a region with a line at 1000Å,
-    a new candidate at 1002Å (overlapping) should be added to the existing region.
+    a new temporary line at 1002Å (overlapping) should be added to the existing region.
     """
     project = _create_project()
     coordinator = _build_coordinator(project)
@@ -249,17 +252,17 @@ def test_multiplet_region_actual_overlap_detected() -> None:
     # Add existing region with one line: 995-1005Å
     _add_existing_region_with_lines(project, "region-1", [("line-1", (995.0, 1005.0))])
 
-    # Create candidate at 1002Å (overlapping with existing line)
-    candidate = _make_candidate_line("candidate-1", 1000.0, 1008.0)
+    # Create a temporary line at 1002Å (overlapping with existing line)
+    temporary_line = _make_temporary_line("candidate-1", 1000.0, 1008.0)
 
     # Call build_region_previews
-    previews = coordinator.build_region_previews([candidate])
+    previews = coordinator.build_region_previews([temporary_line])
 
     # Should add to existing region
     assert len(previews) == 1
     preview = previews[0]
     assert preview.existing_group_id == "region-1", (
-        "Candidate overlapping with existing line should be merged into existing region"
+        "Temporary line overlapping with existing line should be merged into existing region"
     )
     assert preview.group_id.startswith("add-to-")
 
@@ -275,19 +278,19 @@ def test_single_line_region_backward_compatible() -> None:
     # Add existing region with single line: 995-1005Å
     _add_existing_region_with_lines(project, "region-1", [("line-1", (995.0, 1005.0))])
 
-    # Create candidate NOT overlapping
-    candidate_no_overlap = _make_candidate_line("candidate-1", 1100.0, 1110.0)
+    # Create a non-overlapping temporary line
+    temporary_line_no_overlap = _make_temporary_line("candidate-1", 1100.0, 1110.0)
 
     # Should NOT be merged
-    previews = coordinator.build_region_previews([candidate_no_overlap])
+    previews = coordinator.build_region_previews([temporary_line_no_overlap])
     assert len(previews) == 1
     assert previews[0].existing_group_id is None
 
-    # Create candidate overlapping
-    candidate_overlap = _make_candidate_line("candidate-2", 998.0, 1002.0)
+    # Create an overlapping temporary line
+    temporary_line_overlap = _make_temporary_line("candidate-2", 998.0, 1002.0)
 
     # Should be merged
-    previews = coordinator.build_region_previews([candidate_overlap])
+    previews = coordinator.build_region_previews([temporary_line_overlap])
     assert len(previews) == 1
     assert previews[0].existing_group_id == "region-1"
 
@@ -296,7 +299,7 @@ def test_multiple_discrete_lines_all_checked() -> None:
     """Verify overlap is checked against ALL lines in a region, not just first/last.
 
     Given a region with lines at 1000Å, 1100Å, and 1200Å,
-    a candidate overlapping with the middle line (1100Å) should be detected.
+    a temporary line overlapping with the middle line (1100Å) should be detected.
     """
     project = _create_project()
     coordinator = _build_coordinator(project)
@@ -312,14 +315,14 @@ def test_multiple_discrete_lines_all_checked() -> None:
         ],
     )
 
-    # Create candidate overlapping with middle line only
-    candidate = _make_candidate_line("candidate-1", 1098.0, 1108.0)
+    # Create a temporary line overlapping with the middle line only
+    temporary_line = _make_temporary_line("candidate-1", 1098.0, 1108.0)
 
     # Call build_region_previews
-    previews = coordinator.build_region_previews([candidate])
+    previews = coordinator.build_region_previews([temporary_line])
 
     # Should detect overlap with middle line
     assert len(previews) == 1
     assert previews[0].existing_group_id == "region-1", (
-        "Candidate overlapping with middle line should be detected"
+        "Temporary line overlapping with middle line should be detected"
     )

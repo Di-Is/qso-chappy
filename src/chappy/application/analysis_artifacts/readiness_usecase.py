@@ -14,13 +14,10 @@ class DeriveAnalysisReadinessUseCase:
     """Derive one exclusive readiness value from authoritative facts."""
 
     def execute(self, source: AnalysisReadinessSourcePort, region_id: str) -> AnalysisReadiness:
-        """Return readiness in prerequisite, artifact, freshness order."""
-        if not source.is_region_analysis_capable(region_id):
-            return AnalysisReadiness.UNAVAILABLE
-
+        """Return readiness in artifact and freshness order."""
         region_state = source.region_analysis_state(region_id)
         if region_state is None:
-            return AnalysisReadiness.UNAVAILABLE
+            return AnalysisReadiness.NOT_ANALYZED
 
         artifact = region_state.artifact
         if artifact is None:

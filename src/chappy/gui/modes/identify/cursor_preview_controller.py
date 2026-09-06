@@ -85,12 +85,6 @@ class IdentifyCursorPreviewController:
         """Return whether identify preview lock is active."""
         return self._preview_always_on
 
-    def velocity_verification_wavelength(self) -> float | None:
-        """Return the Shift-preview wavelength used to enter velocity verification."""
-        if self._cached_preview_payload is None:
-            return None
-        return self._cached_preview_payload.get("velocity_verification_wavelength")
-
     def handle_cursor_position(self, wavelength: float, _flux: float, modifiers: int) -> None:
         """Update ghost overlays based on the current cursor position."""
         logger.debug(
@@ -144,7 +138,6 @@ class IdentifyCursorPreviewController:
             "modifiers": modifiers if not preview_forced else self._apply_shift_mask(modifiers),
         }
         if shift_pressed:
-            preview_payload["velocity_verification_wavelength"] = wavelength
             preview_payload["hint_text"] = self._ports.preview_hint_provider()
         self._apply_cursor_preview(preview_payload)
 
@@ -191,8 +184,10 @@ class IdentifyCursorPreviewController:
         wavelength, modifiers = self._cursor_state
         self.handle_cursor_position(wavelength, 0.0, modifiers)
 
-    def note_manual_candidate_position(self, observed_wavelength: float, modifiers: int) -> None:
-        """Remember the cursor position after a shift-click manual candidate action."""
+    def note_manual_temporary_line_position(
+        self, observed_wavelength: float, modifiers: int
+    ) -> None:
+        """Remember the cursor position after a shift-click manual temporary-line action."""
         if self._ports.identify_mode_active_provider() and modifier_active(
             modifiers, Qt.KeyboardModifier.ShiftModifier
         ):

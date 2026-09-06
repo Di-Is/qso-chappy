@@ -117,10 +117,11 @@ def test_identify_velocity_capture_shows_overlay_headers_subplot_and_annotations
             operations_by_scope = window.property("doc.operationsByScopeKey")
             assert isinstance(operations_by_scope, dict)
             assert (
-                "Hold Shift over an absorption feature and press V while the all-species "
-                "preview is visible to verify that exact position in the Velocity Plot. "
-                "Without a valid preview, press V and then select the velocity origin in "
-                "the spectrum." in operations_by_scope["identify"]
+                "Place the cursor over an absorption feature and press V to verify that "
+                "exact position in the Velocity Plot; hold Shift first when you want to "
+                "see the all-species preview before deciding. Right-clicking the spectrum "
+                "and selecting [Show Velocity Plot (V)] opens the plot at the position you "
+                "right-clicked." in operations_by_scope["identify"]
             )
 
             overlay = window.findChild(SpectrumVelocityOverlayWidget, "velocityPlotContainer")

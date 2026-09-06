@@ -63,7 +63,7 @@ class ModeContextColors:
     """Mode-tinted surface colors.
 
     The context bar no longer tints per mode (its info pill uses a neutral
-    surface); only the start-mode organize overlay keeps a mode tint.
+    surface); only the start-mode structure overlay keeps a mode tint.
     """
 
     ORGANIZE = "#3C4248"

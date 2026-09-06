@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Literal, Protocol
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from chappy.application.identify import CandidateLineSnapshot
+    from chappy.application.identify import TemporaryLineSnapshot
 
     from .models import ChangeSet
     from .resolution_commands import ResolutionHistoryPort
@@ -236,8 +236,8 @@ class AbsorberComponentGroupAssignment:
 
 
 @dataclass(frozen=True, slots=True)
-class OrganizeMoveHistoryPayload:
-    """Complete exact before/after payload for one organize move."""
+class StructureMoveHistoryPayload:
+    """Complete exact before/after payload for one structure move."""
 
     expanded_line_ids: tuple[str, ...]
     source_assignments: tuple[LineRegionAssignment, ...]
@@ -254,7 +254,7 @@ class OrganizeMoveHistoryPayload:
         """Return the one destination identity encoded by all target assignments."""
         region_ids = {assignment.region_id for assignment in self.destination_assignments}
         if len(region_ids) != 1 or None in region_ids:
-            msg = "Organize move payload does not encode one destination region."
+            msg = "Structure move payload does not encode one destination region."
             raise ValueError(msg)
         return next(region_id for region_id in region_ids if region_id is not None)
 
@@ -291,7 +291,7 @@ class OrganizeMoveHistoryPayload:
 
 
 @dataclass(frozen=True, slots=True)
-class OrganizeLineTopologySnapshot:
+class StructureLineTopologySnapshot:
     """Exact structure-owned topology for one absorption line."""
 
     line_id: str
@@ -301,18 +301,18 @@ class OrganizeLineTopologySnapshot:
 
 
 @dataclass(frozen=True, slots=True)
-class OrganizeStructureStateSnapshot:
+class StructureStateSnapshot:
     """Exact ordered region, mask, and absorber-group topology at one instant."""
 
     regions: tuple[AbsorptionRegionSnapshot, ...]
-    lines: tuple[OrganizeLineTopologySnapshot, ...]
+    lines: tuple[StructureLineTopologySnapshot, ...]
     masks: tuple[MaskDefinitionSnapshot, ...]
     component_groups: tuple[AbsorberComponentGroupAssignment, ...]
 
 
 @dataclass(frozen=True, slots=True)
-class OrganizeDeleteModelHistorySnapshot:
-    """Model topology removed as part of one organize delete command."""
+class StructureDeleteModelHistorySnapshot:
+    """Model topology removed as part of one structure delete command."""
 
     components: tuple[AbsorberComponentSnapshot, ...]
     component_indices: tuple[int, ...]
@@ -330,7 +330,7 @@ class MultipletLinkSnapshot:
 
 
 @dataclass(frozen=True, slots=True)
-class OrganizeUnlinkHistoryPayload:
+class StructureUnlinkHistoryPayload:
     """Exact before/after line-link topology for one unlink command."""
 
     line_ids: tuple[str, ...]
@@ -414,8 +414,8 @@ class ModelHistoryPort(Protocol):
         ...
 
 
-class OrganizeHistoryPort(Protocol):
-    """Port for applying organize operation history snapshots."""
+class StructureHistoryPort(Protocol):
+    """Port for applying structure operation history snapshots."""
 
     def restore_absorption_regions(
         self, snapshots: tuple[AbsorptionRegionSnapshot, ...]
@@ -505,18 +505,18 @@ class OrganizeHistoryPort(Protocol):
 class IdentifyHistoryPort(Protocol):
     """Port for applying identify operation history snapshots."""
 
-    def restore_identify_candidates(
-        self, snapshots: tuple[CandidateLineSnapshot, ...]
+    def restore_identify_temporary_lines(
+        self, snapshots: tuple[TemporaryLineSnapshot, ...]
     ) -> ChangeSet:
-        """Restore identify candidate lines from typed snapshots."""
+        """Restore identify temporary lines from typed snapshots."""
         ...
 
-    def remove_identify_candidates(self, system_ids: tuple[str, ...]) -> ChangeSet:
-        """Remove identify candidate lines by system ID."""
+    def remove_identify_temporary_lines(self, temporary_line_ids: tuple[str, ...]) -> ChangeSet:
+        """Remove identify temporary lines by line ID."""
         ...
 
-    def clear_identify_candidates(self) -> ChangeSet:
-        """Clear all identify candidate lines."""
+    def clear_identify_temporary_lines(self) -> ChangeSet:
+        """Clear all identify temporary lines."""
         ...
 
     def update_identify_region_analysis_ranges(self, region_ids: tuple[str, ...]) -> ChangeSet:
@@ -530,7 +530,7 @@ class HistoryCommandContext:
 
     range_port: RangeHistoryPort | None = None
     model_port: ModelHistoryPort | None = None
-    organize_port: OrganizeHistoryPort | None = None
+    structure_port: StructureHistoryPort | None = None
     identify_port: IdentifyHistoryPort | None = None
     continuum_port: ContinuumHistoryPort | None = None
     resolution_port: ResolutionHistoryPort | None = None
@@ -549,12 +549,12 @@ class HistoryCommandContext:
             raise RuntimeError(msg)
         return self.model_port
 
-    def require_organize_port(self) -> OrganizeHistoryPort:
-        """Return the required organize history port."""
-        if self.organize_port is None:
-            msg = "Organize history port is required."
+    def require_structure_port(self) -> StructureHistoryPort:
+        """Return the required structure history port."""
+        if self.structure_port is None:
+            msg = "Structure history port is required."
             raise RuntimeError(msg)
-        return self.organize_port
+        return self.structure_port
 
     def require_identify_port(self) -> IdentifyHistoryPort:
         """Return the required identify history port."""

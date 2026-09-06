@@ -20,7 +20,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     InteractionStateSnapshot,
     MaskSelectionContext,
     RectZoomContext,
-    VelocityContext,
 )
 
 
@@ -36,45 +35,21 @@ class _MaskSnapshotController:
         self.snapshots.append(snapshot)
 
 
-class _VelocitySnapshotController:
-    """Record velocity snapshots applied by the coordinator."""
-
-    def __init__(self) -> None:
-        """Initialize the controller."""
-        self.snapshots: list[InteractionStateSnapshot[VelocityContext]] = []
-
-    def apply_snapshot(
-        self,
-        snapshot: InteractionStateSnapshot[VelocityContext],
-        *,
-        snapshot_callback: Callable[[InteractionStateSnapshot[VelocityContext]], None],
-    ) -> None:
-        """Record and publish the applied snapshot."""
-        self.snapshots.append(snapshot)
-        snapshot_callback(snapshot)
-
-
 def _create_coordinator() -> tuple[
-    SpectrumInteractionStateCoordinator,
-    list[SpectrumInteractionSnapshot],
-    _MaskSnapshotController,
-    _VelocitySnapshotController,
+    SpectrumInteractionStateCoordinator, list[SpectrumInteractionSnapshot], _MaskSnapshotController
 ]:
     """Create a coordinator with recording dependencies."""
     emissions: list[SpectrumInteractionSnapshot] = []
     mask_controller = _MaskSnapshotController()
-    velocity_controller = _VelocitySnapshotController()
     coordinator = SpectrumInteractionStateCoordinator(
-        snapshot_publisher=emissions.append,
-        mask_controller=mask_controller,
-        velocity_controller=velocity_controller,
+        snapshot_publisher=emissions.append, mask_controller=mask_controller
     )
-    return coordinator, emissions, mask_controller, velocity_controller
+    return coordinator, emissions, mask_controller
 
 
 def test_rect_zoom_snapshot_is_cached_and_published() -> None:
     """Rect zoom snapshots should update latest state and notify observers."""
-    coordinator, emissions, mask_controller, velocity_controller = _create_coordinator()
+    coordinator, emissions, mask_controller = _create_coordinator()
     snapshot = InteractionStateSnapshot(
         interaction_id=InteractionId("rect"),
         channel=InteractionChannel.RECT_ZOOM,
@@ -89,12 +64,11 @@ def test_rect_zoom_snapshot_is_cached_and_published() -> None:
     assert coordinator.latest_snapshot == snapshot
     assert emissions == [snapshot]
     assert mask_controller.snapshots == []
-    assert velocity_controller.snapshots == []
 
 
 def test_absorber_drag_snapshot_is_cached_and_published() -> None:
     """Absorber drag snapshots should update latest state and notify observers."""
-    coordinator, emissions, _mask_controller, _velocity_controller = _create_coordinator()
+    coordinator, emissions, _mask_controller = _create_coordinator()
     snapshot = InteractionStateSnapshot(
         interaction_id=InteractionId("absorber"),
         channel=InteractionChannel.ABSORBER_DRAG,
@@ -117,7 +91,7 @@ def test_absorber_drag_snapshot_is_cached_and_published() -> None:
 
 def test_continuum_snapshot_is_cached_and_published() -> None:
     """Continuum snapshots should update latest state and notify observers."""
-    coordinator, emissions, _mask_controller, _velocity_controller = _create_coordinator()
+    coordinator, emissions, _mask_controller = _create_coordinator()
     snapshot = InteractionStateSnapshot(
         interaction_id=InteractionId("continuum"),
         channel=InteractionChannel.CONTINUUM,
@@ -141,7 +115,7 @@ def test_continuum_snapshot_is_cached_and_published() -> None:
 
 def test_mask_snapshot_is_cached_and_delegated() -> None:
     """Mask snapshots should be handled by the mask controller."""
-    coordinator, emissions, mask_controller, velocity_controller = _create_coordinator()
+    coordinator, emissions, mask_controller = _create_coordinator()
     snapshot = InteractionStateSnapshot(
         interaction_id=InteractionId("mask"),
         channel=InteractionChannel.MASK_SELECTION,
@@ -165,36 +139,11 @@ def test_mask_snapshot_is_cached_and_delegated() -> None:
     assert coordinator.latest_snapshot == snapshot
     assert emissions == []
     assert mask_controller.snapshots == [snapshot]
-    assert velocity_controller.snapshots == []
-
-
-def test_velocity_snapshot_is_cached_and_delegated_with_publisher() -> None:
-    """Velocity snapshots should be handled by the velocity controller."""
-    coordinator, emissions, mask_controller, velocity_controller = _create_coordinator()
-    snapshot = InteractionStateSnapshot(
-        interaction_id=InteractionId("velocity"),
-        channel=InteractionChannel.VELOCITY,
-        phase=InteractionPhase.ARMED,
-        context=VelocityContext(
-            target_wavelength=5000.0,
-            confirmed_wavelength=None,
-            trigger="keyboard",
-            modifiers=0,
-            cancel_reason=None,
-        ),
-    )
-
-    coordinator.apply_interaction_state_snapshot(snapshot)
-
-    assert coordinator.latest_snapshot == snapshot
-    assert emissions == [snapshot]
-    assert mask_controller.snapshots == []
-    assert velocity_controller.snapshots == [snapshot]
 
 
 def test_clear_latest_snapshot_resets_cached_state() -> None:
     """Latest snapshot cache should be explicitly clearable."""
-    coordinator, _emissions, _mask_controller, _velocity_controller = _create_coordinator()
+    coordinator, _emissions, _mask_controller = _create_coordinator()
     snapshot = InteractionStateSnapshot(
         interaction_id=InteractionId("rect"),
         channel=InteractionChannel.RECT_ZOOM,
@@ -223,24 +172,14 @@ def test_clear_latest_snapshot_resets_cached_state() -> None:
             ),
         ),
         (
-            InteractionChannel.VELOCITY,
-            RectZoomContext(start=(4100.0, 0.2), current=None, end=None, bounds=None),
-        ),
-        (
             InteractionChannel.CONTINUUM,
-            VelocityContext(
-                target_wavelength=5000.0,
-                confirmed_wavelength=None,
-                trigger="keyboard",
-                modifiers=0,
-                cancel_reason=None,
-            ),
+            RectZoomContext(start=(4100.0, 0.2), current=None, end=None, bounds=None),
         ),
     ],
 )
 def test_channel_context_mismatch_fails_fast(channel: InteractionChannel, context: object) -> None:
     """Mismatched channel/context pairs should fail fast."""
-    coordinator, _emissions, _mask_controller, _velocity_controller = _create_coordinator()
+    coordinator, _emissions, _mask_controller = _create_coordinator()
     snapshot = InteractionStateSnapshot(
         interaction_id=InteractionId("mismatch"),
         channel=channel,

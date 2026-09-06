@@ -8,6 +8,9 @@ consumers that were previously hardcoded independently and drifted apart.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import pytest
 from PySide6.QtWidgets import QPushButton
 
 from chappy.core.editing_mode import MODE_WORKFLOW_ORDER, EditingMode
@@ -16,9 +19,15 @@ from chappy.gui.shell.actions.registry import ActionRegistry
 from chappy.gui.shell.mode_context_bar import ModeContextBar
 from chappy.gui.shell.shortcuts import SHORTCUTS
 from chappy.gui.shell.tutorial_chapters import (
-    build_full_walkthrough_chapters,
-    build_short_walkthrough_chapters,
+    build_advanced_walkthrough_chapters,
+    build_essential_walkthrough_chapters,
 )
+from tests.helpers.tutorial_chapters import all_walkthrough_chapters
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from chappy.gui.common.tutorial import TutorialChapter
 
 _MODE_ACTION_BY_MODE: dict[EditingMode, ShellActionId] = {
     EditingMode.IDENTIFY: ShellActionId.IDENTIFY_MODE,
@@ -67,22 +76,27 @@ def test_mode_menu_follows_workflow_order() -> None:
     assert mode_menu.entries == expected_order
 
 
-def test_full_walkthrough_chapters_follow_workflow_order() -> None:
+def test_walkthrough_chapters_follow_workflow_order() -> None:
     mode_values = {mode.value for mode in MODE_WORKFLOW_ORDER}
     chapter_ids = [
         chapter.chapter_id
-        for chapter in build_full_walkthrough_chapters()
+        for chapter in all_walkthrough_chapters()
         if chapter.chapter_id in mode_values
     ]
 
     assert chapter_ids == [mode.value for mode in MODE_WORKFLOW_ORDER]
 
 
-def test_short_walkthrough_destinations_follow_workflow_order() -> None:
+@pytest.mark.parametrize(
+    "build_chapters", [build_essential_walkthrough_chapters, build_advanced_walkthrough_chapters]
+)
+def test_walkthrough_destinations_follow_workflow_order(
+    build_chapters: Callable[[], tuple[TutorialChapter, ...]],
+) -> None:
     modes = list(
         dict.fromkeys(
             chapter.destination.mode
-            for chapter in build_short_walkthrough_chapters()
+            for chapter in build_chapters()
             if chapter.destination.mode is not None
         )
     )

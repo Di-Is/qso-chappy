@@ -9,14 +9,14 @@ import pytest
 from chappy.application.identify import (
     AtomicIdentifyRegistrationUseCase,
     AtomicRegisterSelectedLinesRequest,
-    CandidateLineSnapshot,
+    TemporaryLineSnapshot,
     ExistingRegionSnapshot,
     IdentifyRegistrationImpactPreviewUseCase,
     IdentifyRegistrationImpactRequest,
 )
 from chappy.application.structure import StructureMutationOutcome
 from chappy.core.analysis import AnalysisRevision, RegionAnalysisState
-from chappy.core.identify_state import CandidateLine, CandidateLineContext, IdentifySessionState
+from chappy.core.identify_state import TemporaryLine, TemporaryLineContext, IdentifySessionState
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.core.velocity_ranges import (
     DEFAULT_IDENTIFY_MULTIPLET_GROUPING_TOLERANCE,
@@ -34,10 +34,10 @@ class _RuntimeState:
     model_components: tuple[int, ...]
     masks: tuple[int, ...]
     modified: object
-    candidates: tuple[tuple[str, int, CandidateLineSnapshot], ...]
+    temporary_lines: tuple[tuple[str, int, TemporaryLineSnapshot], ...]
 
 
-def _add_candidate(
+def _add_temporary_line(
     session: IdentifySessionState,
     *,
     species: str = "C IV",
@@ -45,14 +45,14 @@ def _add_candidate(
     lambda_max: float = 1005.0,
     rest_wavelength: float = 1000.0,
     tie_group_key: str = "",
-) -> CandidateLine:
-    """Create one live candidate with reproducible scientific context."""
-    return session.add_candidate_line(
+) -> TemporaryLine:
+    """Create one live temporary line with reproducible scientific context."""
+    return session.add_temporary_line(
         species,
         lambda_min,
         lambda_max,
         creation_method="manual",
-        context=CandidateLineContext(
+        context=TemporaryLineContext(
             line_id=f"atomic-{species}-{rest_wavelength}",
             rest_wavelength=rest_wavelength,
             center_z=0.0,
@@ -66,24 +66,24 @@ def _add_candidate(
     )
 
 
-def _candidate_snapshot(candidate: CandidateLine) -> CandidateLineSnapshot:
-    """Build the immutable candidate source used by application requests."""
-    return CandidateLineSnapshot(
-        system_id=candidate.system_id,
-        species=candidate.species,
-        lambda_min=candidate.lambda_min,
-        lambda_max=candidate.lambda_max,
-        creation_method=candidate.creation_method,
-        line_id=candidate.line_id,
-        rest_wavelength=candidate.rest_wavelength,
-        center_z=candidate.center_z,
-        multiplet_id=candidate.multiplet_id,
-        multiplet_label=candidate.multiplet_label,
-        transition_name=candidate.transition_name,
-        oscillator_strength=candidate.oscillator_strength,
-        gamma_value=candidate.gamma_value,
-        analysis_half_width=LineAnalysisHalfWidth(candidate.analysis_half_width_kms),
-        tie_group_key=candidate.tie_group_key,
+def _temporary_line_snapshot(temporary_line: TemporaryLine) -> TemporaryLineSnapshot:
+    """Build the immutable temporary line source used by application requests."""
+    return TemporaryLineSnapshot(
+        temporary_line_id=temporary_line.temporary_line_id,
+        species=temporary_line.species,
+        lambda_min=temporary_line.lambda_min,
+        lambda_max=temporary_line.lambda_max,
+        creation_method=temporary_line.creation_method,
+        line_id=temporary_line.line_id,
+        rest_wavelength=temporary_line.rest_wavelength,
+        center_z=temporary_line.center_z,
+        multiplet_id=temporary_line.multiplet_id,
+        multiplet_label=temporary_line.multiplet_label,
+        transition_name=temporary_line.transition_name,
+        oscillator_strength=temporary_line.oscillator_strength,
+        gamma_value=temporary_line.gamma_value,
+        analysis_half_width=LineAnalysisHalfWidth(temporary_line.analysis_half_width_kms),
+        tie_group_key=temporary_line.tie_group_key,
     )
 
 
@@ -107,13 +107,13 @@ def _existing_regions(project: SpectroscopyProject) -> tuple[ExistingRegionSnaps
 def _impact_request(
     project: SpectroscopyProject,
     session: IdentifySessionState,
-    candidates: tuple[CandidateLineSnapshot, ...],
+    temporary_lines: tuple[TemporaryLineSnapshot, ...],
 ) -> IdentifyRegistrationImpactRequest:
     """Build one exact, production-shaped read-only preview request."""
     return IdentifyRegistrationImpactRequest(
         project=project,
         session=session,
-        candidates=candidates,
+        temporary_lines=temporary_lines,
         existing_regions=_existing_regions(project),
         region_line_memberships=tuple(
             (region.region_id, tuple(region.line_ids))
@@ -133,7 +133,7 @@ def _atomic_request(
     return AtomicRegisterSelectedLinesRequest(
         project=request.project,
         session=request.session,
-        candidates=request.candidates,
+        temporary_lines=request.temporary_lines,
         existing_regions=request.existing_regions,
         region_line_memberships=request.region_line_memberships,
         multiplet_grouping_tolerance=request.multiplet_grouping_tolerance,
@@ -156,15 +156,19 @@ def _runtime_state(project: SpectroscopyProject, session: IdentifySessionState) 
         model_components=tuple(id(component) for component in project.model.components),
         masks=tuple(id(mask) for mask in project.model.mask_definitions),
         modified=project.modified,
-        candidates=tuple(
-            (candidate.system_id, id(candidate), _candidate_snapshot(candidate))
-            for candidate in session.candidate_lines
+        temporary_lines=tuple(
+            (
+                temporary_line.temporary_line_id,
+                id(temporary_line),
+                _temporary_line_snapshot(temporary_line),
+            )
+            for temporary_line in session.temporary_lines
         ),
     )
 
 
 def _project_with_existing_region() -> tuple[SpectroscopyProject, str]:
-    """Create a project with one existing region overlapping test candidates."""
+    """Create a project with one existing region overlapping test temporary lines."""
     project = SpectroscopyProject()
     line = project.add_absorption_line(
         species="C IV",
@@ -188,17 +192,19 @@ def test_existing_region_preview_is_typed_and_side_effect_free() -> None:
     """Preview reports existing-region impact without touching any runtime owner."""
     project, region_id = _project_with_existing_region()
     session = project.identify_state
-    candidate = _add_candidate(session)
-    request = _impact_request(project, session, (_candidate_snapshot(candidate),))
+    temporary_line = _add_temporary_line(session)
+    request = _impact_request(project, session, (_temporary_line_snapshot(temporary_line),))
     before = _runtime_state(project, session)
 
     plan = IdentifyRegistrationImpactPreviewUseCase().preview(request)
 
     assert plan.impact.mutation_outcome is StructureMutationOutcome.CHANGED
-    assert plan.impact.normalized_system_ids == (candidate.system_id,)
-    assert plan.impact.registerable_system_ids == (candidate.system_id,)
-    assert plan.impact.rejected_system_ids == ()
-    assert tuple(item.system_id for item in plan.registration_requests) == (candidate.system_id,)
+    assert plan.impact.normalized_temporary_line_ids == (temporary_line.temporary_line_id,)
+    assert plan.impact.registerable_temporary_line_ids == (temporary_line.temporary_line_id,)
+    assert plan.impact.rejected_temporary_line_ids == ()
+    assert tuple(item.temporary_line_id for item in plan.registration_requests) == (
+        temporary_line.temporary_line_id,
+    )
     assert plan.impact.affected_existing_region_ids == (region_id,)
     assert plan.impact.created_region_count == 0
     assert plan.impact.created_line_count == 1
@@ -211,8 +217,8 @@ def test_new_region_preview_and_commit_have_the_same_delta() -> None:
     """A new-region preview count matches the committed topology exactly."""
     project = SpectroscopyProject()
     session = project.identify_state
-    candidate = _add_candidate(session)
-    request = _impact_request(project, session, (_candidate_snapshot(candidate),))
+    temporary_line = _add_temporary_line(session)
+    request = _impact_request(project, session, (_temporary_line_snapshot(temporary_line),))
     plan = IdentifyRegistrationImpactPreviewUseCase().preview(request)
     result = AtomicIdentifyRegistrationUseCase().register(_atomic_request(request))
 
@@ -229,11 +235,11 @@ def test_new_region_preview_and_commit_have_the_same_delta() -> None:
     )
 
 
-def test_multiplet_candidates_are_normalized_into_one_link_group() -> None:
-    """The plan exposes the exact candidates that will receive multiplet links."""
+def test_multiplet_temporary_lines_are_normalized_into_one_link_group() -> None:
+    """The plan exposes the exact temporary lines that will receive multiplet links."""
     project = SpectroscopyProject()
     session = project.identify_state
-    first = _add_candidate(
+    first = _add_temporary_line(
         session,
         species="C IV 1548",
         lambda_min=1547.0,
@@ -241,7 +247,7 @@ def test_multiplet_candidates_are_normalized_into_one_link_group() -> None:
         rest_wavelength=1548.0,
         tie_group_key="civ-doublet",
     )
-    second = _add_candidate(
+    second = _add_temporary_line(
         session,
         species="C IV 1550",
         lambda_min=1549.0,
@@ -250,7 +256,7 @@ def test_multiplet_candidates_are_normalized_into_one_link_group() -> None:
         tie_group_key="civ-doublet",
     )
     request = _impact_request(
-        project, session, (_candidate_snapshot(first), _candidate_snapshot(second))
+        project, session, (_temporary_line_snapshot(first), _temporary_line_snapshot(second))
     )
 
     plan = IdentifyRegistrationImpactPreviewUseCase().preview(request)
@@ -258,7 +264,10 @@ def test_multiplet_candidates_are_normalized_into_one_link_group() -> None:
 
     assert len(plan.impact.multiplet_groups) == 1
     assert plan.impact.multiplet_groups[0].tie_group_key == "civ-doublet"
-    assert plan.impact.multiplet_groups[0].system_ids == (first.system_id, second.system_id)
+    assert plan.impact.multiplet_groups[0].temporary_line_ids == (
+        first.temporary_line_id,
+        second.temporary_line_id,
+    )
     assert plan.impact.created_line_count == 2
     assert result.outcome is not None
     first_line_id, second_line_id = result.outcome.created_line_ids
@@ -270,37 +279,37 @@ def test_multiplet_candidates_are_normalized_into_one_link_group() -> None:
     assert second_line.multiplet_ids == [first_line_id]
 
 
-def test_invalid_candidates_produce_no_change_without_cleanup() -> None:
+def test_invalid_temporary_lines_produce_no_change_without_cleanup() -> None:
     """An all-invalid selection is an explicit NoChange preview and command."""
     project = SpectroscopyProject()
     session = project.identify_state
-    invalid = _add_candidate(session, rest_wavelength=0.0)
-    request = _impact_request(project, session, (_candidate_snapshot(invalid),))
+    invalid = _add_temporary_line(session, rest_wavelength=0.0)
+    request = _impact_request(project, session, (_temporary_line_snapshot(invalid),))
     before = _runtime_state(project, session)
 
     plan = IdentifyRegistrationImpactPreviewUseCase().preview(request)
     result = AtomicIdentifyRegistrationUseCase().register(_atomic_request(request))
 
     assert plan.impact.mutation_outcome is StructureMutationOutcome.NO_CHANGE
-    assert plan.impact.normalized_system_ids == (invalid.system_id,)
-    assert plan.impact.registerable_system_ids == ()
-    assert plan.impact.rejected_system_ids == (invalid.system_id,)
+    assert plan.impact.normalized_temporary_line_ids == (invalid.temporary_line_id,)
+    assert plan.impact.registerable_temporary_line_ids == ()
+    assert plan.impact.rejected_temporary_line_ids == (invalid.temporary_line_id,)
     assert plan.impact.created_region_count == 0
     assert plan.impact.created_line_count == 0
     assert result.mutation_outcome is StructureMutationOutcome.NO_CHANGE
     assert _runtime_state(project, session) == before
 
 
-def test_preview_rejects_stale_candidate_without_additional_changes() -> None:
-    """Candidate drift fails exact preflight and preview changes nothing further."""
+def test_preview_rejects_stale_temporary_line_without_additional_changes() -> None:
+    """Temporary line drift fails exact preflight and preview changes nothing further."""
     project = SpectroscopyProject()
     session = project.identify_state
-    candidate = _add_candidate(session)
-    request = _impact_request(project, session, (_candidate_snapshot(candidate),))
-    candidate.lambda_max += 1.0
+    temporary_line = _add_temporary_line(session)
+    request = _impact_request(project, session, (_temporary_line_snapshot(temporary_line),))
+    temporary_line.lambda_max += 1.0
     before = _runtime_state(project, session)
 
-    with pytest.raises(ValueError, match="candidate source is stale"):
+    with pytest.raises(ValueError, match="temporary-line source is stale"):
         IdentifyRegistrationImpactPreviewUseCase().preview(request)
 
     assert _runtime_state(project, session) == before
@@ -310,8 +319,8 @@ def test_preview_rejects_stale_region_membership_without_additional_changes() ->
     """Region membership drift fails exact preflight and preview remains read-only."""
     project, _region_id = _project_with_existing_region()
     session = project.identify_state
-    candidate = _add_candidate(session)
-    request = _impact_request(project, session, (_candidate_snapshot(candidate),))
+    temporary_line = _add_temporary_line(session)
+    request = _impact_request(project, session, (_temporary_line_snapshot(temporary_line),))
     project.add_absorption_line(
         species="Si IV",
         rest_wavelength=1400.0,

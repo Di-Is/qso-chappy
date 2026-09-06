@@ -260,7 +260,7 @@ def test_region_delete_reports_surviving_multiplet_reference_change() -> None:
 
 
 def test_unlink_preview_reports_every_linked_line_and_owning_region() -> None:
-    """Unlink preview expands the materialized system without clearing its links."""
+    """Unlink preview expands the linked lines without clearing their links."""
     project = SpectroscopyProject()
     blue = _line("blue", "first", related_ids=("red",))
     red = _line("red", "second", related_ids=("blue",))

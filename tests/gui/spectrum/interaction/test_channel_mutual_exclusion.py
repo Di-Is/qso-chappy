@@ -30,7 +30,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     MaskSelectionContext,
     MaskSelectionRequest,
     RectZoomContext,
-    VelocityContext,
 )
 from chappy.gui.spectrum.interaction.input.ports import (
     ContinuumInteractionEventSink,
@@ -42,11 +41,7 @@ from chappy.gui.spectrum.interaction.input.spectrum_input_adapter import Spectru
 from chappy.presentation.velocity import VelocityDragComplete, VelocityDragRequest
 
 Snapshot = InteractionStateSnapshot[
-    RectZoomContext
-    | VelocityContext
-    | AbsorberDragContext
-    | MaskSelectionContext
-    | ContinuumContext
+    RectZoomContext | AbsorberDragContext | MaskSelectionContext | ContinuumContext
 ]
 
 

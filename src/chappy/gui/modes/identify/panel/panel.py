@@ -12,11 +12,11 @@ if TYPE_CHECKING:
 
     from chappy.core.velocity_ranges import NewCandidateAnalysisHalfWidth
     from chappy.gui.modes.identify.panel.panel_models import (
-        CandidateLineRow,
         CandidateRow,
         ConfirmedRegionRow,
         LineListItem,
         RegionPreviewRow,
+        TemporaryLineRow,
     )
 
 from PySide6.QtCore import QEvent, QPointF, Qt, Signal
@@ -81,7 +81,9 @@ class IdentifySidePanel(QWidget):
     registration_requested = Signal(list)  # list[str] - selected IDs, empty for all
     temporary_selection_changed = Signal(list)
     group_focus_requested = Signal(str, float, float)
-    system_focus_requested = Signal(str, float, float)
+    line_focus_requested = Signal(str, float, float)
+    region_open_requested = Signal(str)
+    region_structure_edit_requested = Signal(str)
     ui_state_changed = Signal()
 
     def __init__(
@@ -155,7 +157,11 @@ class IdentifySidePanel(QWidget):
         )
 
         self._confirmed_section.group_focus_requested.connect(self.group_focus_requested)
-        self._confirmed_section.system_focus_requested.connect(self.system_focus_requested)
+        self._confirmed_section.line_focus_requested.connect(self.line_focus_requested)
+        self._confirmed_section.region_open_requested.connect(self.region_open_requested)
+        self._confirmed_section.region_structure_edit_requested.connect(
+            self.region_structure_edit_requested
+        )
 
         self._confirmed_collapsible.collapse_toggled.connect(self._on_confirmed_collapse_toggled)
         self._splitter.splitterMoved.connect(self._on_splitter_moved)
@@ -202,16 +208,16 @@ class IdentifySidePanel(QWidget):
         """Forward the future-candidate draft to the preset section."""
         self._preset_section.set_new_candidate_analysis_half_width(value)
 
-    def set_temporary_systems(
-        self, systems: Sequence[CandidateLineRow], previews: Sequence[RegionPreviewRow] = ()
+    def set_temporary_lines(
+        self, lines: Sequence[TemporaryLineRow], previews: Sequence[RegionPreviewRow] = ()
     ) -> None:
-        """Display temporary systems grouped by the live registration result."""
+        """Display temporary lines grouped by the live registration result."""
         had_feedback = self._temporary_section.has_registration_feedback
         self._temporary_section.clear_registration_feedback()
         had_rows = self._temporary_section.has_rows
-        if had_rows and not systems:
+        if had_rows and not lines:
             self._capture_current_nonempty_sizes()
-        self._temporary_section.set_temporary_systems(systems, previews)
+        self._temporary_section.set_temporary_lines(lines, previews)
         if had_feedback or had_rows != self._temporary_section.has_rows:
             self._apply_layout_for_content_state()
 

@@ -21,18 +21,12 @@ class _Source:
     """Readiness source with independently configurable project facts."""
 
     state: RegionAnalysisState | None
-    analysis_capable: bool
     requires_reanalysis: bool
 
     def region_analysis_state(self, region_id: str) -> RegionAnalysisState | None:
         """Return the configured region analysis state."""
         _ = region_id
         return self.state
-
-    def is_region_analysis_capable(self, region_id: str) -> bool:
-        """Return the configured prerequisite result."""
-        _ = region_id
-        return self.analysis_capable
 
     def region_requires_reanalysis(self, region_id: str) -> bool:
         """Return the configured reanalysis requirement."""
@@ -64,32 +58,25 @@ def _state(
     ("source", "expected"),
     [
         pytest.param(
-            _Source(_state(artifact_revision=0), False, False),
-            AnalysisReadiness.UNAVAILABLE,
-            id="prerequisite-failure-wins-over-artifact",
+            _Source(None, False), AnalysisReadiness.NOT_ANALYZED, id="missing-region-state"
         ),
         pytest.param(
-            _Source(None, True, False),
-            AnalysisReadiness.UNAVAILABLE,
-            id="missing-region-state-is-unavailable",
-        ),
-        pytest.param(
-            _Source(_state(), True, True),
+            _Source(_state(), True),
             AnalysisReadiness.NOT_ANALYZED,
             id="artifact-absence-wins-over-stale-input",
         ),
         pytest.param(
-            _Source(_state(current_revision=2, artifact_revision=1), True, False),
+            _Source(_state(current_revision=2, artifact_revision=1), False),
             AnalysisReadiness.STALE,
             id="revision-mismatch",
         ),
         pytest.param(
-            _Source(_state(current_revision=2, artifact_revision=2), True, True),
+            _Source(_state(current_revision=2, artifact_revision=2), True),
             AnalysisReadiness.STALE,
             id="explicit-reanalysis-requirement",
         ),
         pytest.param(
-            _Source(_state(current_revision=2, artifact_revision=2), True, False),
+            _Source(_state(current_revision=2, artifact_revision=2), False),
             AnalysisReadiness.LATEST,
             id="matching-current-artifact",
         ),

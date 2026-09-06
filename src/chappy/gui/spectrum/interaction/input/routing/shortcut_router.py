@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import Qt
 
-from chappy.gui.spectrum.interaction.support.commands import CancelVelocityPending
 from chappy.presentation.interaction.interaction_contracts import InteractionChannel
 
 if TYPE_CHECKING:
@@ -34,9 +33,7 @@ class RouteModeVelocityShortcut:
     """Command to route a raw velocity shortcut to the active mode owner."""
 
 
-type ShortcutCommand = (
-    EmitShortcutIntent | CancelRectZoom | CancelVelocityPending | RouteModeVelocityShortcut
-)
+type ShortcutCommand = EmitShortcutIntent | CancelRectZoom | RouteModeVelocityShortcut
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,7 +43,6 @@ class KeyRouteState:
     identify_velocity_shortcut_enabled: bool
     mode_velocity_shortcut_enabled: bool
     active_channel: InteractionChannel | None
-    velocity_pending: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,12 +84,9 @@ class SpectrumShortcutRouter:
             and key == Qt.Key.Key_V
             and modifiers == Qt.KeyboardModifier.NoModifier
         ):
-            if state.active_channel not in (None, InteractionChannel.VELOCITY):
+            if state.active_channel is not None:
                 return KeyRouteResult(False)
             return KeyRouteResult(True, (RouteModeVelocityShortcut(),))
-
-        if key == Qt.Key.Key_Escape and state.velocity_pending:
-            return KeyRouteResult(True, (CancelVelocityPending(reason="escape-key"),))
 
         if modifiers == Qt.KeyboardModifier.ControlModifier and key in (
             Qt.Key.Key_A,
@@ -111,12 +104,9 @@ class SpectrumShortcutRouter:
         commands: list[ShortcutCommand] = []
         if state.active_channel is InteractionChannel.RECT_ZOOM:
             commands.append(CancelRectZoom(reason="velocity-toggle"))
-        elif state.active_channel not in (None, InteractionChannel.VELOCITY):
+        elif state.active_channel is not None:
             return KeyRouteResult(True)
 
-        if state.velocity_pending:
-            commands.append(CancelVelocityPending(reason="toggle-key"))
-        else:
-            commands.append(RouteModeVelocityShortcut())
+        commands.append(RouteModeVelocityShortcut())
 
         return KeyRouteResult(True, tuple(commands))

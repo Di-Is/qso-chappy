@@ -113,10 +113,6 @@ class SpectrumInputFacadePort(VelocityInteractionProvider, Protocol):
     sig_interaction_snapshot: SignalInstance
     sig_cursor_position_changed: SignalInstance
 
-    def cancel_velocity_pending(self, *, reason: str) -> None:
-        """Cancel pending velocity input during a policy transition."""
-        ...
-
     def begin_mask_selection_interaction(self, request: MaskSelectionRequest) -> bool:
         """Prime mask selection using a typed request."""
         ...

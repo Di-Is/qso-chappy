@@ -142,7 +142,7 @@ def analysis_region_detail_workflow(context: ScenarioContext) -> OperationFlow:
             QT_TRANSLATE_NOOP(
                 "ManualExporter",
                 "Click-added components appear at the clicked position; button-added"
-                " ones appear at the system centre. A component row is added under the"
+                " ones appear at the line centre. A component row is added under the"
                 " selected line in the parameter table.",
             )
         ),

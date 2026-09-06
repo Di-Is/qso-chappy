@@ -1,4 +1,4 @@
-"""Controller for organize-mode project operations."""
+"""Controller for structure-mode project operations."""
 
 from __future__ import annotations
 
@@ -18,14 +18,14 @@ if TYPE_CHECKING:
 
     from chappy.application.structure import StructureImpactPreview
     from chappy.gui.modes.analysis.overview.adapters import (
-        OrganizeDeleteResult,
-        OrganizeHistoryRecorder,
-        OrganizeMergeResult,
-        OrganizeMoveResult,
-        OrganizeOperationAdapter,
-        OrganizeProjectPort,
-        OrganizeSplitResult,
-        OrganizeUnlinkResult,
+        StructureDeleteResult,
+        StructureHistoryRecorder,
+        StructureMergeResult,
+        StructureMoveResult,
+        StructureOperationAdapter,
+        StructureProjectPort,
+        StructureSplitResult,
+        StructureUnlinkResult,
     )
 
 
@@ -33,13 +33,13 @@ MERGE_SELECTION_THRESHOLD = 2
 SINGLE_SELECTION = 1
 
 
-class OrganizeOperationController(QObject):
-    """Coordinate organize-mode operation validation and use case dispatch."""
+class StructureOperationController(QObject):
+    """Coordinate structure-mode operation validation and use case dispatch."""
 
     def __init__(
         self,
         *,
-        operation_adapter: OrganizeOperationAdapter,
+        operation_adapter: StructureOperationAdapter,
         impact_previewer: StructureImpactPreviewUseCase | None = None,
         status_callback: Callable[[str], None] | None = None,
         parent: QObject | None = None,
@@ -59,12 +59,12 @@ class OrganizeOperationController(QObject):
 
     def move_lines(
         self,
-        project: OrganizeProjectPort | None,
+        project: StructureProjectPort | None,
         *,
         line_ids: list[str],
         target_region_id: str | None,
-        history_recorder: OrganizeHistoryRecorder | None,
-    ) -> OrganizeMoveResult | None:
+        history_recorder: StructureHistoryRecorder | None,
+    ) -> StructureMoveResult | None:
         """Move selected lines to a target region."""
         if project is None or not line_ids:
             self._emit_status(self.tr("No project loaded."))
@@ -80,43 +80,43 @@ class OrganizeOperationController(QObject):
             self._emit_status(self.tr("Failed to move selected lines."))
         return result
 
-    def can_merge(self, group_ids: list[str], system_ids: list[str]) -> bool:
+    def can_merge(self, group_ids: list[str], linked_line_ids: list[str]) -> bool:
         """Return whether the current selection can be merged."""
-        return len(group_ids) >= MERGE_SELECTION_THRESHOLD and not system_ids
+        return len(group_ids) >= MERGE_SELECTION_THRESHOLD and not linked_line_ids
 
-    def can_split(self, group_ids: list[str], system_ids: list[str]) -> bool:
+    def can_split(self, group_ids: list[str], linked_line_ids: list[str]) -> bool:
         """Return whether the current selection can be split."""
-        return len(system_ids) == SINGLE_SELECTION and not group_ids
+        return len(linked_line_ids) == SINGLE_SELECTION and not group_ids
 
-    def can_delete(self, group_ids: list[str], system_ids: list[str]) -> bool:
+    def can_delete(self, group_ids: list[str], linked_line_ids: list[str]) -> bool:
         """Return whether the current selection can be deleted."""
-        return (len(group_ids) == SINGLE_SELECTION and not system_ids) or (
-            len(system_ids) == SINGLE_SELECTION and not group_ids
+        return (len(group_ids) == SINGLE_SELECTION and not linked_line_ids) or (
+            len(linked_line_ids) == SINGLE_SELECTION and not group_ids
         )
 
-    def can_focus(self, group_ids: list[str], system_ids: list[str]) -> bool:
+    def can_focus(self, group_ids: list[str], linked_line_ids: list[str]) -> bool:
         """Return whether the current selection can be focused in the spectrum view."""
-        return self.can_delete(group_ids, system_ids)
+        return self.can_delete(group_ids, linked_line_ids)
 
     def can_unlink(
         self,
         project: StructureImpactProjectPort | None,
         group_ids: list[str],
-        system_ids: list[str],
+        linked_line_ids: list[str],
     ) -> bool:
-        """Return whether one selected line has materialized system links."""
-        if project is None or group_ids or len(system_ids) != SINGLE_SELECTION:
+        """Return whether one selected line belongs to materialized linked lines."""
+        if project is None or group_ids or len(linked_line_ids) != SINGLE_SELECTION:
             return False
-        selected = project.absorption_lines.get(system_ids[0])
+        selected = project.absorption_lines.get(linked_line_ids[0])
         return selected is not None and bool(selected.multiplet_ids)
 
     def merge_regions(
         self,
-        project: OrganizeProjectPort | None,
+        project: StructureProjectPort | None,
         *,
         group_ids: list[str],
-        history_recorder: OrganizeHistoryRecorder | None,
-    ) -> OrganizeMergeResult | None:
+        history_recorder: StructureHistoryRecorder | None,
+    ) -> StructureMergeResult | None:
         """Merge selected regions into the primary region."""
         if project is None:
             self._emit_status(self.tr("No project loaded."))
@@ -134,21 +134,21 @@ class OrganizeOperationController(QObject):
 
     def split_lines(
         self,
-        project: OrganizeProjectPort | None,
+        project: StructureProjectPort | None,
         *,
-        system_ids: list[str],
-        history_recorder: OrganizeHistoryRecorder | None,
-    ) -> OrganizeSplitResult | None:
+        linked_line_ids: list[str],
+        history_recorder: StructureHistoryRecorder | None,
+    ) -> StructureSplitResult | None:
         """Split one selected line into a new region."""
         if project is None:
             self._emit_status(self.tr("No project loaded."))
             return None
-        if len(system_ids) != SINGLE_SELECTION:
+        if len(linked_line_ids) != SINGLE_SELECTION:
             self._emit_status(self.tr("Select exactly one line to split."))
             return None
 
         result = self._operation_adapter.split_lines(
-            project, system_ids=system_ids, history_recorder=history_recorder
+            project, linked_line_ids=linked_line_ids, history_recorder=history_recorder
         )
         if result is None:
             self._emit_status(self.tr("Failed to split the selected line."))
@@ -156,22 +156,25 @@ class OrganizeOperationController(QObject):
 
     def delete_selection(
         self,
-        project: OrganizeProjectPort | None,
+        project: StructureProjectPort | None,
         *,
         group_ids: list[str],
-        system_ids: list[str],
-        history_recorder: OrganizeHistoryRecorder | None,
-    ) -> OrganizeDeleteResult | None:
-        """Delete selected regions and systems."""
+        linked_line_ids: list[str],
+        history_recorder: StructureHistoryRecorder | None,
+    ) -> StructureDeleteResult | None:
+        """Delete selected regions and linked lines."""
         if project is None:
             self._emit_status(self.tr("No project loaded."))
             return None
-        if not group_ids and not system_ids:
+        if not group_ids and not linked_line_ids:
             self._emit_status(self.tr("Select regions or lines to delete."))
             return None
 
         result = self._operation_adapter.delete_selection(
-            project, group_ids=group_ids, system_ids=system_ids, history_recorder=history_recorder
+            project,
+            group_ids=group_ids,
+            linked_line_ids=linked_line_ids,
+            history_recorder=history_recorder,
         )
         if result is None:
             self._emit_status(self.tr("Failed to delete the selected items."))
@@ -182,7 +185,7 @@ class OrganizeOperationController(QObject):
         project: StructureImpactProjectPort | None,
         *,
         group_ids: list[str],
-        system_ids: list[str],
+        linked_line_ids: list[str],
     ) -> StructureImpactPreview | None:
         """Resolve the exact delete impact without mutating project or UI state."""
         if project is None:
@@ -190,7 +193,7 @@ class OrganizeOperationController(QObject):
             return None
         preview = self._impact_previewer.preview_delete(
             project,
-            DeleteStructureRequest(region_ids=tuple(group_ids), line_ids=tuple(system_ids)),
+            DeleteStructureRequest(region_ids=tuple(group_ids), line_ids=tuple(linked_line_ids)),
         )
         if not preview.changed:
             self._emit_status(self.tr("Select regions or lines to delete."))
@@ -198,42 +201,42 @@ class OrganizeOperationController(QObject):
         return preview
 
     def preview_unlink(
-        self, project: StructureImpactProjectPort | None, *, system_ids: list[str]
+        self, project: StructureImpactProjectPort | None, *, linked_line_ids: list[str]
     ) -> StructureImpactPreview | None:
         """Resolve the exact unlink impact without mutating project or UI state."""
         if project is None:
             self._emit_status(self.tr("No project loaded."))
             return None
-        if len(system_ids) != SINGLE_SELECTION:
-            self._emit_status(self.tr("Select exactly one line system to unlink."))
+        if len(linked_line_ids) != SINGLE_SELECTION:
+            self._emit_status(self.tr("Select exactly one linked line to unlink."))
             return None
         preview = self._impact_previewer.preview_unlink(
-            project, UnlinkStructureRequest(line_id=system_ids[0])
+            project, UnlinkStructureRequest(line_id=linked_line_ids[0])
         )
         if not preview.changed:
-            self._emit_status(self.tr("The selected line is not linked to a system."))
+            self._emit_status(self.tr("The selected line is not linked to other lines."))
             return None
         return preview
 
-    def unlink_line_system(
+    def unlink_linked_lines(
         self,
-        project: OrganizeProjectPort | None,
+        project: StructureProjectPort | None,
         *,
-        system_ids: list[str],
-        history_recorder: OrganizeHistoryRecorder | None,
-    ) -> OrganizeUnlinkResult | None:
-        """Unlink one selected materialized line system."""
+        linked_line_ids: list[str],
+        history_recorder: StructureHistoryRecorder | None,
+    ) -> StructureUnlinkResult | None:
+        """Unlink one selected materialized linked-line group."""
         if project is None:
             self._emit_status(self.tr("No project loaded."))
             return None
-        if len(system_ids) != SINGLE_SELECTION:
-            self._emit_status(self.tr("Select exactly one line system to unlink."))
+        if len(linked_line_ids) != SINGLE_SELECTION:
+            self._emit_status(self.tr("Select exactly one linked line to unlink."))
             return None
-        result = self._operation_adapter.unlink_line_system(
-            project, line_id=system_ids[0], history_recorder=history_recorder
+        result = self._operation_adapter.unlink_linked_lines(
+            project, line_id=linked_line_ids[0], history_recorder=history_recorder
         )
         if result is None:
-            self._emit_status(self.tr("The selected line is not linked to a system."))
+            self._emit_status(self.tr("The selected line is not linked to other lines."))
         return result
 
     def _emit_status(self, message: str) -> None:

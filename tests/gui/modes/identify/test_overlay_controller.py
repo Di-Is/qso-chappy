@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from chappy.core.identify_state import CandidateLine
+from chappy.core.identify_state import TemporaryLine
 from chappy.gui.modes.identify.overlay_controller import (
     IdentifyLineOverlayController,
     IdentifyLineOverlayPorts,
@@ -15,14 +15,14 @@ from chappy.gui.utils.absorption_overlays import RegionPayload
 class _Session:
     """Minimal identify session for overlay tests."""
 
-    def __init__(self, candidate_lines: Sequence[CandidateLine]) -> None:
-        """Initialize candidate line storage."""
-        self._candidate_lines = tuple(candidate_lines)
+    def __init__(self, temporary_lines: Sequence[TemporaryLine]) -> None:
+        """Initialize temporary line storage."""
+        self._temporary_lines = tuple(temporary_lines)
 
     @property
-    def candidate_lines(self) -> tuple[CandidateLine, ...]:
+    def temporary_lines(self) -> tuple[TemporaryLine, ...]:
         """Return temporary identify candidates."""
-        return self._candidate_lines
+        return self._temporary_lines
 
 
 class _SpectrumView:
@@ -37,15 +37,15 @@ class _SpectrumView:
         self.applied.append(regions)
 
 
-def _candidate(system_id: str) -> CandidateLine:
-    """Build a temporary candidate line for overlay tests."""
-    return CandidateLine(
-        system_id=system_id,
+def _candidate(temporary_line_id: str) -> TemporaryLine:
+    """Build a temporary line for overlay tests."""
+    return TemporaryLine(
+        temporary_line_id=temporary_line_id,
         species="Mg II",
         lambda_min=5000.0,
         lambda_max=5010.0,
         creation_method="manual",
-        line_id=f"{system_id}-line",
+        line_id=f"{temporary_line_id}-line",
         rest_wavelength=2796.352,
         center_z=0.788,
         multiplet_id="",

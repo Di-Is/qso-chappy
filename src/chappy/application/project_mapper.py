@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import numpy as np
@@ -24,6 +25,10 @@ from chappy.application.project_document import (
     SpectrumDocument,
     TieSetDocument,
     TieSharedParameterDocument,
+)
+from chappy.application.structure.region_line_repair import (
+    RegionLineRepairReport,
+    RepairRegionLineTopologyUseCase,
 )
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.analysis import (
@@ -56,6 +61,14 @@ from chappy.core.spectrum import Spectrum
 from chappy.core.spectrum_model import SpectrumModel
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectLoadResult:
+    """Project reconstructed from storage and repairs applied during loading."""
+
+    project: SpectroscopyProject
+    repair_report: RegionLineRepairReport
 
 
 def project_to_document(project: SpectroscopyProject) -> ProjectDocument:
@@ -111,14 +124,14 @@ def project_to_document(project: SpectroscopyProject) -> ProjectDocument:
     )
 
 
-def project_from_document(document: ProjectDocument) -> SpectroscopyProject:
+def project_from_document(document: ProjectDocument) -> ProjectLoadResult:
     """Build a project instance from a typed document.
 
     Args:
         document: Source document.
 
     Returns:
-        Reconstructed project instance.
+        Reconstructed project and any automatic topology repairs.
     """
     project = SpectroscopyProject(name=document.name, spectrum_filename=document.spectrum_filename)
     project.created = document.created
@@ -160,9 +173,12 @@ def project_from_document(document: ProjectDocument) -> SpectroscopyProject:
     project.load_region_analysis_states(
         _region_analysis_state_from_document(state) for state in document.analysis_states
     )
+    repair_report = RepairRegionLineTopologyUseCase().execute(
+        project.absorption_regions, project.absorption_lines
+    )
     project.prune_empty_absorption_regions()
     project.modified = document.modified
-    return project
+    return ProjectLoadResult(project=project, repair_report=repair_report)
 
 
 def _region_analysis_state_to_document(state: RegionAnalysisState) -> RegionAnalysisStateDocument:
@@ -662,7 +678,7 @@ def _identify_state_to_document(state: IdentifySessionState) -> IdentifyStateDoc
 
 
 def _identify_state_from_document(document: IdentifyStateDocument) -> IdentifySessionState:
-    # Legacy "grouping" work_phase values normalize to the default "candidate_add".
+    # Legacy "grouping" work_phase values normalize to the default "temporary_line_add".
     state = IdentifySessionState()
     state.reference_z = document.reference_z
     state.last_added_wavelength = document.last_added_wavelength

@@ -14,12 +14,12 @@ from chappy.gui.modes.identify.panel.panel import (
     IdentifySidePanel,
 )
 from chappy.gui.modes.identify.panel.panel_models import (
-    CandidateLineRow,
+    TemporaryLineRow,
     CandidateRow,
     ConfirmedLineRow,
     ConfirmedRegionRow,
     RegionPreviewRow,
-    TemporarySystemItemPayload,
+    TemporaryLineItemPayload,
 )
 from chappy.gui.theme import empty_state_label_style
 from tests.gui.support.faithful_env import faithful_application_environment
@@ -42,10 +42,10 @@ def _candidate_rows() -> list[CandidateRow]:
     ]
 
 
-def _temporary_rows() -> tuple[list[CandidateLineRow], list[RegionPreviewRow]]:
+def _temporary_rows() -> tuple[list[TemporaryLineRow], list[RegionPreviewRow]]:
     rows = [
-        CandidateLineRow(
-            system_ids=("temporary-1",),
+        TemporaryLineRow(
+            temporary_line_ids=("temporary-1",),
             species="C IV",
             lambda_start=3544.8,
             lambda_end=3546.3,
@@ -56,7 +56,10 @@ def _temporary_rows() -> tuple[list[CandidateLineRow], list[RegionPreviewRow]]:
     ]
     previews = [
         RegionPreviewRow(
-            group_id="preview-1", label="C IV", member_count=1, member_system_ids=["temporary-1"]
+            group_id="preview-1",
+            label="C IV",
+            member_count=1,
+            member_temporary_line_ids=["temporary-1"],
         )
     ]
     return rows, previews
@@ -67,9 +70,9 @@ def _confirmed_rows() -> list[ConfirmedRegionRow]:
         ConfirmedRegionRow(
             group_id="region-1",
             label="Region 1",
-            systems=[
+            lines=[
                 ConfirmedLineRow(
-                    system_id="confirmed-1",
+                    line_id="confirmed-1",
                     species="C IV",
                     redshift=1.292,
                     lambda_start=3544.8,
@@ -95,7 +98,7 @@ def _select_first_temporary_line(panel: IdentifySidePanel) -> None:
         item = top_level.child(0)
         assert item is not None
     payload = item.data(0, Qt.ItemDataRole.UserRole)
-    assert isinstance(payload, TemporarySystemItemPayload)
+    assert isinstance(payload, TemporaryLineItemPayload)
     item.setSelected(True)
 
 
@@ -112,7 +115,7 @@ def _show_state(
     panel.resize(width, 760)
     panel.set_candidates(_candidate_rows() if has_candidates else [])
     temporary_rows, previews = _temporary_rows()
-    panel.set_temporary_systems(
+    panel.set_temporary_lines(
         temporary_rows if has_temporary else [], previews if has_temporary else []
     )
     panel.set_confirmed_regions(_confirmed_rows() if has_confirmed else [])
@@ -203,13 +206,13 @@ def test_registration_feedback_is_passive_and_wraps(
 
 
 def test_workflow_refresh_clears_registration_feedback(qtbot: QtBot) -> None:
-    """The next temporary-system refresh expires registration feedback."""
+    """The next temporary-line refresh expires registration feedback."""
     panel = _show_state(
         qtbot, width=320, has_temporary=False, has_confirmed=False, has_candidates=True
     )
     panel.show_registration_feedback("Registered 2 lines")
 
-    panel.set_temporary_systems([])
+    panel.set_temporary_lines([])
 
     assert not panel._temporary_section._registration_feedback.isVisible()
     assert panel._temporary_section._temporary_placeholder.isVisible()
@@ -252,7 +255,7 @@ def test_nonempty_layout_and_disclosures_round_trip_before_data_restore(
     assert restored._confirmed_section._empty_placeholder.isVisible()
 
     rows, previews = _temporary_rows()
-    restored.set_temporary_systems(rows, previews)
+    restored.set_temporary_lines(rows, previews)
     restored.set_confirmed_regions(_confirmed_rows())
     QApplication.processEvents()
 
@@ -272,7 +275,7 @@ def test_empty_derived_layout_does_not_overwrite_saved_nonempty_sizes(
     saved_nonempty = panel._last_nonempty_splitter_sizes
     assert saved_nonempty is not None
 
-    panel.set_temporary_systems([])
+    panel.set_temporary_lines([])
     panel.set_confirmed_regions([])
     QApplication.processEvents()
     compact_sizes = panel._splitter.sizes()
@@ -301,8 +304,8 @@ def test_collapsed_confirmed_reclaim_is_not_double_counted_in_saved_layout(
     assert sum(saved_nonempty) == sum(displayed_sizes)
 
     rows, previews = _temporary_rows()
-    panel.set_temporary_systems([])
-    panel.set_temporary_systems(rows, previews)
+    panel.set_temporary_lines([])
+    panel.set_temporary_lines(rows, previews)
     QApplication.processEvents()
     assert panel._splitter.sizes() == displayed_sizes
 
@@ -312,7 +315,7 @@ def test_collapsed_confirmed_reclaim_is_not_double_counted_in_saved_layout(
     qtbot.addWidget(restored)
     restored.resize(420, 760)
     restored.restore_ui_state(settings)
-    restored.set_temporary_systems(rows, previews)
+    restored.set_temporary_lines(rows, previews)
     restored.set_confirmed_regions(_confirmed_rows())
     restored.show()
     QApplication.processEvents()
@@ -370,7 +373,7 @@ def test_confirmed_only_user_layout_round_trips_before_data_and_temporary_arrive
     assert restored._splitter.sizes() == confirmed_only_sizes
 
     rows, previews = _temporary_rows()
-    restored.set_temporary_systems(rows, previews)
+    restored.set_temporary_lines(rows, previews)
     QApplication.processEvents()
     assert restored._last_nonempty_splitter_sizes == saved_nonempty
     assert restored._splitter.sizes()[1] >= restored._temporary_section.minimum_readable_height()
@@ -389,10 +392,10 @@ def test_temporary_and_confirmed_content_transitions_restore_user_layout(qtbot: 
     rows, previews = _temporary_rows()
 
     for _ in range(2):
-        panel.set_temporary_systems([])
+        panel.set_temporary_lines([])
         QApplication.processEvents()
         assert panel._splitter.sizes()[1] == panel._temporary_section.maximumHeight()
-        panel.set_temporary_systems(rows, previews)
+        panel.set_temporary_lines(rows, previews)
         QApplication.processEvents()
         assert panel._last_nonempty_splitter_sizes == saved_nonempty
         assert panel._splitter.sizes()[1] >= panel._temporary_section.minimum_readable_height()
@@ -417,8 +420,8 @@ def test_temporary_action_tray_keeps_group_heading_and_two_lines_visible(
     with faithful_application_environment(qapp, language):
         panel = _show_state(qtbot, width=width, has_temporary=False, has_confirmed=False)
         rows = [
-            CandidateLineRow(
-                system_ids=(f"temporary-{index}",),
+            TemporaryLineRow(
+                temporary_line_ids=(f"temporary-{index}",),
                 species="C IV",
                 lambda_start=3544.8 + index,
                 lambda_end=3545.6 + index,
@@ -432,10 +435,10 @@ def test_temporary_action_tray_keeps_group_heading_and_two_lines_visible(
             group_id="preview-1",
             label="C IV",
             member_count=2,
-            member_system_ids=["temporary-1", "temporary-2"],
+            member_temporary_line_ids=["temporary-1", "temporary-2"],
         )
 
-        panel.set_temporary_systems(rows, [preview])
+        panel.set_temporary_lines(rows, [preview])
         QApplication.processEvents()
 
         temporary = panel._temporary_section
@@ -487,7 +490,7 @@ def test_empty_states_and_all_sections_collapsed_do_not_break(qtbot: QtBot) -> N
     panel.resize(300, 700)
 
     panel.set_candidates([])
-    panel.set_temporary_systems([])
+    panel.set_temporary_lines([])
     panel.set_confirmed_regions([])
     panel.show()
 
@@ -519,13 +522,13 @@ def test_content_surfaces_stay_stable_across_workflow_states(qtbot: QtBot) -> No
     assert "border: 1px solid" in temporary_surface.styleSheet()
 
     temporary_rows, previews = _temporary_rows()
-    panel.set_temporary_systems(temporary_rows, previews)
+    panel.set_temporary_lines(temporary_rows, previews)
     QApplication.processEvents()
     assert temporary._content_surface is temporary_surface
     assert temporary_surface.isVisible()
     assert temporary._temporary_tree.isVisible()
 
-    panel.set_temporary_systems([])
+    panel.set_temporary_lines([])
     panel.show_registration_feedback("Registered 1 line")
     QApplication.processEvents()
     assert temporary._content_surface is temporary_surface
@@ -590,7 +593,7 @@ def test_splitter_handles_expose_only_available_resize_operations(qtbot: QtBot) 
     assert temporary_confirmed_handle.cursor().shape() is Qt.CursorShape.ArrowCursor
 
     temporary_rows, previews = _temporary_rows()
-    panel.set_temporary_systems(temporary_rows, previews)
+    panel.set_temporary_lines(temporary_rows, previews)
     QApplication.processEvents()
     assert candidate_temporary_handle.isEnabled()
     assert not temporary_confirmed_handle.isEnabled()
@@ -606,7 +609,7 @@ def test_splitter_handles_expose_only_available_resize_operations(qtbot: QtBot) 
     assert temporary_confirmed_handle.isEnabled()
     assert temporary_confirmed_handle.cursor().shape() is Qt.CursorShape.SplitVCursor
 
-    panel.set_temporary_systems([])
+    panel.set_temporary_lines([])
     QApplication.processEvents()
     assert not candidate_temporary_handle.isEnabled()
     assert not temporary_confirmed_handle.isEnabled()
@@ -765,7 +768,7 @@ def test_empty_nonempty_round_trip_reapplies_layout_constraints_and_keeps_select
         assert temporary.maximumHeight() < temporary._unconstrained_maximum_height
 
         for _ in range(2):
-            panel.set_temporary_systems(temporary_rows, previews)
+            panel.set_temporary_lines(temporary_rows, previews)
             panel.set_confirmed_regions(confirmed_rows)
             QApplication.processEvents()
 
@@ -778,13 +781,13 @@ def test_empty_nonempty_round_trip_reapplies_layout_constraints_and_keeps_select
             assert not confirmed_collapsible._content.isVisible()
 
             _select_first_temporary_line(panel)
-            panel.set_temporary_systems(temporary_rows, previews)
+            panel.set_temporary_lines(temporary_rows, previews)
             selected_ids = temporary._selection_controller.selected_temporary_primary_ids(
                 temporary._temporary_tree
             )
             assert selected_ids == ["temporary-1"]
 
-            panel.set_temporary_systems([])
+            panel.set_temporary_lines([])
             panel.set_confirmed_regions([])
             QApplication.processEvents()
 

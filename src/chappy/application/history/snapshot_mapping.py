@@ -14,12 +14,12 @@ from chappy.application.history.ports import (
     NamedParameterState,
     TieSetSnapshot,
 )
-from chappy.application.identify import CandidateLineSnapshot
+from chappy.application.identify import TemporaryLineSnapshot
 from chappy.core.absorption.models import UNASSIGNED_REGION_ID, AbsorptionLine, AbsorptionRegion
 from chappy.core.components.absorber import AbsorberComponent
 from chappy.core.components.base import Parameter
 from chappy.core.components.tie_set import ParameterTieSet, TieParameterName
-from chappy.core.identify_state import CandidateLine
+from chappy.core.identify_state import TemporaryLine
 from chappy.core.masking import MaskDefinition
 from chappy.core.velocity_ranges import LineAnalysisHalfWidth
 
@@ -336,17 +336,17 @@ def absorption_line_from_snapshot(snapshot: AbsorptionLineSnapshot) -> Absorptio
     )
 
 
-def candidate_line_from_snapshot(snapshot: CandidateLineSnapshot) -> CandidateLine:
-    """Create a core candidate line from a typed history snapshot.
+def temporary_line_from_snapshot(snapshot: TemporaryLineSnapshot) -> TemporaryLine:
+    """Create a core temporary line from a typed history snapshot.
 
     Args:
-        snapshot: Typed candidate line snapshot.
+        snapshot: Typed temporary line snapshot.
 
     Returns:
-        Restored core candidate line.
+        Restored core temporary line.
     """
-    return CandidateLine(
-        system_id=snapshot.system_id,
+    return TemporaryLine(
+        temporary_line_id=snapshot.temporary_line_id,
         species=snapshot.species,
         lambda_min=snapshot.lambda_min,
         lambda_max=snapshot.lambda_max,
@@ -364,51 +364,54 @@ def candidate_line_from_snapshot(snapshot: CandidateLineSnapshot) -> CandidateLi
     )
 
 
-def candidate_snapshots_for_ids(
-    session: IdentifySessionState, system_ids: tuple[str, ...]
-) -> tuple[CandidateLineSnapshot, ...]:
-    """Return typed candidate snapshots for known system IDs.
+def temporary_line_snapshots_for_ids(
+    session: IdentifySessionState, temporary_line_ids: tuple[str, ...]
+) -> tuple[TemporaryLineSnapshot, ...]:
+    """Return typed temporary-line snapshots for known line IDs.
 
     Args:
-        session: Identify session containing candidate lines.
-        system_ids: Candidate system IDs to snapshot.
+        session: Identify session containing temporary lines.
+        temporary_line_ids: Temporary line IDs to snapshot.
 
     Returns:
-        Typed candidate snapshots for matching IDs.
+        Typed temporary-line snapshots for matching IDs.
     """
-    candidates_by_id = {candidate.system_id: candidate for candidate in session.candidate_lines}
+    temporary_lines_by_id = {
+        temporary_line.temporary_line_id: temporary_line
+        for temporary_line in session.temporary_lines
+    }
     return tuple(
-        candidate_line_snapshot(candidate)
-        for system_id in system_ids
-        if (candidate := candidates_by_id.get(system_id)) is not None
+        temporary_line_snapshot(temporary_line)
+        for temporary_line_id in temporary_line_ids
+        if (temporary_line := temporary_lines_by_id.get(temporary_line_id)) is not None
     )
 
 
-def candidate_line_snapshot(candidate: CandidateLine) -> CandidateLineSnapshot:
-    """Convert a core candidate line to an application snapshot.
+def temporary_line_snapshot(temporary_line: TemporaryLine) -> TemporaryLineSnapshot:
+    """Convert a core temporary line to an application snapshot.
 
     Args:
-        candidate: Core candidate line.
+        temporary_line: Core temporary line.
 
     Returns:
-        Typed candidate line snapshot.
+        Typed temporary line snapshot.
     """
-    return CandidateLineSnapshot(
-        system_id=candidate.system_id,
-        species=candidate.species,
-        lambda_min=candidate.lambda_min,
-        lambda_max=candidate.lambda_max,
-        creation_method=candidate.creation_method,
-        line_id=candidate.line_id,
-        rest_wavelength=candidate.rest_wavelength,
-        center_z=candidate.center_z,
-        multiplet_id=candidate.multiplet_id,
-        multiplet_label=candidate.multiplet_label,
-        tie_group_key=candidate.tie_group_key,
-        transition_name=candidate.transition_name,
-        oscillator_strength=candidate.oscillator_strength,
-        gamma_value=candidate.gamma_value,
-        analysis_half_width=LineAnalysisHalfWidth(candidate.analysis_half_width_kms),
+    return TemporaryLineSnapshot(
+        temporary_line_id=temporary_line.temporary_line_id,
+        species=temporary_line.species,
+        lambda_min=temporary_line.lambda_min,
+        lambda_max=temporary_line.lambda_max,
+        creation_method=temporary_line.creation_method,
+        line_id=temporary_line.line_id,
+        rest_wavelength=temporary_line.rest_wavelength,
+        center_z=temporary_line.center_z,
+        multiplet_id=temporary_line.multiplet_id,
+        multiplet_label=temporary_line.multiplet_label,
+        tie_group_key=temporary_line.tie_group_key,
+        transition_name=temporary_line.transition_name,
+        oscillator_strength=temporary_line.oscillator_strength,
+        gamma_value=temporary_line.gamma_value,
+        analysis_half_width=LineAnalysisHalfWidth(temporary_line.analysis_half_width_kms),
     )
 
 

@@ -1,4 +1,4 @@
-"""Shared structure-impact presentation for organize confirmations."""
+"""Shared structure-impact presentation for structure confirmations."""
 
 from __future__ import annotations
 
@@ -6,30 +6,34 @@ from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QT_TRANSLATE_NOOP, QCoreApplication
 
-from chappy.presentation.organize.impact_display_presenter import build_structure_impact_display
+from chappy.presentation.analysis.structure.impact_display_presenter import (
+    build_structure_impact_display,
+)
 
 if TYPE_CHECKING:
     from chappy.application.structure import StructureImpactPreview
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
 
-_CONTEXT = "OrganizeImpactConfirmation"
-_AFFECTED_REGIONS_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "Affected regions"))
-_DELETED_REGIONS_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "Deleted regions"))
-_AFFECTED_LINES_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "Affected lines"))
-_DELETED_LINES_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "Deleted lines"))
+_CONTEXT = "StructureImpactConfirmation"
+_AFFECTED_REGIONS_SOURCE = str(
+    QT_TRANSLATE_NOOP("StructureImpactConfirmation", "Affected regions")
+)
+_DELETED_REGIONS_SOURCE = str(QT_TRANSLATE_NOOP("StructureImpactConfirmation", "Deleted regions"))
+_AFFECTED_LINES_SOURCE = str(QT_TRANSLATE_NOOP("StructureImpactConfirmation", "Affected lines"))
+_DELETED_LINES_SOURCE = str(QT_TRANSLATE_NOOP("StructureImpactConfirmation", "Deleted lines"))
 _AFFECTED_COMPONENTS_SOURCE = str(
-    QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "Affected components")
+    QT_TRANSLATE_NOOP("StructureImpactConfirmation", "Affected components")
 )
 _DELETED_COMPONENTS_SOURCE = str(
-    QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "Deleted components")
+    QT_TRANSLATE_NOOP("StructureImpactConfirmation", "Deleted components")
 )
-_AFFECTED_MASKS_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "Affected masks"))
-_DELETED_MASKS_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "Deleted masks"))
-_NONE_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "none"))
+_AFFECTED_MASKS_SOURCE = str(QT_TRANSLATE_NOOP("StructureImpactConfirmation", "Affected masks"))
+_DELETED_MASKS_SOURCE = str(QT_TRANSLATE_NOOP("StructureImpactConfirmation", "Deleted masks"))
+_NONE_SOURCE = str(QT_TRANSLATE_NOOP("StructureImpactConfirmation", "none"))
 #: {label} is an impact category; keep {count} and {identities} unchanged.
 _ROW_TEMPLATE_SOURCE = str(
-    QT_TRANSLATE_NOOP("OrganizeImpactConfirmation", "{label} ({count}): {identities}")
+    QT_TRANSLATE_NOOP("StructureImpactConfirmation", "{label} ({count}): {identities}")
 )
 
 

@@ -43,6 +43,7 @@ class _WorkflowPort:
 
     requested_wavelengths: list[float] = field(default_factory=list)
     closed_count: int = 0
+    invalid_wavelength_reports: int = 0
     confirmed: list[tuple[float | None, tuple[IdentifyVelocitySelectionPort, ...]]] = field(
         default_factory=list
     )
@@ -71,6 +72,10 @@ class _WorkflowPort:
     def handle_velocity_plot_closed(self) -> None:
         """Record close notifications."""
         self.closed_count += 1
+
+    def report_invalid_wavelength(self) -> None:
+        """Record invalid wavelength reports."""
+        self.invalid_wavelength_reports += 1
 
     def confirm_velocity_plot_selection(
         self, *, center_z: float | None, slices: list[IdentifyVelocitySelectionPort]
@@ -129,7 +134,7 @@ def _harness(mode: EditingMode | None = EditingMode.IDENTIFY) -> _Harness:
 
 
 def test_toggle_without_wavelength_does_not_guess_view_center() -> None:
-    """A missing preview/pending target never opens at an inferred center."""
+    """A missing cursor wavelength never opens at an inferred center."""
     harness = _harness()
 
     harness.controller.toggle(None)
@@ -137,6 +142,36 @@ def test_toggle_without_wavelength_does_not_guess_view_center() -> None:
     assert harness.workflow.requested_wavelengths == []
     assert harness.spectrum.visible is False
     assert harness.wavelength_enabled == []
+
+
+def test_toggle_without_wavelength_reports_invalid_wavelength() -> None:
+    """A cursor outside the wavelength axis asks the user for a valid position."""
+    harness = _harness()
+
+    harness.controller.toggle(None)
+
+    assert harness.workflow.invalid_wavelength_reports == 1
+
+
+def test_toggle_without_wavelength_closes_visible_plot_silently() -> None:
+    """Closing the visible plot never asks for a wavelength position."""
+    harness = _harness()
+    harness.spectrum.visible = True
+
+    harness.controller.toggle(None)
+
+    assert harness.spectrum.visible is False
+    assert harness.spectrum.hide_count == 1
+    assert harness.workflow.invalid_wavelength_reports == 0
+
+
+def test_toggle_outside_identify_mode_reports_nothing() -> None:
+    """Other modes own their own velocity shortcuts and stay silent."""
+    harness = _harness(EditingMode.ANALYSIS)
+
+    harness.controller.toggle(None)
+
+    assert harness.workflow.invalid_wavelength_reports == 0
 
 
 def test_toggle_hides_an_existing_velocity_plot() -> None:

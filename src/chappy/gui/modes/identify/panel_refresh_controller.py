@@ -55,7 +55,7 @@ class IdentifyPanelRefreshController(QObject):
 
     @property
     def primary_to_members(self) -> dict[str, tuple[str, ...]]:
-        """Return the latest primary-to-member candidate line mapping."""
+        """Return the latest primary-to-member temporary line mapping."""
         return self._primary_to_members
 
     def current_candidate_rows(self) -> tuple[CandidateRow, ...]:
@@ -75,7 +75,7 @@ class IdentifyPanelRefreshController(QObject):
             panel.set_candidates(candidate_rows)
 
     def refresh_workflow(self) -> None:
-        """Refresh temporary candidate, preview, and confirmed-region workflow rows."""
+        """Refresh temporary-line, preview, and confirmed-region workflow rows."""
         panel = self._ports.panel_provider()
         if panel is None:
             return
@@ -86,7 +86,7 @@ class IdentifyPanelRefreshController(QObject):
         session = self._ports.session_provider()
         view_model = self._workflow_builder.build(
             IdentifyWorkflowBuilderInput(
-                candidate_lines=session.candidate_lines,
+                temporary_lines=session.temporary_lines,
                 region_previews=tuple(self._ports.region_previews_provider()),
                 absorption_lines=absorption_lines,
                 absorption_regions=absorption_regions,
@@ -101,7 +101,7 @@ class IdentifyPanelRefreshController(QObject):
         )
 
         self._primary_to_members = view_model.primary_to_members
-        panel.set_temporary_systems(view_model.candidate_line_rows, view_model.region_preview_rows)
+        panel.set_temporary_lines(view_model.temporary_line_rows, view_model.region_preview_rows)
         panel.set_confirmed_regions(view_model.confirmed_region_rows)
         self._ports.line_overlay_callback()
 

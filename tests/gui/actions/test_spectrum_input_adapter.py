@@ -35,10 +35,9 @@ from chappy.presentation.interaction.interaction_contracts import (
     InteractionPhase,
     InteractionStateSnapshot,
     RectZoomContext,
-    VelocityContext,
 )
 
-InteractorContext = AbsorberDragContext | RectZoomContext | VelocityContext
+InteractorContext = AbsorberDragContext | RectZoomContext
 
 
 @dataclass
@@ -282,47 +281,21 @@ def view() -> _SpectrumViewFake:
 def interactor(view: _SpectrumViewFake) -> Iterator[SpectrumInputAdapter]:
     """Create a SpectrumInputAdapter instance."""
     adapter = SpectrumInputAdapter(view=view)
-    adapter.sig_mode_velocity_shortcut_requested.connect(adapter.toggle_identify_velocity_pending)
     yield adapter
 
 
-def test_velocity_pending_uses_controller_phase(interactor: SpectrumInputAdapter) -> None:
-    """Velocity pending state should come from the velocity controller phase."""
+def test_identify_velocity_key_routes_to_mode_owner(interactor: SpectrumInputAdapter) -> None:
+    """V in identify mode routes to the mode owner without arming a channel."""
     interactor.set_mode_capabilities(
         spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
     )
-
-    assert interactor._is_velocity_pending() is False  # noqa: SLF001
+    recorder = _SignalRecorder()
+    recorder.connect(interactor)
 
     handled = interactor.handle_key_event(_key_event(Qt.Key.Key_V))
 
     assert handled is True
-    assert interactor._velocity_controller.phase is InteractionPhase.ARMED  # noqa: SLF001
-    assert interactor._is_velocity_pending() is True  # noqa: SLF001
-
-
-def test_velocity_commit_without_pending_fails_fast(interactor: SpectrumInputAdapter) -> None:
-    """Velocity commit without pending state should fail fast."""
-    recorder = _SignalRecorder()
-    recorder.connect(interactor)
-
-    with pytest.raises(InteractionStateError, match="requires an active interaction"):
-        interactor._complete_velocity_pending(  # noqa: SLF001 - intentional transition test
-            5000.0, 0, trigger="test"
-        )
-
-    assert recorder.identify == []
-    assert recorder.mode_velocity_shortcuts == []
-    assert recorder.snapshots == []
-
-
-def test_velocity_cancel_without_pending_is_noop(interactor: SpectrumInputAdapter) -> None:
-    """Velocity cancellation should not emit snapshots when no pending state exists."""
-    recorder = _SignalRecorder()
-    recorder.connect(interactor)
-
-    interactor._cancel_velocity_pending(reason="test")  # noqa: SLF001
-
+    assert recorder.mode_velocity_shortcuts == [True]
     assert recorder.snapshots == []
 
 
@@ -618,17 +591,13 @@ class TestSpectrumInputAdapterMouseProcessing:
         assert plot.mouse_input is None
         assert plot.continuum_input is None
 
-    def test_handle_mouse_leave_clears_velocity_target_and_emits_cursor_left(
-        self, interactor: SpectrumInputAdapter
-    ) -> None:
-        """Mouse leave clears velocity prompt target and emits cursor-left feedback."""
-        interactor.set_target_wavelength(5050.0)
+    def test_handle_mouse_leave_emits_cursor_left(self, interactor: SpectrumInputAdapter) -> None:
+        """Mouse leave emits cursor-left feedback."""
         recorder = _SignalRecorder()
         recorder.connect(interactor)
 
         interactor.handle_mouse_leave()
 
-        assert interactor.current_velocity_target_wavelength() is None
         assert recorder.cursor_left_count == 1
 
     def test_handle_double_click_center_emits_center_intent(
@@ -705,10 +674,10 @@ class TestRectZoomFlow:
         assert context.bounds.min_wavelength == pytest.approx(4000.0)
         assert context.bounds.max_wavelength == pytest.approx(5000.0)
 
-    def test_velocity_key_cancels_rect_zoom_before_pending(
+    def test_velocity_key_cancels_rect_zoom_before_routing(
         self, interactor: SpectrumInputAdapter
     ) -> None:
-        """Velocity key cancels rectangle zoom and enters pending mode."""
+        """Velocity key cancels rectangle zoom and routes to the mode owner."""
         interactor.set_mode_capabilities(
             spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
         )
@@ -721,19 +690,18 @@ class TestRectZoomFlow:
 
         assert handled is True
         assert interactor.is_rect_zoom_mode_enabled() is False
+        assert recorder.mode_velocity_shortcuts == [True]
         assert [snapshot.phase for snapshot in recorder.snapshots] == [
             InteractionPhase.ARMED,
             InteractionPhase.CANCELLED,
-            InteractionPhase.ARMED,
         ]
         assert recorder.snapshots[0].channel is InteractionChannel.RECT_ZOOM
         assert recorder.snapshots[1].channel is InteractionChannel.RECT_ZOOM
-        assert recorder.snapshots[2].channel is InteractionChannel.VELOCITY
 
-    def test_velocity_shortcut_cancels_rect_zoom_before_pending(
+    def test_velocity_shortcut_cancels_rect_zoom_before_routing(
         self, interactor: SpectrumInputAdapter
     ) -> None:
-        """Global velocity shortcut cancels rectangle zoom and enters pending mode."""
+        """Global velocity shortcut cancels rectangle zoom and routes to the mode owner."""
         interactor.set_mode_capabilities(
             spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
         )
@@ -746,149 +714,15 @@ class TestRectZoomFlow:
 
         assert handled is True
         assert interactor.is_rect_zoom_mode_enabled() is False
+        assert recorder.mode_velocity_shortcuts == [True]
         assert [snapshot.phase for snapshot in recorder.snapshots] == [
             InteractionPhase.ARMED,
             InteractionPhase.CANCELLED,
-            InteractionPhase.ARMED,
         ]
 
 
 class TestVelocityFlow:
-    """Velocity pending behavior for SpectrumInputAdapter."""
-
-    def test_velocity_toggle_flow_commits_on_click(self, interactor: SpectrumInputAdapter) -> None:
-        """V then left click emits a velocity toggle intent and exits pending mode."""
-        interactor.set_mode_capabilities(
-            spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
-        )
-        recorder = _SignalRecorder()
-        recorder.connect(interactor)
-
-        handled_key = interactor.handle_key_event(_key_event(Qt.Key.Key_V))
-        click_handled = interactor.handle_mouse_click((5050.0, 0.75), "left", 0)
-
-        assert handled_key is True
-        assert click_handled is True
-        assert len(recorder.identify) == 1
-        intent = recorder.identify[0]
-        assert isinstance(intent, ToggleVelocityPlotIntent)
-        assert intent.wavelength == pytest.approx(5050.0)
-        assert [snapshot.phase for snapshot in recorder.snapshots] == [
-            InteractionPhase.ARMED,
-            InteractionPhase.IDLE,
-        ]
-
-    def test_velocity_shortcut_repress_cancels_pending(
-        self, interactor: SpectrumInputAdapter
-    ) -> None:
-        """Shortcut repress cancels pending velocity mode."""
-        interactor.set_mode_capabilities(
-            spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
-        )
-        recorder = _SignalRecorder()
-        recorder.connect(interactor)
-
-        interactor.trigger_velocity_shortcut()
-        handled = interactor.trigger_velocity_shortcut()
-
-        assert handled is True
-        cancel_snapshot = recorder.snapshots[-1]
-        assert cancel_snapshot.channel is InteractionChannel.VELOCITY
-        assert cancel_snapshot.phase is InteractionPhase.CANCELLED
-        context = cancel_snapshot.context
-        assert isinstance(context, VelocityContext)
-        assert context.cancel_reason == "shortcut-toggle"
-
-    def test_velocity_cancel_by_escape(self, interactor: SpectrumInputAdapter) -> None:
-        """Escape cancels pending velocity mode."""
-        interactor.set_mode_capabilities(
-            spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
-        )
-        recorder = _SignalRecorder()
-        recorder.connect(interactor)
-
-        interactor.handle_key_event(_key_event(Qt.Key.Key_V))
-        handled = interactor.handle_key_event(_key_event(Qt.Key.Key_Escape))
-
-        assert handled is True
-        cancel_snapshot = recorder.snapshots[-1]
-        assert cancel_snapshot.phase is InteractionPhase.CANCELLED
-        context = cancel_snapshot.context
-        assert isinstance(context, VelocityContext)
-        assert context.cancel_reason == "escape-key"
-
-    def test_velocity_cancel_by_right_click(self, interactor: SpectrumInputAdapter) -> None:
-        """Right-click cancels pending velocity mode."""
-        interactor.set_mode_capabilities(
-            spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
-        )
-        recorder = _SignalRecorder()
-        recorder.connect(interactor)
-
-        interactor.handle_key_event(_key_event(Qt.Key.Key_V))
-        handled = interactor.handle_mouse_click((5100.0, 0.8), "right")
-
-        assert handled is True
-        cancel_snapshot = recorder.snapshots[-1]
-        assert cancel_snapshot.phase is InteractionPhase.CANCELLED
-        context = cancel_snapshot.context
-        assert isinstance(context, VelocityContext)
-        assert context.cancel_reason == "context-menu"
-
-    def test_velocity_cancel_by_policy_transition(self, interactor: SpectrumInputAdapter) -> None:
-        """The explicit policy cleanup cancels pending velocity mode."""
-        interactor.set_mode_capabilities(
-            spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
-        )
-        recorder = _SignalRecorder()
-        recorder.connect(interactor)
-
-        interactor.handle_key_event(_key_event(Qt.Key.Key_V))
-        interactor.cancel_velocity_pending(reason="policy-transition")
-
-        cancel_snapshot = recorder.snapshots[-1]
-        assert cancel_snapshot.phase is InteractionPhase.CANCELLED
-        context = cancel_snapshot.context
-        assert isinstance(context, VelocityContext)
-        assert context.cancel_reason == "policy-transition"
-
-    def test_velocity_key_repress_cancels_pending(self, interactor: SpectrumInputAdapter) -> None:
-        """V key repress toggles pending velocity mode off."""
-        interactor.set_mode_capabilities(
-            spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
-        )
-        recorder = _SignalRecorder()
-        recorder.connect(interactor)
-        event = _key_event(Qt.Key.Key_V)
-
-        interactor.handle_key_event(event)
-        handled = interactor.handle_key_event(event)
-
-        assert handled is True
-        cancel_snapshot = recorder.snapshots[-1]
-        assert cancel_snapshot.phase is InteractionPhase.CANCELLED
-        context = cancel_snapshot.context
-        assert isinstance(context, VelocityContext)
-        assert context.cancel_reason == "toggle-key"
-
-    def test_velocity_mouse_press_bridge_commits(self, interactor: SpectrumInputAdapter) -> None:
-        """Matplotlib bridge press event commits velocity pending mode."""
-        interactor.set_mode_capabilities(
-            spectrum_interaction_mode_policy(EditingMode.IDENTIFY).input_capabilities
-        )
-        interactor.coord_transform = _CoordinateTransformFake([(5050.0, 0.7)])
-        recorder = _SignalRecorder()
-        recorder.connect(interactor)
-
-        interactor.trigger_velocity_shortcut()
-        handled = interactor.handle_mouse_press_event(_mouse_event())
-
-        assert handled is True
-        assert len(recorder.identify) == 1
-        intent = recorder.identify[0]
-        assert isinstance(intent, ToggleVelocityPlotIntent)
-        assert intent.wavelength == pytest.approx(5050.0)
-        assert recorder.snapshots[-1].phase is InteractionPhase.IDLE
+    """Velocity shortcut behavior for SpectrumInputAdapter."""
 
     def test_optimize_velocity_key_uses_optimize_toggle_signal(
         self, interactor: SpectrumInputAdapter

@@ -29,7 +29,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     InteractionPhase,
     InteractionStateSnapshot,
     RectZoomContext,
-    VelocityContext,
 )
 from chappy.presentation.spectrum import AbsorptionMarkerInput
 from chappy.gui.protocols.intent_types import (
@@ -65,8 +64,6 @@ from .fixtures.mock_spectrum_view import (
 )
 
 SPECTRUM_PRESENTER_SOURCES = {
-    "Click to confirm velocity plot",
-    "Velocity plot creation cancelled",
     "Add Control Point",
     "Delete Control Point",
     "Always show candidate overlay",
@@ -109,13 +106,6 @@ def _read_ts_sources(ts_path: Path) -> set[str]:
 class _PresenterView:
     """Minimal view dependency for SpectrumInteractionCoordinator tests."""
 
-    def __init__(self) -> None:
-        self.current_window: _PresenterWindow | None = None
-
-    def window(self) -> "_PresenterWindow | None":
-        """Return the configured window dependency."""
-        return self.current_window
-
     def get_velocity_plot_y_range(self) -> tuple[float, float] | None:
         """Return no override flux range."""
         return None
@@ -130,44 +120,6 @@ class _CursorWidget:
     def setCursor(self, cursor: Qt.CursorShape) -> None:  # noqa: N802
         """Record the requested cursor shape."""
         self.cursors.append(cursor)
-
-
-class _StatusController:
-    """Record status bar messages and clear operations."""
-
-    def __init__(self) -> None:
-        self.messages: list[tuple[str, int | None]] = []
-        self.clear_count = 0
-
-    def show_message(self, message: str, *, timeout_ms: int | None = None) -> None:
-        """Record a status message request."""
-        self.messages.append((message, timeout_ms))
-
-    def clear_message(self) -> None:
-        """Record a status message clear request."""
-        self.clear_count += 1
-
-
-class _IdentifyModeCoordinator:
-    """Record identify coordinator preview lock requests."""
-
-    def __init__(self) -> None:
-        self.preview_lock_enabled = False
-        self.preview_lock_requests: list[bool] = []
-
-    def handle_manual_candidate(
-        self, *, observed_wavelength: float, modifiers: int, source: str
-    ) -> None:
-        """Accept manual candidate placement requests."""
-
-    def preview_always_on(self) -> bool:
-        """Return the recorded preview lock state."""
-        return self.preview_lock_enabled
-
-    def set_preview_always_on(self, enabled: bool) -> None:
-        """Record a preview lock request."""
-        self.preview_lock_enabled = enabled
-        self.preview_lock_requests.append(enabled)
 
 
 class _ContinuumEditor:
@@ -229,14 +181,6 @@ class _ModeIntentSink:
     def handle_identify_intent(self, intent: object) -> None:
         """Record an identify intent."""
         self.identify_intents.append(intent)
-
-
-class _PresenterWindow:
-    """Window double exposing a status controller."""
-
-    def __init__(self, status_controller: _StatusController) -> None:
-        self.status_controller = status_controller
-        self.identify_coordinator: _IdentifyModeCoordinator | None = None
 
 
 class _RangeCoordinatorRecorder:
@@ -320,7 +264,6 @@ class _InteractorComponent:
         self.sig_interaction_snapshot = MockSignal()
         self.sig_cursor_position_changed = MockSignal()
         self.rect_zoom_enabled = False
-        self.velocity_cancel_reasons: list[str] = []
 
     def set_rect_zoom_mode(self, enabled: bool) -> None:
         """Record rectangle zoom mode."""
@@ -332,10 +275,6 @@ class _InteractorComponent:
 
     def set_selected_line_absorbers(self, _absorber_ids: set[str] | None) -> None:
         """Accept selected absorber updates."""
-
-    def cancel_velocity_pending(self, *, reason: str) -> None:
-        """Accept velocity cleanup."""
-        self.velocity_cancel_reasons.append(reason)
 
     def cancel_mask_selection_interaction(self, *, reason: str | None = None) -> bool:
         """Accept mask cleanup."""
@@ -443,7 +382,7 @@ def _attach_absorber_model_mutation_owner(presenter: SpectrumInteractionCoordina
             project_provider=lambda: (
                 presenter.data_bridge.project if presenter.data_bridge is not None else None
             ),
-            system_info_provider=presenter._get_system_info_for_component,
+            line_info_provider=presenter._get_line_info_for_component,
             history_provider=_History,
             plot_widget_provider=lambda: (
                 presenter.plot_host.plot_widget
@@ -747,120 +686,6 @@ class TestSpectrumInteractionCoordinator:
         with pytest.raises(RuntimeError, match="column_density"):
             plot_host.update_absorption_line_markers(project)
 
-    def test_velocity_snapshot_updates_cursor_and_status(
-        self, presenter: SpectrumInteractionCoordinator
-    ) -> None:
-        """Velocity snapshots should drive cursor feedback and status messaging."""
-        cursor_widget = _CursorWidget()
-        presenter.plot_host = SimpleNamespace(plot_widget=cursor_widget)  # type: ignore[assignment]
-
-        status_controller = _StatusController()
-        presenter.view.current_window = _PresenterWindow(status_controller)
-
-        class DummyInteractor:
-            def __init__(self) -> None:
-                self.sig_interaction_snapshot = MockSignal()
-                self.sig_cursor_position_changed = MockSignal()
-                self._calls = 0
-
-            def trigger_velocity_shortcut(self) -> bool:
-                self._calls += 1
-                return True
-
-        interactor = DummyInteractor()
-        presenter._connect_interactor_signals(interactor)  # type: ignore[arg-type]
-
-        interactor.sig_interaction_snapshot.emit(
-            InteractionStateSnapshot(
-                interaction_id=InteractionId("velocity-armed"),
-                channel=InteractionChannel.VELOCITY,
-                phase=InteractionPhase.ARMED,
-                context=VelocityContext(
-                    target_wavelength=5100.0,
-                    confirmed_wavelength=None,
-                    trigger="keyboard-v",
-                    modifiers=0,
-                    cancel_reason=None,
-                ),
-            )
-        )
-
-        assert cursor_widget.cursors == [Qt.CursorShape.CrossCursor]
-        assert status_controller.messages == [("Click to confirm velocity plot", 0)]
-
-    def test_velocity_snapshot_cancellation_message(
-        self, presenter: SpectrumInteractionCoordinator
-    ) -> None:
-        """Velocity cancellation snapshots should display a cancellation message."""
-        cursor_widget = _CursorWidget()
-        presenter.plot_host = SimpleNamespace(plot_widget=cursor_widget)  # type: ignore[assignment]
-
-        status_controller = _StatusController()
-        presenter.view.current_window = _PresenterWindow(status_controller)
-
-        class DummyInteractor:
-            def __init__(self) -> None:
-                self.sig_interaction_snapshot = MockSignal()
-                self.sig_cursor_position_changed = MockSignal()
-                self._calls = 0
-
-            def trigger_velocity_shortcut(self) -> bool:
-                self._calls += 1
-                return True
-
-        interactor = DummyInteractor()
-        presenter._connect_interactor_signals(interactor)  # type: ignore[arg-type]
-
-        interactor.sig_interaction_snapshot.emit(
-            InteractionStateSnapshot(
-                interaction_id=InteractionId("velocity-armed"),
-                channel=InteractionChannel.VELOCITY,
-                phase=InteractionPhase.ARMED,
-                context=VelocityContext(
-                    target_wavelength=5100.0,
-                    confirmed_wavelength=None,
-                    trigger="keyboard-v",
-                    modifiers=0,
-                    cancel_reason=None,
-                ),
-            )
-        )
-        status_controller.messages.clear()
-        status_controller.clear_count = 0
-
-        interactor.sig_interaction_snapshot.emit(
-            InteractionStateSnapshot(
-                interaction_id=InteractionId("velocity-idle"),
-                channel=InteractionChannel.VELOCITY,
-                phase=InteractionPhase.IDLE,
-                context=VelocityContext(
-                    target_wavelength=5100.0,
-                    confirmed_wavelength=5100.0,
-                    trigger="mouse",
-                    modifiers=0,
-                    cancel_reason=None,
-                ),
-            )
-        )
-        assert status_controller.clear_count == 1
-
-        snapshot = InteractionStateSnapshot(
-            interaction_id=InteractionId("velocity-cancel"),
-            channel=InteractionChannel.VELOCITY,
-            phase=InteractionPhase.CANCELLED,
-            context=VelocityContext(
-                target_wavelength=5100.0,
-                confirmed_wavelength=None,
-                trigger="keyboard-v",
-                modifiers=0,
-                cancel_reason="escape-key",
-            ),
-        )
-
-        presenter.apply_interaction_state_snapshot(snapshot)
-
-        assert status_controller.messages == [("Velocity plot creation cancelled", 3000)]
-
     def test_cursor_signal_updates_optimize_cursor_feedback(
         self, presenter: SpectrumInteractionCoordinator
     ) -> None:
@@ -916,7 +741,6 @@ class TestSpectrumInteractionCoordinator:
 
         cancel_mask.assert_called_once_with()
         cancel_drag.assert_called_once_with()
-        assert interactor.velocity_cancel_reasons == ["policy-transition"]
 
     def test_apply_interaction_state_snapshot_emits_signal(
         self, presenter: SpectrumInteractionCoordinator
@@ -1023,7 +847,6 @@ def test_lupdate_extracts_spectrum_interaction_coordinator_sources(tmp_path: Pat
         source_dirs=[
             Path("src/chappy/gui/spectrum/spectrum_interaction_coordinator.py"),
             Path("src/chappy/gui/spectrum/context_menu_controller.py"),
-            Path("src/chappy/gui/spectrum/velocity_prompt_controller.py"),
             Path("src/chappy/gui/modes/continuum/context_menu_controller.py"),
             Path("src/chappy/gui/modes/identify/context_menu_controller.py"),
         ],

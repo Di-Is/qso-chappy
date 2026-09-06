@@ -20,7 +20,7 @@ from chappy.gui.modes.analysis.region_detail.spectrum_integration import (
     OptimizeSpectrumIntegration,
 )
 from chappy.gui.protocols.intent_types import EndAbsorberDragIntent, StartAbsorberDragIntent
-from chappy.gui.protocols.optimize_spectrum import OptimizeSystemInfo
+from chappy.gui.protocols.optimize_spectrum import OptimizeLineInfo
 from chappy.gui.shell.absorber_model_mutation_controller import (
     AbsorberModelMutationController,
     AbsorberModelMutationPorts,
@@ -204,21 +204,21 @@ def _mutation_controller(project: SpectroscopyProject) -> AbsorberModelMutationC
     """Create a mutation controller wired to a real history recorder."""
     history = HistoryRecorder(CommandHistory(), lambda: project)
 
-    def system_info(component: AbsorberComponent) -> OptimizeSystemInfo | None:
+    def line_info(component: AbsorberComponent) -> OptimizeLineInfo | None:
         owner = next(
             (line for line in project.list_absorption_lines() if component.id in line.model_ids),
             None,
         )
         if owner is None:
             return None
-        return OptimizeSystemInfo(
+        return OptimizeLineInfo(
             rest_wavelength=float(owner.rest_wavelength), lambda_range=owner.lambda_range
         )
 
     return AbsorberModelMutationController(
         ports=AbsorberModelMutationPorts(
             project_provider=lambda: project,
-            system_info_provider=system_info,
+            line_info_provider=line_info,
             history_provider=lambda: history,
             plot_widget_provider=lambda: None,
             plot_refresh_callback=lambda: None,

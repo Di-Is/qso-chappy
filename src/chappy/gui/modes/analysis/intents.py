@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from chappy.gui.modes.common.analysis_navigation import OpenAnalysisRegionIntent
+from chappy.gui.modes.common.analysis_navigation import (
+    OpenAnalysisRegionIntent,
+    OpenAnalysisStructureIntent,
+)
 
 
 def _require_id(value: str, *, field_name: str) -> None:
@@ -40,6 +43,7 @@ class CloseStructureEditorIntent:
 
 AnalysisWorkspaceIntent = (
     OpenAnalysisRegionIntent
+    | OpenAnalysisStructureIntent
     | ReturnToOverviewIntent
     | OpenStructureEditorIntent
     | CloseStructureEditorIntent
@@ -50,6 +54,7 @@ __all__ = [
     "AnalysisWorkspaceIntent",
     "CloseStructureEditorIntent",
     "OpenAnalysisRegionIntent",
+    "OpenAnalysisStructureIntent",
     "OpenStructureEditorIntent",
     "ReturnToOverviewIntent",
 ]

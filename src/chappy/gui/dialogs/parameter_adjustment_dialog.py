@@ -257,11 +257,11 @@ class ParameterAdjustmentDialog(QDialog):
                 title_source="b (Doppler parameter)",
                 tooltip=self.tr(
                     "Doppler broadening parameter in km/s. "
-                    "Extend the range for highly turbulent systems."
+                    "Extend the range for highly turbulent absorbers."
                 ),
                 tooltip_source=(
                     "Doppler broadening parameter in km/s. "
-                    "Extend the range for highly turbulent systems."
+                    "Extend the range for highly turbulent absorbers."
                 ),
                 slider=self._b_slider,
                 spin=self._b_spin,

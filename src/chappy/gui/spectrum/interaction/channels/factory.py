@@ -25,12 +25,6 @@ from chappy.gui.spectrum.interaction.channels.rect_zoom.interaction_controller i
 from chappy.gui.spectrum.interaction.channels.rect_zoom.state_controller import (
     RectZoomStateController,
 )
-from chappy.gui.spectrum.interaction.channels.velocity.snapshot_emitter import (
-    VelocitySnapshotEmitter,
-)
-from chappy.gui.spectrum.interaction.channels.velocity.state_controller import (
-    VelocityStateController,
-)
 from chappy.gui.spectrum.interaction.support.logging import InteractionLogEmitter
 from chappy.presentation.interaction.interaction_contracts import (
     InteractionChannel,
@@ -53,7 +47,6 @@ class InteractionControllerBundle:
     channel_coordinator: InteractionChannelCoordinator
     rect_zoom: RectZoomStateController
     absorber_drag: AbsorberDragStateController
-    velocity: VelocityStateController
     mask_selection: MaskSelectionStateController
 
 
@@ -83,20 +76,12 @@ class InteractionControllerFactory:
 
         absorber_drag = self._create_absorber_drag_interaction_controller(ports)
 
-        velocity_snapshot_emitter = VelocitySnapshotEmitter(
-            snapshot_consumer=ports.snapshot_consumer
-        )
-        velocity = VelocityStateController(
-            velocity_snapshot_emitter=velocity_snapshot_emitter, logger=self._logger
-        )
-
         mask_selection = self._create_mask_selection_interaction_controller(ports)
 
         return InteractionControllerBundle(
             channel_coordinator=channel_coordinator,
             rect_zoom=rect_zoom,
             absorber_drag=absorber_drag,
-            velocity=velocity,
             mask_selection=mask_selection,
         )
 

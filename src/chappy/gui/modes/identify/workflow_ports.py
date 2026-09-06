@@ -46,10 +46,6 @@ class IdentifyModeCoordinatorPort(Protocol):
         """Return whether identify preview lock is active."""
         ...
 
-    def velocity_verification_wavelength(self) -> float | None:
-        """Return the active Shift-preview wavelength for velocity verification."""
-        ...
-
     def notify_resolution_changed(self) -> None:
         """React to instrumental resolution changes."""
         ...
@@ -70,10 +66,10 @@ class IdentifyModeCoordinatorPort(Protocol):
         """Handle release of the transient Identify Shift preview input."""
         ...
 
-    def handle_manual_candidate(
+    def handle_manual_temporary_line(
         self, *, observed_wavelength: float, modifiers: int = 0, source: str = "click"
     ) -> None:
-        """Create manual candidate lines."""
+        """Create manual temporary lines."""
         ...
 
     def on_mode_changed(self, mode: EditingMode) -> None:
@@ -98,10 +94,14 @@ class IdentifyModeCoordinatorPort(Protocol):
         """Handle velocity plot close events."""
         ...
 
+    def report_invalid_wavelength(self) -> None:
+        """Report that a valid wavelength position must be specified."""
+        ...
+
     def confirm_velocity_plot_selection(
         self, *, center_z: float | None, slices: Sequence[IdentifyVelocitySelectionPort]
     ) -> None:
-        """Create candidates from velocity plot selections."""
+        """Create temporary lines from velocity plot selections."""
         ...
 
     open_analysis_region_requested: SignalInstance

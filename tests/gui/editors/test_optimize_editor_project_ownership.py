@@ -83,7 +83,7 @@ def test_project_document_persists_only_absorber_and_continuum_components() -> N
     project.model.add_component(OptimizeComponent(name="Transient optimizer"))
 
     document = project_to_document(project)
-    restored = project_from_document(document)
+    restored = project_from_document(document).project
 
     assert tuple(component.kind for component in document.components) == ("absorber", "continuum")
     assert [type(component) for component in restored.model.components] == [

@@ -60,7 +60,7 @@ class DetectCandidateLinesUseCase:
                     status="unused",
                 ),
                 existing_line_ranges=request.existing_line_ranges,
-                candidate_ranges=request.candidate_ranges,
+                temporary_line_ranges=request.temporary_line_ranges,
             )
             for idx, region in enumerate(raw_regions, start=1)
         )
@@ -71,14 +71,14 @@ def _assign_region_status(
     region: DetectedRegionSnapshot,
     *,
     existing_line_ranges: tuple[tuple[float, float], ...],
-    candidate_ranges: tuple[tuple[float, float], ...],
+    temporary_line_ranges: tuple[tuple[float, float], ...],
 ) -> DetectedRegionSnapshot:
-    """Assign status based on overlap with existing and candidate ranges.
+    """Assign status based on overlap with existing and temporary-line ranges.
 
     Args:
         region: Detected region to classify.
         existing_line_ranges: Existing confirmed absorption line ranges.
-        candidate_ranges: Temporary candidate ranges.
+        temporary_line_ranges: Wavelength ranges of existing temporary lines.
 
     Returns:
         Region with status assigned.
@@ -94,7 +94,7 @@ def _assign_region_status(
                 sigma=region.sigma,
                 status="identified",
             )
-    for start, end in candidate_ranges:
+    for start, end in temporary_line_ranges:
         if start <= center <= end:
             return DetectedRegionSnapshot(
                 region_id=region.region_id,

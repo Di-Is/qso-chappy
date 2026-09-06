@@ -7,13 +7,13 @@ from typing import Protocol
 from chappy.gui.protocols.context_menu import ContextMenuActionIntent
 from chappy.gui.protocols.intent_types import (
     AddContinuumPointIntent,
-    AddIdentifyCandidateIntent,
+    AddIdentifyTemporaryLineIntent,
     DeleteContinuumPointIntent,
     ToggleIdentifyPreviewLockIntent,
 )
 
 type IdentifyModeIntent = (
-    ContextMenuActionIntent | AddIdentifyCandidateIntent | ToggleIdentifyPreviewLockIntent
+    ContextMenuActionIntent | AddIdentifyTemporaryLineIntent | ToggleIdentifyPreviewLockIntent
 )
 type ContinuumModeIntent = AddContinuumPointIntent | DeleteContinuumPointIntent
 

@@ -19,7 +19,8 @@ from chappy.core.analysis import AnalysisReadiness
 from chappy.gui.common.collapsible_section import CollapsibleSection
 from chappy.gui.theme import Colors, Fonts, apply_button_variant, card_frame_style
 from chappy.gui.visual_tokens import SidePanelMetrics
-from chappy.presentation.analysis import AnalysisUnavailableCause
+from chappy.presentation.analysis import build_region_structure_summary
+from chappy.presentation.analysis.structure.tree_presenter import StructureTreePresenter
 
 if TYPE_CHECKING:
     from PySide6.QtGui import QMouseEvent
@@ -28,18 +29,18 @@ if TYPE_CHECKING:
     from chappy.presentation.analysis import AnalysisReviewRow, AnalysisReviewSummary
 
 _EXCLUSIVE_STATUSES = (
-    AnalysisReadiness.UNAVAILABLE,
     AnalysisReadiness.NOT_ANALYZED,
     AnalysisReadiness.STALE,
     AnalysisReadiness.LATEST,
 )
 
 _STATUS_OBJECT_NAMES = {
-    AnalysisReadiness.UNAVAILABLE: "analysisOverviewStatusUnavailable",
     AnalysisReadiness.NOT_ANALYZED: "analysisOverviewStatusNotAnalyzed",
     AnalysisReadiness.STALE: "analysisOverviewStatusStale",
     AnalysisReadiness.LATEST: "analysisOverviewStatusLatest",
 }
+
+_MAX_TRANSITIONS_PER_ROW = 3
 
 
 class _ClickableLabel(QLabel):
@@ -59,7 +60,7 @@ class _ClickableLabel(QLabel):
 
 
 class AnalysisOverviewSummaryPanel(QWidget):
-    """Render typed counts, unavailable causes, structure, and explicit user actions."""
+    """Render typed counts, structure, and explicit user actions."""
 
     open_region_requested = Signal(str)
     structure_edit_requested = Signal(str)
@@ -91,7 +92,7 @@ class AnalysisOverviewSummaryPanel(QWidget):
         )
         layout.addWidget(self._progress)
 
-        # The text block scrolls so selection, reasons, and structure stay
+        # The text block scrolls so selection and structure stay
         # reachable at the 800x600 minimum window size; the action buttons
         # remain pinned below the scroll surface.
         content = QWidget(self)
@@ -181,17 +182,6 @@ class AnalysisOverviewSummaryPanel(QWidget):
         self._select_first_button.clicked.connect(self.first_region_requested)
         content_layout.addWidget(self._select_first_button, 0, Qt.AlignmentFlag.AlignLeft)
 
-        self._reasons = QWidget(content)
-        self._reasons.setObjectName("analysisOverviewReasons")
-        self._reasons_layout = QVBoxLayout(self._reasons)
-        self._reasons_layout.setContentsMargins(0, 0, 0, 0)
-        self._reasons_layout.setSpacing(2)
-        self._reasons_title = QLabel(self._reasons)
-        self._reasons_title.setObjectName("analysisOverviewReasonsTitle")
-        self._reasons_title.setStyleSheet(f"color: {Colors.TEXT_SECONDARY};")
-        self._reasons_layout.addWidget(self._reasons_title)
-        content_layout.addWidget(self._reasons)
-
         self._structure = QLabel(content)
         self._structure.setObjectName("analysisOverviewReadOnlyStructure")
         self._structure.setWordWrap(True)
@@ -222,7 +212,6 @@ class AnalysisOverviewSummaryPanel(QWidget):
             )
         )
         counts = {
-            AnalysisReadiness.UNAVAILABLE: summary.unavailable,
             AnalysisReadiness.NOT_ANALYZED: summary.not_analyzed,
             AnalysisReadiness.STALE: summary.stale,
             AnalysisReadiness.LATEST: summary.latest,
@@ -245,61 +234,60 @@ class AnalysisOverviewSummaryPanel(QWidget):
         self._open_button.setToolTip("" if enabled else self.tr("Select a region to open it."))
         self._edit_button.setToolTip("" if enabled else self.tr("Select a region to edit it."))
         self._select_first_button.setVisible(row is None)
-        self._reasons.setVisible(row is not None)
         self._structure.setVisible(row is not None)
-        self._clear_reason_items()
         if row is None:
             self._selection.setText(self.tr("Select a region from the region list below."))
             return
 
         #: {region} is the localized display label of the selected analysis region.
         self._selection.setText(self.tr("Selected: {region}").format(region=row.region.label))
-        self._reasons.setVisible(bool(row.unavailable_causes))
-        for cause in row.unavailable_causes:
-            item = QLabel(self._cause_text(cause), self._reasons)
-            item.setObjectName("analysisOverviewReasonItem")
-            item.setWordWrap(True)
-            item.setToolTip(self._cause_tooltip(cause))
-            self._reasons_layout.addWidget(item)
-        line_labels: list[str] = []
-        if project is not None:
-            region = project.absorption_regions.get(row.region.region_id)
-            if region is not None:
-                line_labels = [
-                    project.absorption_lines[line_id].species
-                    if line_id in project.absorption_lines
-                    #: {line_id} is the stable identifier of a missing absorption line.
-                    else self.tr("Missing line: {line_id}").format(line_id=line_id)
-                    for line_id in region.line_ids
-                ]
-        self._structure.setText(
-            #: {lines} is a comma-separated list of absorption-line species labels.
-            self.tr("Lines: {lines}").format(lines=", ".join(line_labels) or "—")
-        )
+        if project is None:
+            self._structure.setText("—")
+            return
 
-    def _clear_reason_items(self) -> None:
-        while self._reasons_layout.count() > 1:
-            item = self._reasons_layout.takeAt(1)
-            widget = item.widget() if item is not None else None
-            if widget is not None:
-                # Hide first: a widget removed from the layout keeps painting
-                # at its old geometry until the deferred deletion runs.
-                widget.hide()
-                widget.deleteLater()
+        region = project.absorption_regions[row.region.region_id]
+        lines = [project.absorption_lines[line_id] for line_id in region.line_ids]
+        summary = build_region_structure_summary(lines)
+        #: {linked} is the linked-line count; {lines} is the absorption-line count.
+        display_lines = [
+            self.tr("Linked lines: {linked} / Lines: {lines}").format(
+                linked=summary.linked_line_count, lines=summary.line_count
+            )
+        ]
+        if summary.linked_line_count > 0 and not summary.linked_lines:
+            #: {button} is the current label of the button that opens region editing.
+            display_lines.append(
+                self.tr("See [{button}] for the breakdown.").format(
+                    button=self._edit_button.text()
+                )
+            )
+        else:
+            for linked_line in summary.linked_lines:
+                transition_names = linked_line.transition_names
+                names = ", ".join(transition_names[:_MAX_TRANSITIONS_PER_ROW])
+                remaining_count = len(transition_names) - _MAX_TRANSITIONS_PER_ROW
+                if remaining_count > 0:
+                    #: {names} contains the strongest transition names; {count} is omitted lines.
+                    names = self.tr("{names} and {count} more").format(
+                        names=names, count=remaining_count
+                    )
+                redshift = StructureTreePresenter.format_redshift(linked_line.center_z) or "—"
+                #: {redshift} is the linked line's redshift; {transitions} lists its transitions.
+                display_lines.append(
+                    self.tr("z={redshift}  {transitions}").format(
+                        redshift=redshift, transitions=names
+                    )
+                )
+        self._structure.setText("\n".join(display_lines))
 
     def _retranslate_static_texts(self) -> None:
         self._status_section.set_title(self.tr("Status"))
         self._selection_section.set_title(self.tr("Selected region"))
-        self._reasons_title.setText(self.tr("Why analysis is unavailable"))
         self._open_button.setText(self.tr("Open region"))
         self._edit_button.setText(self.tr("Edit region"))
         self._select_first_button.setText(self.tr("Select the first region"))
         click_note = self.tr("Click to filter the region list.")
         status_tooltips = {
-            AnalysisReadiness.UNAVAILABLE: self.tr(
-                "Analysis prerequisites are not met (no lines, broken references,"
-                " etc.). Fitting is not possible."
-            ),
             AnalysisReadiness.NOT_ANALYZED: self.tr(
                 "Prerequisites are met but the region has not been fitted yet."
             ),
@@ -316,31 +304,11 @@ class AnalysisOverviewSummaryPanel(QWidget):
     def _status_count_text(self, readiness: AnalysisReadiness) -> str:
         #: {count} is the number of regions in this exclusive analysis status.
         templates = {
-            AnalysisReadiness.UNAVAILABLE: self.tr("Unavailable: {count}"),
             AnalysisReadiness.NOT_ANALYZED: self.tr("Not analyzed: {count}"),
             AnalysisReadiness.STALE: self.tr("Stale: {count}"),
             AnalysisReadiness.LATEST: self.tr("Latest: {count}"),
         }
         return templates[readiness]
-
-    def _cause_text(self, cause: AnalysisUnavailableCause) -> str:
-        labels = {
-            AnalysisUnavailableCause.NO_LINES: self.tr("No lines"),
-            AnalysisUnavailableCause.MISSING_LINE_REFERENCE: self.tr("Missing line reference"),
-        }
-        return labels[cause]
-
-    def _cause_tooltip(self, cause: AnalysisUnavailableCause) -> str:
-        tooltips = {
-            AnalysisUnavailableCause.NO_LINES: self.tr(
-                "The region contains no absorption lines. Add lines to enable analysis."
-            ),
-            AnalysisUnavailableCause.MISSING_LINE_REFERENCE: self.tr(
-                "The region references a line that no longer exists."
-                " Remove or relink the missing line."
-            ),
-        }
-        return tooltips[cause]
 
     def _emit_open(self) -> None:
         if self._selected_region_id is not None:

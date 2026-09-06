@@ -9,6 +9,10 @@ import numpy as np
 import pytest
 
 from chappy.application.project_io_usecase import ProjectIOUseCase
+from chappy.application.structure.region_line_topology import (
+    RegionLineTopologyIssueKind,
+    find_region_line_topology_issues,
+)
 from chappy.core.absorption.models import UNASSIGNED_REGION_ID
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.core.spectrum import Spectrum
@@ -161,7 +165,7 @@ class TestPersistence:
             project_io.save_project(project, str(tmp_path))
 
             # Load the project - prune should be called
-            loaded = project_io.load_project(str(tmp_path))
+            loaded = project_io.load_project(str(tmp_path)).project
 
             # Empty region should be removed
             assert empty_region.region_id not in loaded.absorption_regions
@@ -205,7 +209,7 @@ class TestPersistence:
 
         try:
             project_io.save_project(project, str(tmp_path))
-            loaded = project_io.load_project(str(tmp_path))
+            loaded = project_io.load_project(str(tmp_path)).project
 
             # Region should have both line_ids
             loaded_region = loaded.absorption_regions[region.region_id]
@@ -215,5 +219,44 @@ class TestPersistence:
             # Lines should reference the region
             assert loaded.absorption_lines[line1.line_id].region_id == region.region_id
             assert loaded.absorption_lines[line2.line_id].region_id == region.region_id
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    def test_hdf5_roundtrip_repairs_mismatched_region_reference(
+        self, project_io: ProjectIOUseCase, project_with_spectrum: SpectroscopyProject
+    ) -> None:
+        """Loading a persisted mismatch repairs it without editing HDF5 directly."""
+        line = project_with_spectrum.add_absorption_line(
+            species="C IV",
+            rest_wavelength=1548.195,
+            center_z=0.5,
+            window_kms=150.0,
+            multiplet_label="C IV",
+            transition_name="1548",
+            oscillator_strength=0.19,
+            gamma_value=2.65e8,
+            lambda_range=(1500.0, 1600.0),
+        )
+        region = project_with_spectrum.create_region_with_lines([line.line_id])
+        line.region_id = "missing-region"
+
+        with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
+            tmp_path = Path(tmp.name)
+
+        try:
+            project_io.save_project(project_with_spectrum, str(tmp_path))
+
+            result = project_io.load_project(str(tmp_path))
+
+            assert result.project.absorption_lines[line.line_id].region_id == region.region_id
+            assert [action.kind for action in result.repair_report.actions] == [
+                RegionLineTopologyIssueKind.REGION_LINE_MISMATCH
+            ]
+            assert (
+                find_region_line_topology_issues(
+                    result.project.absorption_regions, result.project.absorption_lines
+                )
+                == ()
+            )
         finally:
             tmp_path.unlink(missing_ok=True)

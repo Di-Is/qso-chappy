@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from chappy.application.identify import RegistrationOutcome
-from chappy.core.identify_state import CandidateLine
+from chappy.core.identify_state import TemporaryLine
 from chappy.gui.modes.identify.registration_controller import (
     IdentifyRegistrationController,
     IdentifyRegistrationMessages,
@@ -25,7 +25,7 @@ def _outcome() -> RegistrationOutcome:
     return RegistrationOutcome(
         created_line_ids=("line-1",),
         created_region_ids=("region-1",),
-        processed_system_ids=("line-1",),
+        processed_temporary_line_ids=("line-1",),
         affected_region_ids=("region-1",),
         appended_region_ids=(),
         confirmed_count=1,
@@ -36,14 +36,14 @@ def _outcome() -> RegistrationOutcome:
 
 @dataclass
 class _SessionPort:
-    """Expose candidate lines to the controller."""
+    """Expose temporary lines to the controller."""
 
-    candidates: list[CandidateLine] = field(default_factory=list)
+    _temporary_lines: list[TemporaryLine] = field(default_factory=list)
 
     @property
-    def candidate_lines(self) -> Sequence[CandidateLine]:
-        """Return candidate lines."""
-        return list(self.candidates)
+    def temporary_lines(self) -> Sequence[TemporaryLine]:
+        """Return temporary lines."""
+        return list(self._temporary_lines)
 
 
 @dataclass
@@ -52,16 +52,18 @@ class _WorkflowPort:
 
     result: IdentifyRegistrationResult | None = None
     expanded_ids: list[str] = field(default_factory=list)
-    registered_systems: list[tuple[str, ...]] = field(default_factory=list)
+    registered_lines: list[tuple[str, ...]] = field(default_factory=list)
 
-    def expand_multiplet_candidate_lines(self, selected_ids: Sequence[str]) -> list[str]:
+    def expand_multiplet_temporary_lines(self, selected_ids: Sequence[str]) -> list[str]:
         """Return configured expanded ids."""
         self.expanded_ids = list(selected_ids)
         return list(selected_ids)
 
-    def register_candidates(self, systems: Sequence[CandidateLine]) -> IdentifyRegistrationResult:
-        """Record candidate ids submitted for registration."""
-        self.registered_systems.append(tuple(system.system_id for system in systems))
+    def register_temporary_lines(
+        self, lines: Sequence[TemporaryLine]
+    ) -> IdentifyRegistrationResult:
+        """Record temporary line ids submitted for registration."""
+        self.registered_lines.append(tuple(line.temporary_line_id for line in lines))
         return self.result or IdentifyRegistrationResult("Registered", outcome=_outcome())
 
 
@@ -77,10 +79,10 @@ class _Harness:
     candidates_refresh_count: list[int]
 
 
-def _candidate(identifier: str) -> CandidateLine:
-    """Build a candidate line for controller tests."""
-    return CandidateLine(
-        system_id=identifier,
+def _temporary_line(identifier: str) -> TemporaryLine:
+    """Build a temporary line for controller tests."""
+    return TemporaryLine(
+        temporary_line_id=identifier,
         species="C IV",
         lambda_min=1000.0,
         lambda_max=1002.0,
@@ -100,13 +102,13 @@ def _candidate(identifier: str) -> CandidateLine:
 def _messages() -> IdentifyRegistrationMessages:
     """Return stable registration messages."""
     return IdentifyRegistrationMessages(
-        no_candidates="No candidates", no_selected_candidates="No selected candidates"
+        no_temporary_lines="No candidates", no_selected_temporary_lines="No selected candidates"
     )
 
 
-def _harness(*, candidates: list[CandidateLine] | None = None) -> _Harness:
+def _harness(*, temporary_lines: list[TemporaryLine] | None = None) -> _Harness:
     """Create a registration controller with recording ports."""
-    session = _SessionPort(candidates=list(candidates or []))
+    session = _SessionPort(_temporary_lines=list(temporary_lines or []))
     workflow = _WorkflowPort()
     statuses: list[str] = []
     workflow_refresh_count = [0]
@@ -138,24 +140,24 @@ def _harness(*, candidates: list[CandidateLine] | None = None) -> _Harness:
     )
 
 
-def test_register_requires_candidates() -> None:
-    """Registration reports empty state when no candidates exist."""
+def test_register_requires_temporary_lines() -> None:
+    """Registration reports empty state when no temporary lines exist."""
     harness = _harness()
 
     outcome = harness.controller.register()
 
     assert outcome is None
     assert harness.statuses == ["No candidates"]
-    assert harness.workflow.registered_systems == []
+    assert harness.workflow.registered_lines == []
 
 
-def test_register_submits_all_candidates_and_refreshes() -> None:
-    """Registration without selection submits all candidates in one operation."""
-    harness = _harness(candidates=[_candidate("line-1"), _candidate("line-2")])
+def test_register_submits_all_temporary_lines_and_refreshes() -> None:
+    """Registration without selection submits all temporary lines in one operation."""
+    harness = _harness(temporary_lines=[_temporary_line("line-1"), _temporary_line("line-2")])
 
     outcome = harness.controller.register()
 
-    assert harness.workflow.registered_systems == [("line-1", "line-2")]
+    assert harness.workflow.registered_lines == [("line-1", "line-2")]
     assert harness.statuses == ["Registered"]
     assert harness.workflow_refresh_count == [1]
     assert harness.candidates_refresh_count == [1]
@@ -166,7 +168,7 @@ def test_register_submits_all_candidates_and_refreshes() -> None:
 
 def test_register_zero_created_lines_has_status_but_no_inline_result() -> None:
     """A zero-line outcome refreshes and reports status without offering inline Undo."""
-    harness = _harness(candidates=[_candidate("line-1")])
+    harness = _harness(temporary_lines=[_temporary_line("line-1")])
     harness.workflow.result = IdentifyRegistrationResult(
         "Registered 0 lines",
         outcome=replace(_outcome(), created_line_ids=(), confirmed_count=0, failed_count=1),
@@ -180,30 +182,30 @@ def test_register_zero_created_lines_has_status_but_no_inline_result() -> None:
     assert harness.candidates_refresh_count == [1]
 
 
-def test_register_filters_selected_candidates() -> None:
-    """Selected ids restrict the registered candidate subset."""
-    harness = _harness(candidates=[_candidate("line-1"), _candidate("line-2")])
+def test_register_filters_selected_temporary_lines() -> None:
+    """Selected ids restrict the registered temporary line subset."""
+    harness = _harness(temporary_lines=[_temporary_line("line-1"), _temporary_line("line-2")])
 
     harness.controller.register(["line-2"])
 
     assert harness.workflow.expanded_ids == ["line-2"]
-    assert harness.workflow.registered_systems == [("line-2",)]
+    assert harness.workflow.registered_lines == [("line-2",)]
 
 
 def test_register_reports_empty_selection() -> None:
-    """Selection matching no candidate lines reports a status without registering."""
-    harness = _harness(candidates=[_candidate("line-1")])
+    """Selection matching no temporary lines reports a status without registering."""
+    harness = _harness(temporary_lines=[_temporary_line("line-1")])
 
     outcome = harness.controller.register(["missing"])
 
     assert outcome is None
     assert harness.statuses == ["No selected candidates"]
-    assert harness.workflow.registered_systems == []
+    assert harness.workflow.registered_lines == []
 
 
 def test_register_skips_refresh_when_workflow_declines() -> None:
     """Refresh callbacks follow the workflow result flags."""
-    harness = _harness(candidates=[_candidate("line-1")])
+    harness = _harness(temporary_lines=[_temporary_line("line-1")])
     harness.workflow.result = IdentifyRegistrationResult(
         "Failed", refresh_workflow=False, refresh_candidates=False
     )
@@ -218,7 +220,7 @@ def test_register_skips_refresh_when_workflow_declines() -> None:
 
 def test_postcommit_observer_failure_does_not_skip_later_refreshes() -> None:
     """One failed GUI observer cannot undo registration or suppress later observers."""
-    session = _SessionPort(candidates=[_candidate("line-1")])
+    session = _SessionPort(_temporary_lines=[_temporary_line("line-1")])
     workflow = _WorkflowPort()
     calls: list[str] = []
 
@@ -246,7 +248,7 @@ def test_postcommit_observer_failure_does_not_skip_later_refreshes() -> None:
 
 def test_register_missing_workflow_fails_fast() -> None:
     """Missing registration workflow is a composition error."""
-    session = _SessionPort(candidates=[_candidate("line-1")])
+    session = _SessionPort(_temporary_lines=[_temporary_line("line-1")])
     statuses: list[str] = []
     controller = IdentifyRegistrationController(
         IdentifyRegistrationPorts(

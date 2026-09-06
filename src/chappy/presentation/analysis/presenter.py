@@ -13,7 +13,6 @@ from chappy.presentation.analysis.models import (
     AnalysisRegionDisplay,
     AnalysisReviewRow,
     AnalysisReviewSummary,
-    AnalysisUnavailableCause,
 )
 
 if TYPE_CHECKING:
@@ -58,14 +57,12 @@ class AnalysisReviewFacts:
 
     def _validate_readiness_contract(self) -> None:
         """Validate facts guaranteed by the P1 exclusive readiness contract."""
-        if self.readiness is AnalysisReadiness.UNAVAILABLE:
-            return
         if not self.line_ids or self.missing_line_ids:
-            msg = "Available analysis readiness requires complete region line topology."
+            msg = "Analysis readiness requires complete region line topology."
             raise ValueError(msg)
         state = self.analysis_state
         if state is None:
-            msg = "Available analysis readiness requires region analysis state."
+            msg = "Analysis readiness requires region analysis state."
             raise ValueError(msg)
         artifact = state.artifact
         if self.readiness is AnalysisReadiness.NOT_ANALYZED:
@@ -91,7 +88,6 @@ class AnalysisReviewPresenter:
             region=AnalysisRegionDisplay(facts.region_id, facts.region_label),
             analysis_status=facts.readiness,
             fit_result=self._fit_result(facts),
-            unavailable_causes=self._unavailable_causes(facts),
             next_action=self._next_action(facts),
         )
 
@@ -104,7 +100,6 @@ class AnalysisReviewPresenter:
         }
         return AnalysisReviewSummary(
             total=len(materialized),
-            unavailable=readiness_counts[AnalysisReadiness.UNAVAILABLE],
             not_analyzed=readiness_counts[AnalysisReadiness.NOT_ANALYZED],
             stale=readiness_counts[AnalysisReadiness.STALE],
             latest=readiness_counts[AnalysisReadiness.LATEST],
@@ -113,8 +108,6 @@ class AnalysisReviewPresenter:
     @staticmethod
     def _fit_result(facts: AnalysisReviewFacts) -> AnalysisFitResultDisplay:
         readiness = facts.readiness
-        if readiness is AnalysisReadiness.UNAVAILABLE:
-            return AnalysisFitResultDisplay(AnalysisFitResultKind.UNAVAILABLE)
         if readiness is AnalysisReadiness.NOT_ANALYZED:
             return AnalysisFitResultDisplay(AnalysisFitResultKind.NOT_ANALYZED)
         if readiness is AnalysisReadiness.STALE:
@@ -129,20 +122,7 @@ class AnalysisReviewPresenter:
         )
 
     @staticmethod
-    def _unavailable_causes(facts: AnalysisReviewFacts) -> tuple[AnalysisUnavailableCause, ...]:
-        if facts.readiness is not AnalysisReadiness.UNAVAILABLE:
-            return ()
-        causes: list[AnalysisUnavailableCause] = []
-        if not facts.line_ids:
-            causes.append(AnalysisUnavailableCause.NO_LINES)
-        if facts.missing_line_ids:
-            causes.append(AnalysisUnavailableCause.MISSING_LINE_REFERENCE)
-        return tuple(causes)
-
-    @staticmethod
     def _next_action(facts: AnalysisReviewFacts) -> AnalysisNextAction:
-        if facts.readiness is AnalysisReadiness.UNAVAILABLE:
-            return AnalysisNextAction.RESOLVE_PREREQUISITES
         if facts.readiness is AnalysisReadiness.NOT_ANALYZED:
             return AnalysisNextAction.ANALYZE
         if facts.readiness is AnalysisReadiness.STALE:

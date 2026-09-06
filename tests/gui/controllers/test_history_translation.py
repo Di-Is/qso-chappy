@@ -19,12 +19,10 @@ from scripts.i18n_lupdate import run_lupdate
 
 
 HISTORY_OPERATION_SOURCES = {
-    "Add Candidate Line",
-    "Remove Candidate Line",
-    "Clear Candidates",
+    "Add Temporary Line",
+    "Remove Temporary Line",
+    "Clear Temporary Lines",
     "Register Selected Lines",
-    "Create Velocity Plot",
-    "Confirm Auto Region",
     "Move Lines",
     "Split Region",
     "Merge Regions",
@@ -52,7 +50,7 @@ HISTORY_OPERATION_SOURCES = {
 @pytest.mark.parametrize(
     ("operation_id", "expected"),
     [
-        ("ident.add_candidate", "ident.add_candidate"),
+        ("ident.add_temporary_line", "ident.add_temporary_line"),
         ("cont.add_point.nav", "cont.add_point"),
         ("draw.range_change.manual", "draw.range_change"),
     ],

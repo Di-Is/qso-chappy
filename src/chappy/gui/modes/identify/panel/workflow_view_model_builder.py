@@ -20,13 +20,13 @@ from chappy.gui.modes.identify.panel import panel_models
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from chappy.core.identify_state import CandidateLine, RegionPreview
+    from chappy.core.identify_state import RegionPreview, TemporaryLine
     from chappy.core.velocity_ranges import MultipletGroupingVelocityTolerance
 
 
 @dataclass(frozen=True, slots=True)
 class IdentifyWorkflowMethodLabels:
-    """Translated labels for temporary candidate creation methods."""
+    """Translated labels for temporary-line creation methods."""
 
     candidate_table: str
     manual: str
@@ -46,7 +46,7 @@ class IdentifyWorkflowMethodLabels:
 class IdentifyWorkflowBuilderInput:
     """Input snapshots needed to build identify workflow rows."""
 
-    candidate_lines: Sequence[CandidateLine]
+    temporary_lines: Sequence[TemporaryLine]
     region_previews: Sequence[RegionPreview]
     absorption_lines: Sequence[AbsorptionLine]
     absorption_regions: Sequence[AbsorptionRegion]
@@ -59,7 +59,7 @@ class IdentifyWorkflowBuilderInput:
 class IdentifyWorkflowViewModel:
     """Panel rows and lookup data for identify workflow display."""
 
-    candidate_line_rows: list[panel_models.CandidateLineRow]
+    temporary_line_rows: list[panel_models.TemporaryLineRow]
     region_preview_rows: list[panel_models.RegionPreviewRow]
     confirmed_region_rows: list[panel_models.ConfirmedRegionRow]
     primary_to_members: dict[str, tuple[str, ...]]
@@ -70,11 +70,11 @@ class IdentifyWorkflowViewModelBuilder:
 
     def build(self, input_data: IdentifyWorkflowBuilderInput) -> IdentifyWorkflowViewModel:
         """Build workflow rows and primary-to-member lookup data."""
-        candidate_rows, primary_to_members = self._build_candidate_rows(input_data)
+        temporary_line_rows, primary_to_members = self._build_temporary_line_rows(input_data)
         line_map = {line.line_id: line for line in input_data.absorption_lines}
         region_preview_rows = self._build_preview_rows(
             previews=input_data.region_previews,
-            candidate_rows=candidate_rows,
+            temporary_line_rows=temporary_line_rows,
             absorption_regions=input_data.absorption_regions,
             line_map=line_map,
         )
@@ -82,38 +82,38 @@ class IdentifyWorkflowViewModelBuilder:
             absorption_regions=input_data.absorption_regions, line_map=line_map
         )
         return IdentifyWorkflowViewModel(
-            candidate_line_rows=candidate_rows,
+            temporary_line_rows=temporary_line_rows,
             region_preview_rows=region_preview_rows,
             confirmed_region_rows=confirmed_region_rows,
             primary_to_members=primary_to_members,
         )
 
-    def _build_candidate_rows(
+    def _build_temporary_line_rows(
         self, input_data: IdentifyWorkflowBuilderInput
-    ) -> tuple[list[panel_models.CandidateLineRow], dict[str, tuple[str, ...]]]:
-        groups = group_candidate_lines_by_multiplet(
-            input_data.candidate_lines,
+    ) -> tuple[list[panel_models.TemporaryLineRow], dict[str, tuple[str, ...]]]:
+        groups = group_temporary_lines_by_multiplet(
+            input_data.temporary_lines,
             atomic_data_available=input_data.atomic_data_available,
             multiplet_grouping_tolerance=input_data.multiplet_grouping_tolerance,
         )
-        sorted_groups = sorted(groups, key=_candidate_group_sort_key)
+        sorted_groups = sorted(groups, key=_temporary_line_group_sort_key)
 
         primary_to_members: dict[str, tuple[str, ...]] = {}
-        rows: list[panel_models.CandidateLineRow] = []
+        rows: list[panel_models.TemporaryLineRow] = []
         for display_index, group in enumerate(sorted_groups, start=1):
-            primary_system = group[0]
-            member_ids = tuple(system.system_id for system in group)
-            primary_to_members[primary_system.system_id] = member_ids
+            primary_line = group[0]
+            member_ids = tuple(line.temporary_line_id for line in group)
+            primary_to_members[primary_line.temporary_line_id] = member_ids
 
             transition_labels: list[str] = []
             species_label = ""
             multiplet_label_candidate = ""
-            for system in group:
+            for line in group:
                 if not multiplet_label_candidate:
-                    multiplet_label_candidate = system.multiplet_label
-                transition_labels.append(system.transition_name)
+                    multiplet_label_candidate = line.multiplet_label
+                transition_labels.append(line.transition_name)
                 if not species_label:
-                    species_label = system.species
+                    species_label = line.species
 
             if len(group) > 1:
                 display_species = multiplet_label_candidate
@@ -123,13 +123,13 @@ class IdentifyWorkflowViewModelBuilder:
                 combined_transition = transition_labels[0]
 
             rows.append(
-                panel_models.CandidateLineRow(
-                    system_ids=member_ids,
+                panel_models.TemporaryLineRow(
+                    temporary_line_ids=member_ids,
                     species=display_species,
-                    lambda_start=min(system.lambda_min for system in group),
-                    lambda_end=max(system.lambda_max for system in group),
+                    lambda_start=min(line.lambda_min for line in group),
+                    lambda_end=max(line.lambda_max for line in group),
                     creation_method=input_data.method_labels.label_for(
-                        primary_system.creation_method
+                        primary_line.creation_method
                     ),
                     transition_name=combined_transition,
                     redshift=group[0].center_z,
@@ -144,14 +144,14 @@ class IdentifyWorkflowViewModelBuilder:
         self,
         *,
         previews: Sequence[RegionPreview],
-        candidate_rows: Sequence[panel_models.CandidateLineRow],
+        temporary_line_rows: Sequence[panel_models.TemporaryLineRow],
         absorption_regions: Sequence[AbsorptionRegion],
         line_map: dict[str, AbsorptionLine],
     ) -> list[panel_models.RegionPreviewRow]:
-        system_id_to_row: dict[str, panel_models.CandidateLineRow] = {}
-        for row in candidate_rows:
-            for system_id in row.system_ids:
-                system_id_to_row[system_id] = row
+        temporary_line_id_to_row: dict[str, panel_models.TemporaryLineRow] = {}
+        for row in temporary_line_rows:
+            for temporary_line_id in row.temporary_line_ids:
+                temporary_line_id_to_row[temporary_line_id] = row
 
         preview_rows: list[panel_models.RegionPreviewRow] = []
         for preview in previews:
@@ -165,22 +165,22 @@ class IdentifyWorkflowViewModelBuilder:
                 )
 
             unique_rows: set[int] = set()
-            for system_id in preview.member_system_ids:
-                matched_row = system_id_to_row.get(system_id)
+            for temporary_line_id in preview.member_temporary_line_ids:
+                matched_row = temporary_line_id_to_row.get(temporary_line_id)
                 if matched_row is not None:
                     unique_rows.add(id(matched_row))
-            new_systems_count = len(unique_rows)
+            new_lines_count = len(unique_rows)
 
             preview_rows.append(
                 panel_models.RegionPreviewRow(
                     group_id=preview.existing_group_id or preview.group_id,
                     label=preview.name,
-                    member_count=new_systems_count + (old_member_count or 0),
+                    member_count=new_lines_count + (old_member_count or 0),
                     warning=preview.overlap_warning,
                     is_existing_group=is_existing,
                     old_member_count=old_member_count,
-                    new_systems_count=new_systems_count,
-                    member_system_ids=list(preview.member_system_ids),
+                    new_lines_count=new_lines_count,
+                    member_temporary_line_ids=list(preview.member_temporary_line_ids),
                 )
             )
         return preview_rows
@@ -216,7 +216,7 @@ class IdentifyWorkflowViewModelBuilder:
                     panel_models.ConfirmedRegionRow(
                         group_id=region.region_id,
                         label=display_info.display_name,
-                        systems=region_lines,
+                        lines=region_lines,
                         is_expanded=True,
                     )
                 )
@@ -246,7 +246,7 @@ class IdentifyWorkflowViewModelBuilder:
             absorption_line = absorption_group[0]
             lambda_start, lambda_end = _require_line_range(absorption_line)
             return panel_models.ConfirmedLineRow(
-                system_id=absorption_line.line_id,
+                line_id=absorption_line.line_id,
                 species=absorption_line.species,
                 transition_name=absorption_line.transition_name,
                 redshift=_require_line_redshift(absorption_line),
@@ -269,7 +269,7 @@ class IdentifyWorkflowViewModelBuilder:
 
         combined_label = primary_line.multiplet_label
         return panel_models.ConfirmedLineRow(
-            system_id=primary_line.line_id,
+            line_id=primary_line.line_id,
             species=combined_label,
             transition_name=combined_label,
             redshift=_require_line_redshift(primary_line),
@@ -279,64 +279,64 @@ class IdentifyWorkflowViewModelBuilder:
         )
 
 
-def group_candidate_lines_by_multiplet(
-    systems: Sequence[CandidateLine],
+def group_temporary_lines_by_multiplet(
+    lines: Sequence[TemporaryLine],
     *,
     atomic_data_available: bool,
     multiplet_grouping_tolerance: MultipletGroupingVelocityTolerance,
-) -> list[list[CandidateLine]]:
-    """Group temporary systems by multiplet and redshift proximity."""
-    systems_list = list(systems)
-    if not systems_list:
+) -> list[list[TemporaryLine]]:
+    """Group temporary lines by multiplet and redshift proximity."""
+    lines_list = list(lines)
+    if not lines_list:
         return []
     if not atomic_data_available:
-        return [[system] for system in systems_list]
+        return [[line] for line in lines_list]
 
-    union_find = UnionFind(len(systems_list))
+    union_find = UnionFind(len(lines_list))
     _union_by_tie_group(
-        union_find, systems_list, multiplet_grouping_tolerance=multiplet_grouping_tolerance
+        union_find, lines_list, multiplet_grouping_tolerance=multiplet_grouping_tolerance
     )
 
-    result: list[list[CandidateLine]] = []
+    result: list[list[TemporaryLine]] = []
     for indices in union_find.collect_groups().values():
-        group = [systems_list[index] for index in indices]
+        group = [lines_list[index] for index in indices]
         result.append(
             sorted(
                 group,
-                key=lambda system: (
-                    system.rest_wavelength if system.rest_wavelength is not None else float("inf")
+                key=lambda line: (
+                    line.rest_wavelength if line.rest_wavelength is not None else float("inf")
                 ),
             )
         )
     return result
 
 
-def _candidate_group_sort_key(group: list[CandidateLine]) -> tuple[float, float, str]:
+def _temporary_line_group_sort_key(group: list[TemporaryLine]) -> tuple[float, float, str]:
     primary = group[0]
     center_z = primary.center_z if primary.center_z is not None else float("inf")
     rest_wavelength = (
         primary.rest_wavelength if primary.rest_wavelength is not None else float("inf")
     )
-    return (center_z, rest_wavelength, primary.system_id)
+    return (center_z, rest_wavelength, primary.temporary_line_id)
 
 
-def _derive_redshift_from_system(system: CandidateLine) -> float | None:
-    if system.center_z is not None and math.isfinite(system.center_z):
-        return system.center_z
-    if system.rest_wavelength > 0:
-        center = system.center_wavelength
+def _derive_redshift_from_line(line: TemporaryLine) -> float | None:
+    if line.center_z is not None and math.isfinite(line.center_z):
+        return line.center_z
+    if line.rest_wavelength > 0:
+        center = line.center_wavelength
         if math.isfinite(center) and center > 0:
-            return (center / system.rest_wavelength) - 1.0
+            return (center / line.rest_wavelength) - 1.0
     return None
 
 
 def _should_union_by_redshift(
-    sys_a: CandidateLine,
-    sys_b: CandidateLine,
+    line_a: TemporaryLine,
+    line_b: TemporaryLine,
     multiplet_grouping_tolerance: MultipletGroupingVelocityTolerance,
 ) -> bool:
-    z_a = _derive_redshift_from_system(sys_a)
-    z_b = _derive_redshift_from_system(sys_b)
+    z_a = _derive_redshift_from_line(line_a)
+    z_b = _derive_redshift_from_line(line_b)
     if z_a is None or z_b is None:
         return False
 
@@ -346,13 +346,13 @@ def _should_union_by_redshift(
 
 def _union_by_tie_group(
     union_find: UnionFind,
-    systems_list: Sequence[CandidateLine],
+    lines_list: Sequence[TemporaryLine],
     multiplet_grouping_tolerance: MultipletGroupingVelocityTolerance,
 ) -> None:
     tie_group_map: dict[str, list[int]] = defaultdict(list)
-    for index, system in enumerate(systems_list):
-        if system.tie_group_key:
-            tie_group_map[system.tie_group_key].append(index)
+    for index, line in enumerate(lines_list):
+        if line.tie_group_key:
+            tie_group_map[line.tie_group_key].append(index)
 
     for indices in tie_group_map.values():
         if len(indices) < 2:
@@ -361,7 +361,7 @@ def _union_by_tie_group(
             for j in range(i + 1, len(indices)):
                 idx_a, idx_b = indices[i], indices[j]
                 if _should_union_by_redshift(
-                    systems_list[idx_a], systems_list[idx_b], multiplet_grouping_tolerance
+                    lines_list[idx_a], lines_list[idx_b], multiplet_grouping_tolerance
                 ):
                     union_find.union(idx_a, idx_b)
 

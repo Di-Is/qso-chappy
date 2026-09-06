@@ -7,8 +7,8 @@ from typing import cast
 import pytest
 
 from chappy.application.identify import (
-    BuildVelocitySliceCandidatesUseCase,
-    VelocitySliceCandidateRequest,
+    BuildVelocitySliceTemporaryLinesUseCase,
+    VelocitySliceTemporaryLineRequest,
     VelocitySliceSelection,
 )
 from chappy.core.atomic_data import AtomicLine, AtomicLineData
@@ -49,7 +49,7 @@ def test_build_velocity_slice_candidates_uses_atomic_metadata() -> None:
         "AtomicLineData",
         _AtomicData((_atomic_line("line-a", 1548.2), _atomic_line("line-b", 1550.8))),
     )
-    request = VelocitySliceCandidateRequest(
+    request = VelocitySliceTemporaryLineRequest(
         center_z=2.0,
         new_candidate_analysis_half_width=NewCandidateAnalysisHalfWidth(100.0),
         slices=(
@@ -62,7 +62,7 @@ def test_build_velocity_slice_candidates_uses_atomic_metadata() -> None:
         ),
     )
 
-    entries = BuildVelocitySliceCandidatesUseCase().build(request, atomic_data)
+    entries = BuildVelocitySliceTemporaryLinesUseCase().build(request, atomic_data)
 
     assert len(entries) == 2
     assert entries[0].line_id == "line-a"
@@ -79,7 +79,7 @@ def test_build_velocity_slice_candidates_derives_declared_group_label() -> None:
     atomic_data = cast(
         "AtomicLineData", _AtomicData((_atomic_line("line-a", 1548.2, multiplet_label=""),))
     )
-    request = VelocitySliceCandidateRequest(
+    request = VelocitySliceTemporaryLineRequest(
         center_z=2.0,
         new_candidate_analysis_half_width=NewCandidateAnalysisHalfWidth(100.0),
         slices=(
@@ -89,7 +89,7 @@ def test_build_velocity_slice_candidates_derives_declared_group_label() -> None:
         ),
     )
 
-    entries = BuildVelocitySliceCandidatesUseCase().build(request, atomic_data)
+    entries = BuildVelocitySliceTemporaryLinesUseCase().build(request, atomic_data)
 
     assert entries[0].multiplet_label == "C IV"
 
@@ -97,7 +97,7 @@ def test_build_velocity_slice_candidates_derives_declared_group_label() -> None:
 def test_build_velocity_slice_candidates_skips_unknown_or_invalid_entries() -> None:
     """Invalid selected slices are ignored instead of producing partial payloads."""
     atomic_data = cast("AtomicLineData", _AtomicData((_atomic_line("line-a", 1548.2),)))
-    request = VelocitySliceCandidateRequest(
+    request = VelocitySliceTemporaryLineRequest(
         center_z=2.0,
         new_candidate_analysis_half_width=NewCandidateAnalysisHalfWidth(100.0),
         slices=(
@@ -113,7 +113,7 @@ def test_build_velocity_slice_candidates_skips_unknown_or_invalid_entries() -> N
         ),
     )
 
-    entries = BuildVelocitySliceCandidatesUseCase().build(request, atomic_data)
+    entries = BuildVelocitySliceTemporaryLinesUseCase().build(request, atomic_data)
 
     assert tuple(entry.line_id for entry in entries) == ("line-a",)
 

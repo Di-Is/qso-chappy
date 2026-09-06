@@ -217,13 +217,13 @@ class TestConfirmedMultipletGrouping:
         assert combined_lambda_end == 7015.0
 
 
-class TestConfirmedSystemRowDataStructure:
-    """Tests for ConfirmedSystemRow data structure after field removal."""
+class TestConfirmedLineRowDataStructure:
+    """Tests for ConfirmedLineRow data structure after field removal."""
 
-    def test_confirmed_system_row_has_no_is_multiplet(self) -> None:
-        """ConfirmedSystemRow should not have is_multiplet field after refactoring."""
+    def test_confirmed_line_row_has_no_is_multiplet(self) -> None:
+        """ConfirmedLineRow should not have is_multiplet field after refactoring."""
         row = ConfirmedLineRow(
-            system_id="test_id",
+            line_id="test_id",
             species="Mg II 2796/2803",
             redshift=1.5,
             lambda_start=6990.0,
@@ -236,17 +236,17 @@ class TestConfirmedSystemRowDataStructure:
         assert "is_component" not in field_names
         assert "parent_id" not in field_names
 
-    def test_confirmed_system_row_basic_fields(self) -> None:
-        """ConfirmedSystemRow should have basic required fields."""
+    def test_confirmed_line_row_basic_fields(self) -> None:
+        """ConfirmedLineRow should have basic required fields."""
         row = ConfirmedLineRow(
-            system_id="test_id",
+            line_id="test_id",
             species="Mg II 2796/2803",
             redshift=1.5,
             lambda_start=6990.0,
             lambda_end=7015.0,
             transition_name="Mg II 2796/2803",
         )
-        assert row.system_id == "test_id"
+        assert row.line_id == "test_id"
         assert row.species == "Mg II 2796/2803"
         assert row.redshift == 1.5
         assert row.lambda_start == 6990.0
@@ -280,7 +280,7 @@ def _build_confirmed_view_model(lines: list[AbsorptionLine]) -> None:
     builder = IdentifyWorkflowViewModelBuilder()
     builder.build(
         IdentifyWorkflowBuilderInput(
-            candidate_lines=[],
+            temporary_lines=[],
             region_previews=[],
             absorption_lines=lines,
             absorption_regions=[

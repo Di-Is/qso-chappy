@@ -284,6 +284,7 @@ class TutorialTourController(QObject):
             self._bubble.destroyed.connect(self._forget_bubble)
 
     def _teardown_widgets(self) -> None:
+        self._completion_poll_timer.stop()
         if self._overlay is not None:
             with contextlib.suppress(RuntimeError):
                 self._overlay.destroyed.disconnect(self._forget_overlay)
@@ -303,6 +304,7 @@ class TutorialTourController(QObject):
 
     def _forget_bubble(self) -> None:
         self._bubble = None
+        self._completion_poll_timer.stop()
 
     def _refresh_current_step(self) -> None:
         if not self._active:
@@ -426,7 +428,7 @@ class TutorialTourController(QObject):
         return note_check() if note_check is not None else None
 
     def _poll_step_completion(self) -> None:
-        """Re-check the active gated step's completion condition on a timer."""
+        """Track the active gated step's condition, which may open and close again."""
         if not self._active or self._awaiting_prerequisite or self._bubble is None:
             return
         step = self._current_step()
@@ -442,7 +444,6 @@ class TutorialTourController(QObject):
         self._bubble.set_completion_state(met=met, note=note)
         self._bubble.set_next_enabled(self._current_step_allows_next() and met)
         if met:
-            self._completion_poll_timer.stop()
             self._advance_held_trigger()
 
     def _show_prerequisite_warning(self, chapter: TutorialChapter) -> None:
@@ -722,7 +723,7 @@ class TutorialTourController(QObject):
         bubble.show()
         bubble.raise_()
         self._reposition_bubble()
-        if step.requires is not None and not completion_met:
+        if step.requires is not None:
             self._completion_poll_timer.start()
 
     def _reposition_bubble(self) -> None:

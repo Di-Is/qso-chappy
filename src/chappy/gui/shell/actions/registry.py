@@ -341,7 +341,6 @@ _DEFAULT_MENUS = (
             ShellActionId.RESET_VIEW,
             ShellActionId.AUTO_ADJUST_FLUX,
             None,
-            ShellActionId.TOGGLE_VELOCITY_PLOT_IDENTIFY,
             ShellActionId.TOGGLE_VELOCITY_PLOT_ANALYSIS,
         ),
     ),

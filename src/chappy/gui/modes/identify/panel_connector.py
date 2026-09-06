@@ -35,7 +35,9 @@ class IdentifyPanelConnectorPorts:
     temporary_clear_callback: Callable[[], None]
     registration_requested_callback: Callable[[list[str] | None], None]
     group_focus_callback: Callable[[str, float, float], None]
-    system_focus_callback: Callable[[str, float, float], None]
+    line_focus_callback: Callable[[str, float, float], None]
+    region_open_callback: Callable[[str], None]
+    region_structure_edit_callback: Callable[[str], None]
     refresh_candidates_callback: Callable[[], None]
     refresh_workflow_callback: Callable[[], None]
 
@@ -83,7 +85,9 @@ class IdentifyPanelConnector:
         panel.temporary_clear_requested.connect(self._ports.temporary_clear_callback)
         panel.registration_requested.connect(self._ports.registration_requested_callback)
         panel.group_focus_requested.connect(self._ports.group_focus_callback)
-        panel.system_focus_requested.connect(self._ports.system_focus_callback)
+        panel.line_focus_requested.connect(self._ports.line_focus_callback)
+        panel.region_open_requested.connect(self._ports.region_open_callback)
+        panel.region_structure_edit_requested.connect(self._ports.region_structure_edit_callback)
 
     def _disconnect_panel_signals(self, panel: IdentifySidePanel) -> None:
         with suppress(TypeError):
@@ -109,4 +113,10 @@ class IdentifyPanelConnector:
         with suppress(TypeError):
             panel.group_focus_requested.disconnect(self._ports.group_focus_callback)
         with suppress(TypeError):
-            panel.system_focus_requested.disconnect(self._ports.system_focus_callback)
+            panel.line_focus_requested.disconnect(self._ports.line_focus_callback)
+        with suppress(TypeError):
+            panel.region_open_requested.disconnect(self._ports.region_open_callback)
+        with suppress(TypeError):
+            panel.region_structure_edit_requested.disconnect(
+                self._ports.region_structure_edit_callback
+            )

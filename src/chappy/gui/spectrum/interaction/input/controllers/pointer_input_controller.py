@@ -27,9 +27,6 @@ if TYPE_CHECKING:
     from chappy.gui.spectrum.interaction.input.controllers.rect_zoom_input_controller import (
         RectZoomInputController,
     )
-    from chappy.gui.spectrum.interaction.input.controllers.velocity_pending_input_controller import (
-        VelocityPendingInputController,
-    )
     from chappy.gui.spectrum.interaction.input.mapping.pointer_coordinate_mapper import (
         SpectrumPointerCoordinateMapper,
     )
@@ -58,7 +55,6 @@ class SpectrumPointerInputController:
         rect_zoom_input_controller: RectZoomInputController,
         absorber_drag_input_controller: AbsorberDragInputController,
         mask_selection_input_controller: MaskSelectionInputController,
-        velocity_pending_input_controller: VelocityPendingInputController,
         emitters: PointerInputEmitters,
     ) -> None:
         """Initialize the controller."""
@@ -67,7 +63,6 @@ class SpectrumPointerInputController:
         self._rect_zoom_input_controller = rect_zoom_input_controller
         self._absorber_drag_input_controller = absorber_drag_input_controller
         self._mask_selection_input_controller = mask_selection_input_controller
-        self._velocity_pending_input_controller = velocity_pending_input_controller
         self._emitters = emitters
 
     def handle_mouse_move_event(self, event: QMouseEvent) -> bool:
@@ -81,7 +76,6 @@ class SpectrumPointerInputController:
         modifiers_int = 0
         if data_pos is not None:
             wavelength, flux = data_pos
-            self._velocity_pending_input_controller.set_target_wavelength(float(wavelength))
             modifiers_int = KeyMouseIntentMapper.modifier_mask(event.modifiers())
             self._emitters.cursor_position(wavelength, flux, modifiers_int)
             handled = True
@@ -133,7 +127,6 @@ class SpectrumPointerInputController:
 
     def handle_mouse_leave(self) -> None:
         """Notify listeners that the cursor left the plot region."""
-        self._velocity_pending_input_controller.clear_target_wavelength()
         self._emitters.cursor_left()
 
     def handle_double_click_center(self, wavelength: float) -> None:
@@ -142,9 +135,6 @@ class SpectrumPointerInputController:
 
     def handle_mouse_press_event(self, event: QMouseEvent) -> bool:
         """Handle mouse press events from the plot bridge."""
-        if self._owner.is_velocity_pending():
-            return self._velocity_pending_input_controller.handle_pending_mouse_press(event)
-
         if (
             event.button() == Qt.MouseButton.LeftButton
             and self._owner.active_input_channel() is InteractionChannel.MASK_SELECTION
@@ -156,9 +146,6 @@ class SpectrumPointerInputController:
                 self._owner.coord_transform, event
             )
             data_pos = data_position.as_tuple()
-
-            wavelength, _ = data_pos
-            self._velocity_pending_input_controller.set_target_wavelength(float(wavelength))
 
             modifiers_int = KeyMouseIntentMapper.modifier_mask(event.modifiers())
             if self._absorber_drag_input_controller.begin_drag_at(

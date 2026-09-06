@@ -7,11 +7,17 @@ from chappy.presentation.analysis.models import (
     AnalysisRegionDisplay,
     AnalysisReviewRow,
     AnalysisReviewSummary,
-    AnalysisUnavailableCause,
 )
 from chappy.presentation.analysis.presenter import AnalysisReviewFacts, AnalysisReviewPresenter
+from chappy.presentation.analysis.region_structure import (
+    MAX_LINKED_LINES_WITH_BREAKDOWN,
+    LinkedLineSummary,
+    RegionStructureSummary,
+    build_region_structure_summary,
+)
 
 __all__ = [
+    "MAX_LINKED_LINES_WITH_BREAKDOWN",
     "AnalysisFitResultDisplay",
     "AnalysisFitResultKind",
     "AnalysisNextAction",
@@ -20,5 +26,7 @@ __all__ = [
     "AnalysisReviewPresenter",
     "AnalysisReviewRow",
     "AnalysisReviewSummary",
-    "AnalysisUnavailableCause",
+    "LinkedLineSummary",
+    "RegionStructureSummary",
+    "build_region_structure_summary",
 ]

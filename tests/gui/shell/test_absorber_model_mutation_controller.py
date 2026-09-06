@@ -124,7 +124,7 @@ def _controller(
     return AbsorberModelMutationController(
         ports=AbsorberModelMutationPorts(
             project_provider=lambda: project,
-            system_info_provider=lambda _component: None,
+            line_info_provider=lambda _component: None,
             history_provider=lambda: history,
             plot_widget_provider=lambda: None,
             plot_refresh_callback=lambda: setattr(

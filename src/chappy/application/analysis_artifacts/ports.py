@@ -17,10 +17,6 @@ class AnalysisReadinessSourcePort(Protocol):
         """Return current project-owned analysis state for one region."""
         ...
 
-    def is_region_analysis_capable(self, region_id: str) -> bool:
-        """Return whether the region satisfies analysis prerequisites."""
-        ...
-
     def region_requires_reanalysis(self, region_id: str) -> bool:
         """Return whether any region input requires reanalysis."""
         ...
@@ -28,6 +24,10 @@ class AnalysisReadinessSourcePort(Protocol):
 
 class AnalysisArtifactStorePort(AnalysisReadinessSourcePort, Protocol):
     """Writable project boundary for region analysis state."""
+
+    def is_region_analysis_capable(self, region_id: str) -> bool:
+        """Return whether the region satisfies analysis prerequisites."""
+        ...
 
     def set_region_analysis_state(self, state: RegionAnalysisState) -> None:
         """Replace one existing region's analysis state."""

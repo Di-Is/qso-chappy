@@ -34,7 +34,6 @@ from chappy.presentation.analysis import (
     AnalysisNextAction,
     AnalysisRegionDisplay,
     AnalysisReviewRow,
-    AnalysisUnavailableCause,
 )
 
 _REGION_COUNTS = (10, 100, 1000)
@@ -53,20 +52,11 @@ def _synthetic_row(index: int, *, revision: int) -> AnalysisReviewRow:
         region_id, f"Region {index:04d} cohort-{index % 2}{changed_suffix}"
     )
     readiness = tuple(AnalysisReadiness)[index % len(AnalysisReadiness)]
-    if readiness is AnalysisReadiness.UNAVAILABLE:
-        return AnalysisReviewRow(
-            region,
-            readiness,
-            AnalysisFitResultDisplay(AnalysisFitResultKind.UNAVAILABLE),
-            (AnalysisUnavailableCause.NO_LINES,),
-            AnalysisNextAction.RESOLVE_PREREQUISITES,
-        )
     if readiness is AnalysisReadiness.NOT_ANALYZED:
         return AnalysisReviewRow(
             region,
             readiness,
             AnalysisFitResultDisplay(AnalysisFitResultKind.NOT_ANALYZED),
-            (),
             AnalysisNextAction.ANALYZE,
         )
     if readiness is AnalysisReadiness.STALE:
@@ -74,7 +64,6 @@ def _synthetic_row(index: int, *, revision: int) -> AnalysisReviewRow:
             region,
             readiness,
             AnalysisFitResultDisplay(AnalysisFitResultKind.STALE),
-            (),
             AnalysisNextAction.REANALYZE,
         )
     return AnalysisReviewRow(
@@ -83,7 +72,6 @@ def _synthetic_row(index: int, *, revision: int) -> AnalysisReviewRow:
         AnalysisFitResultDisplay(
             AnalysisFitResultKind.NUMERICAL, FitSummary(reduced_chi_squared=1.0 + index / 1000)
         ),
-        (),
         AnalysisNextAction.OPEN_REGION,
     )
 

@@ -86,7 +86,7 @@ class SpectroscopyProject:
         # Region-scoped analysis evidence and input revisions.
         self._region_analysis_states: dict[str, RegionAnalysisState] = {}
 
-        # Identify mode session state (temporary systems, velocity window, etc.)
+        # Identify mode session state (temporary lines, velocity window, etc.)
         self.identify_state: IdentifySessionState = IdentifySessionState()
 
     def mark_scientific_modified(self) -> None:
@@ -595,8 +595,8 @@ class SpectroscopyProject:
         """
         return self._absorption.expand_multiplet_line_ids(seed_ids)
 
-    def unlink_absorption_line_system(self, line_id: str) -> tuple[str, ...]:
-        """Remove one materialized line-system linkage without changing its declaration.
+    def unlink_linked_lines(self, line_id: str) -> tuple[str, ...]:
+        """Remove one materialized linked-line group without changing its declaration.
 
         The selected line and every transitively connected multiplet companion become
         independent lines. Scientific invalidation and history are application-layer
@@ -609,12 +609,12 @@ class SpectroscopyProject:
         expanded_line_ids = tuple(self.expand_multiplet_line_ids([line_id]))
         expanded_set = set(expanded_line_ids)
         if len(expanded_line_ids) < 2:
-            msg = f"Linked line system has no existing companion: {line_id}"
+            msg = f"Linked lines have no existing companion: {line_id}"
             raise ValueError(msg)
         for member_id in expanded_line_ids:
             member = self.require_absorption_line(member_id)
             if member_id in member.multiplet_ids:
-                msg = f"Linked line system contains a self-reference: {member_id}"
+                msg = f"Linked lines contain a self-reference: {member_id}"
                 raise ValueError(msg)
             missing_ids = tuple(
                 related_id
@@ -623,7 +623,7 @@ class SpectroscopyProject:
             )
             if missing_ids:
                 msg = (
-                    f"Linked line system references missing lines from {member_id}: "
+                    f"Linked lines reference missing lines from {member_id}: "
                     f"{', '.join(missing_ids)}"
                 )
                 raise ValueError(msg)
@@ -634,12 +634,11 @@ class SpectroscopyProject:
             )
             if asymmetric_ids:
                 msg = (
-                    f"Linked line system is not symmetric for {member_id}: "
-                    f"{', '.join(asymmetric_ids)}"
+                    f"Linked lines are not symmetric for {member_id}: {', '.join(asymmetric_ids)}"
                 )
                 raise ValueError(msg)
             if any(related_id not in expanded_set for related_id in member.multiplet_ids):
-                msg = f"Linked line system expansion is incomplete for {member_id}"
+                msg = f"Linked-line expansion is incomplete for {member_id}"
                 raise ValueError(msg)
 
         unexpected_incoming = tuple(
@@ -649,7 +648,7 @@ class SpectroscopyProject:
         )
         if unexpected_incoming:
             msg = (
-                "Linked line system has asymmetric incoming references: "
+                "Linked lines have asymmetric incoming references: "
                 f"{', '.join(unexpected_incoming)}"
             )
             raise ValueError(msg)

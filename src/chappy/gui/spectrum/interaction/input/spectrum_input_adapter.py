@@ -46,7 +46,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     MaskSelectionContext,
     MaskSelectionRequest,
     RectZoomContext,
-    VelocityContext,
 )
 
 if TYPE_CHECKING:
@@ -153,11 +152,8 @@ class SpectrumInputAdapter(QObject):
             composition.absorber_state_controller
         )
         self._velocity_drag_adapter = composition.velocity_drag_adapter
-        self._velocity_controller: InteractionChannelControllerPort = (
-            composition.velocity_state_controller
-        )
-        self._velocity_pending_input_controller = composition.velocity_pending_input_controller
         self._velocity_shortcut_input_controller = composition.velocity_shortcut_input_controller
+        self._cursor_wavelength_input_controller = composition.cursor_wavelength_input_controller
         self._mask_state_controller: InteractionChannelControllerPort | None = (
             composition.mask_state_controller
         )
@@ -260,11 +256,7 @@ class SpectrumInputAdapter(QObject):
     def consume_interaction_snapshot(
         self,
         snapshot: InteractionStateSnapshot[
-            RectZoomContext
-            | VelocityContext
-            | AbsorberDragContext
-            | MaskSelectionContext
-            | ContinuumContext
+            RectZoomContext | AbsorberDragContext | MaskSelectionContext | ContinuumContext
         ],
     ) -> None:
         """Consume an externally owned interaction snapshot."""
@@ -277,25 +269,13 @@ class SpectrumInputAdapter(QObject):
     def _emit_interaction_snapshot(
         self,
         snapshot: InteractionStateSnapshot[
-            RectZoomContext
-            | VelocityContext
-            | AbsorberDragContext
-            | MaskSelectionContext
-            | ContinuumContext
+            RectZoomContext | AbsorberDragContext | MaskSelectionContext | ContinuumContext
         ],
     ) -> None:
         """Emit interaction state snapshots through the dedicated Qt signal."""
         self._channel_session.apply_snapshot(snapshot)
 
         self.sig_interaction_snapshot.emit(snapshot)
-
-    def _is_velocity_pending(self) -> bool:
-        """Return whether velocity interaction is waiting for confirmation."""
-        return self._velocity_pending_input_controller.is_pending()
-
-    def is_velocity_pending(self) -> bool:
-        """Return whether velocity interaction is waiting for confirmation."""
-        return self._is_velocity_pending()
 
     def _sync_absorber_drag_state(self, absorber_id: str | None) -> None:
         """Synchronise legacy absorber drag fields with the state controller.
@@ -353,22 +333,6 @@ class SpectrumInputAdapter(QObject):
         """Apply cursor feedback while mask selection mode is active."""
         self._plot_input_binding.set_cursor(active)
 
-    def _enter_velocity_pending(
-        self, wavelength: float | None, modifiers: int | None, *, trigger: str
-    ) -> None:
-        """Enter velocity pending mode and notify observers."""
-        self._velocity_pending_input_controller.enter(wavelength, modifiers, trigger=trigger)
-
-    def _complete_velocity_pending(
-        self, wavelength: float, modifiers: int | None, *, trigger: str
-    ) -> None:
-        """Complete velocity pending mode and emit toggle intent."""
-        self._velocity_pending_input_controller.complete(wavelength, modifiers, trigger=trigger)
-
-    def _cancel_velocity_pending(self, *, reason: str) -> None:
-        """Cancel velocity pending mode and restore idle state."""
-        self._velocity_pending_input_controller.cancel(reason=reason)
-
     def _cancel_rect_zoom_interaction(self, *, reason: str) -> bool:
         """Cancel active rectangle zoom interaction.
 
@@ -418,7 +382,6 @@ class SpectrumInputAdapter(QObject):
                     self._mode_session.detail_velocity_shortcut_enabled()
                 ),
                 active_channel=self.active_input_channel(),
-                velocity_pending=self._is_velocity_pending(),
             ),
         )
         self._command_executor.execute_shortcut_commands(result.commands)
@@ -439,17 +402,9 @@ class SpectrumInputAdapter(QObject):
         """
         return self._velocity_shortcut_input_controller.trigger_velocity_shortcut()
 
-    def current_velocity_target_wavelength(self) -> float | None:
-        """Return the latest wavelength used for velocity prompt feedback."""
-        return self._velocity_pending_input_controller.current_target_wavelength()
-
-    def toggle_identify_velocity_pending(self) -> None:
-        """Preserve Identify's V-then-click pending workflow when no preview is active."""
-        if self._is_velocity_pending():
-            self._cancel_velocity_pending(reason="mode-shortcut-toggle")
-            return
-        wavelength = self._velocity_pending_input_controller.resolve_toggle_wavelength()
-        self._enter_velocity_pending(wavelength, 0, trigger="mode-shortcut")
+    def wavelength_under_cursor(self) -> float | None:
+        """Return the spectrum wavelength under the pointer."""
+        return self._cursor_wavelength_input_controller.wavelength_under_cursor()
 
     def handle_mouse_click(
         self, pos: tuple[float, float], button: str, modifiers: int = 0
@@ -472,7 +427,6 @@ class SpectrumInputAdapter(QObject):
                 identify_click_enabled=self._mode_session.identify_click_enabled(),
                 optimize_shift_click_enabled=self._mode_session.optimize_shift_click_enabled(),
                 active_channel=self.active_input_channel(),
-                velocity_pending=self._is_velocity_pending(),
             ),
         )
         self._command_executor.execute_click_commands(result.commands)
@@ -521,27 +475,9 @@ class SpectrumInputAdapter(QObject):
         """Cancel rectangle zoom for command executors."""
         return self._interaction_runtime.cancel_rect_zoom_interaction(reason=reason)
 
-    def resolve_velocity_toggle_wavelength(self) -> float | None:
-        """Resolve the velocity toggle wavelength for command executors."""
-        return self._interaction_runtime.resolve_velocity_toggle_wavelength()
-
-    def enter_velocity_pending(
-        self, wavelength: float | None, modifiers: int | None, *, trigger: str
-    ) -> None:
-        """Enter velocity pending mode for command executors."""
-        self._interaction_runtime.enter_velocity_pending(wavelength, modifiers, trigger=trigger)
-
-    def cancel_velocity_pending(self, *, reason: str) -> None:
-        """Cancel velocity pending mode for command executors."""
-        self._interaction_runtime.cancel_velocity_pending(reason=reason)
-
     def emit_mode_velocity_shortcut(self) -> None:
         """Route a velocity shortcut to the active mode owner."""
         self._interaction_runtime.emit_mode_velocity_shortcut()
-
-    def set_target_wavelength(self, wavelength: float) -> None:
-        """Update the latest target wavelength."""
-        self._interaction_runtime.set_target_wavelength(wavelength)
 
     def emit_mode_click(self, position: tuple[float, float], modifiers: int) -> None:
         """Route a raw mode click to the active mode owner."""
@@ -550,12 +486,6 @@ class SpectrumInputAdapter(QObject):
     def cancel_mask_selection(self, *, reason: str) -> bool:
         """Cancel mask selection for command executors."""
         return self._interaction_runtime.cancel_mask_selection(reason=reason)
-
-    def complete_velocity_pending(
-        self, wavelength: float, modifiers: int | None, *, trigger: str
-    ) -> None:
-        """Complete velocity pending mode for command executors."""
-        self._interaction_runtime.complete_velocity_pending(wavelength, modifiers, trigger=trigger)
 
     def begin_rect_zoom_interaction(self, position: tuple[float, float], modifiers: int) -> None:
         """Begin rectangle zoom for command executors."""
@@ -673,10 +603,6 @@ class SpectrumInputAdapter(QObject):
             True if handled
         """
         return self._pointer_input_controller.handle_mouse_press_event(event)
-
-    def _resolve_velocity_toggle_wavelength(self) -> float | None:
-        """Estimate wavelength for velocity toggle using current cursor position."""
-        return self._velocity_pending_input_controller.resolve_toggle_wavelength()
 
     def attach_plot_widget(self, plot_widget: SpectrumPlotWidgetPort) -> None:
         """Attach a required plot widget and initialize coordinate transform."""

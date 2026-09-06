@@ -7,7 +7,7 @@ from typing import cast
 
 import pytest
 
-from chappy.application.identify import BuildVelocitySliceCandidatesUseCase
+from chappy.application.identify import BuildVelocitySliceTemporaryLinesUseCase
 from chappy.core.atomic_data import AtomicLine, AtomicLineData
 from chappy.core.identify_state import IdentifySessionState
 from chappy.core.constants import LIGHT_SPEED_KMS
@@ -90,7 +90,7 @@ def _workflow(
 ) -> IdentifyVelocityWorkflow:
     """Create a velocity workflow with recording callbacks."""
 
-    def create_candidates(
+    def create_temporary_lines(
         entries: list[PreviewEntry],
         redshift: float,
         analysis_half_width: NewCandidateAnalysisHalfWidth,
@@ -105,7 +105,7 @@ def _workflow(
             baseline_line_provider=lambda: baseline,
             current_lines_provider=lambda: list(lines),
             atomic_data_provider=lambda: cast(AtomicLineData, _AtomicData(lines)),
-            candidate_creation_callback=create_candidates,
+            temporary_line_creation_callback=create_temporary_lines,
             status_callback=statuses.append,
             refresh_workflow_callback=lambda: refreshes.append("workflow"),
             refresh_candidates_callback=lambda: refreshes.append("candidates"),
@@ -120,7 +120,7 @@ def _workflow(
                 }
             ),
         ),
-        BuildVelocitySliceCandidatesUseCase(),
+        BuildVelocitySliceTemporaryLinesUseCase(),
     )
 
 
@@ -153,6 +153,39 @@ def test_request_velocity_plot_builds_context_and_marks_active() -> None:
     assert session.reference_z == pytest.approx(1.0)
     assert workflow.is_active() is True
     assert statuses == ["Centered 1.0000 C IV 1548 (1548.2 Å)"]
+
+
+def test_report_invalid_wavelength_asks_for_a_valid_position() -> None:
+    """An unresolvable wavelength reuses the existing invalid wavelength message."""
+    statuses: list[str] = []
+    workflow = _workflow(
+        IdentifySessionState(),
+        (_line("civ-1548", 1548.2),),
+        baseline=None,
+        statuses=statuses,
+        created_entries=[],
+        refreshes=[],
+    )
+
+    workflow.report_invalid_wavelength()
+
+    assert statuses == ["Invalid wavelength"]
+
+
+def test_request_velocity_plot_without_baseline_reports_baseline_required() -> None:
+    """The baseline requirement still takes precedence over wavelength validation."""
+    statuses: list[str] = []
+    workflow = _workflow(
+        IdentifySessionState(),
+        (_line("civ-1548", 1548.2),),
+        baseline=None,
+        statuses=statuses,
+        created_entries=[],
+        refreshes=[],
+    )
+
+    assert workflow.request_velocity_plot(3096.4) is None
+    assert statuses == ["Baseline required"]
 
 
 def test_handle_velocity_plot_closed_resets_state() -> None:
@@ -198,8 +231,8 @@ def test_same_db_multiplet_without_declared_key_is_not_default_selected() -> Non
     assert [slice_info.default_selected for slice_info in context.slices] == [True, False]
 
 
-def test_confirm_velocity_plot_selection_builds_candidate_entries() -> None:
-    """Selected velocity slices should be converted into candidate entries."""
+def test_confirm_velocity_plot_selection_builds_temporary_line_entries() -> None:
+    """Selected velocity slices should be converted into temporary line entries."""
     session = IdentifySessionState()
     baseline = _line("civ-1548", 1548.2, transition_name="C IV 1548")
     statuses: list[str] = []

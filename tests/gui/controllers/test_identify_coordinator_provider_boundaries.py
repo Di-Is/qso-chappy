@@ -82,6 +82,7 @@ def _shell_ports(window: _MainWindow) -> IdentifyShellPorts:
         history_recorder_provider=lambda: window.identify_history_recorder,
         velocity_runtime_provider=lambda: window.identify_velocity_runtime,
         preset_dialog_provider=lambda: window.preset_dialog_port,
+        undo_shortcut_provider=lambda: "Ctrl+Z",
     )
 
 
@@ -104,7 +105,7 @@ def test_invalid_history_recorder_provider_fails_fast() -> None:
     coordinator = _coordinator_with_main_window(window)
 
     with pytest.raises(TypeError, match="Identify history recorder"):
-        coordinator._identify_candidate_history_recorder()
+        coordinator._identify_temporary_line_history_recorder()
 
 
 def test_invalid_current_mode_provider_fails_fast() -> None:

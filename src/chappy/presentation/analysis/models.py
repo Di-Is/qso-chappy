@@ -15,23 +15,14 @@ if TYPE_CHECKING:
 class AnalysisFitResultKind(StrEnum):
     """Mutually exclusive presentation state for the fit-result column."""
 
-    UNAVAILABLE = "unavailable"
     NOT_ANALYZED = "not_analyzed"
     STALE = "stale"
     NUMERICAL = "numerical"
 
 
-class AnalysisUnavailableCause(StrEnum):
-    """Actionable structural cause of an unavailable analysis."""
-
-    NO_LINES = "no_lines"
-    MISSING_LINE_REFERENCE = "missing_line_reference"
-
-
 class AnalysisNextAction(StrEnum):
     """Semantic action displayed in the final review-table column."""
 
-    RESOLVE_PREREQUISITES = "resolve_prerequisites"
     ANALYZE = "analyze"
     REANALYZE = "reanalyze"
     OPEN_REGION = "open_region"
@@ -79,13 +70,11 @@ class AnalysisReviewRow:
     region: AnalysisRegionDisplay
     analysis_status: AnalysisReadiness
     fit_result: AnalysisFitResultDisplay
-    unavailable_causes: tuple[AnalysisUnavailableCause, ...]
     next_action: AnalysisNextAction
 
     def __post_init__(self) -> None:
         """Reject column combinations that contradict exclusive readiness."""
         expected_actions = {
-            AnalysisReadiness.UNAVAILABLE: AnalysisNextAction.RESOLVE_PREREQUISITES,
             AnalysisReadiness.NOT_ANALYZED: AnalysisNextAction.ANALYZE,
             AnalysisReadiness.STALE: AnalysisNextAction.REANALYZE,
             AnalysisReadiness.LATEST: AnalysisNextAction.OPEN_REGION,
@@ -95,19 +84,12 @@ class AnalysisReviewRow:
             raise ValueError(msg)
 
         expected_fit_kinds = {
-            AnalysisReadiness.UNAVAILABLE: AnalysisFitResultKind.UNAVAILABLE,
             AnalysisReadiness.NOT_ANALYZED: AnalysisFitResultKind.NOT_ANALYZED,
             AnalysisReadiness.STALE: AnalysisFitResultKind.STALE,
             AnalysisReadiness.LATEST: AnalysisFitResultKind.NUMERICAL,
         }
         if self.fit_result.kind is not expected_fit_kinds[self.analysis_status]:
             msg = "Analysis fit-result display must match readiness."
-            raise ValueError(msg)
-        if len(set(self.unavailable_causes)) != len(self.unavailable_causes):
-            msg = "Analysis unavailable causes must be unique."
-            raise ValueError(msg)
-        if self.unavailable_causes and self.analysis_status is not AnalysisReadiness.UNAVAILABLE:
-            msg = "Only an unavailable analysis may carry unavailable causes."
             raise ValueError(msg)
 
 
@@ -116,18 +98,17 @@ class AnalysisReviewSummary:
     """Counts displayed by the Overview summary panel."""
 
     total: int
-    unavailable: int
     not_analyzed: int
     stale: int
     latest: int
 
     def __post_init__(self) -> None:
         """Require counts to describe one complete row collection."""
-        counts = (self.total, self.unavailable, self.not_analyzed, self.stale, self.latest)
+        counts = (self.total, self.not_analyzed, self.stale, self.latest)
         if any(count < 0 for count in counts):
             msg = "Analysis review summary counts must be non-negative."
             raise ValueError(msg)
-        if self.unavailable + self.not_analyzed + self.stale + self.latest != self.total:
+        if self.not_analyzed + self.stale + self.latest != self.total:
             msg = "Analysis readiness counts must add up to the total."
             raise ValueError(msg)
 
@@ -153,5 +134,4 @@ __all__ = [
     "AnalysisRegionDisplay",
     "AnalysisReviewRow",
     "AnalysisReviewSummary",
-    "AnalysisUnavailableCause",
 ]

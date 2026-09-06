@@ -44,7 +44,6 @@ def test_top_level_modes_map_to_complete_neutral_policy(
         policy.input_capabilities.identify_velocity_shortcut_enabled
         or policy.input_capabilities.detail_velocity_shortcut_enabled
     ) is velocity
-    assert policy.transition_cleanup.cancel_velocity_pending
     assert policy.transition_cleanup.cancel_mask_selection
     assert policy.transition_cleanup.cancel_absorber_drag
     assert policy.transition_cleanup.clear_interaction_mode

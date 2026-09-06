@@ -47,7 +47,7 @@ class ChangeSet:
     changed_component_ids: tuple[str, ...] = ()
     changed_line_ids: tuple[str, ...] = ()
     changed_region_ids: tuple[str, ...] = ()
-    changed_candidate_ids: tuple[str, ...] = ()
+    changed_temporary_line_ids: tuple[str, ...] = ()
     changed_continuum_ids: tuple[str, ...] = ()
 
     @staticmethod

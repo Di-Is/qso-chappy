@@ -31,9 +31,6 @@ class RectZoomInputController:
             logger.warning("Rectangle zoom ignored because channel %s is active", active_channel)
             return
 
-        if self._owner.is_velocity_pending():
-            self._owner.cancel_velocity_pending(reason="rect-zoom-switch")
-
         if enabled:
             self._owner.acquire_rect_zoom()
             self._owner.set_rect_zoom_cursor(True)

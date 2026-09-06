@@ -47,10 +47,8 @@ class TutorialCompletion(Enum):
     a resolution table; this model layer never inspects application state.
     """
 
-    RECT_ZOOM_APPLIED = auto()
     METAL_LINES_PRESET_SELECTED = auto()
     REFERENCE_LINE_IS_CIV1548 = auto()
-    CIV_ABSORBER_IN_VIEW = auto()
     CONFIRMED_REGION_EXISTS = auto()
     NEW_TUTORIAL_PRESET_SELECTED = auto()
     PRESET_HAS_TUTORIAL_LINES = auto()
@@ -58,7 +56,6 @@ class TutorialCompletion(Enum):
     PRESET_FE2_SINGLE_GROUP = auto()
     PRESET_BASELINE_IS_MG2796 = auto()
     TUTORIAL_PRESET_SELECTED = auto()
-    MG2_ABSORBER_IN_VIEW = auto()
     VELOCITY_PLOT_VISIBLE = auto()
     VELOCITY_SLICES_SELECTED = auto()
     FE2_AND_MG2_REGIONS_EXIST = auto()
@@ -72,7 +69,7 @@ class TutorialCompletion(Enum):
     FE2_AND_MG2_HAVE_THREE_COMPONENTS = auto()
     CROSS_ION_Z_TIE_EXISTS = auto()
     REGION_FIT_APPLIED = auto()
-    MG2_LOGN_FIXED_AND_REFIT_APPLIED = auto()
+    MG2_LOGN_FIXED = auto()
 
 
 FIT_OUTCOME_NOTE_SOURCES: dict[FitOutcome, str] = {
@@ -162,20 +159,11 @@ COMPLETION_NOTE_SOURCES: dict[TutorialCompletion, str] = {
             " and that they share one link in the preset.",
         )
     ),
-    TutorialCompletion.MG2_ABSORBER_IN_VIEW: str(
+    TutorialCompletion.MG2_LOGN_FIXED: str(
         QT_TRANSLATE_NOOP(
             "Tutorial",
-            "The troughs near 4929 and 4942 Å are not both in view yet. Any"
-            " navigation route brings them on screen; typing 4900 and 4970 into"
-            " the wavelength fields is the quickest.",
-        )
-    ),
-    TutorialCompletion.CIV_ABSORBER_IN_VIEW: str(
-        QT_TRANSLATE_NOOP(
-            "Tutorial",
-            "The troughs near 4763 and 4771 Å are not both in view yet. Any"
-            " navigation route brings them on screen; typing 4755 and 4780 into"
-            " the wavelength fields is the quickest.",
+            "Mg II's logN is not fixed yet. Right-click the main Mg II component"
+            " in the parameter tree and tick the entry that starts with [Fix logN].",
         )
     ),
 }

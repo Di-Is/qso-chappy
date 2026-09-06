@@ -17,9 +17,9 @@ from chappy.application.history.snapshot_mapping import (
     absorber_component_from_snapshot,
     absorption_line_from_snapshot,
     absorption_region_from_snapshot,
-    candidate_line_from_snapshot,
     mask_from_snapshot,
     model_link_sort_key,
+    temporary_line_from_snapshot,
     tie_sets_from_snapshots,
 )
 from chappy.core.absorption.models import UNASSIGNED_REGION_ID
@@ -46,7 +46,7 @@ if TYPE_CHECKING:
         TieSetSnapshot,
     )
     from chappy.application.history.resolution_commands import ResolutionStateSnapshot
-    from chappy.application.identify import CandidateLineSnapshot
+    from chappy.application.identify import TemporaryLineSnapshot
     from chappy.core.identify_state import IdentifySessionState
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
@@ -406,8 +406,8 @@ class ProjectModelHistoryApplier:
         )
 
 
-class ProjectOrganizeHistoryApplier:
-    """`OrganizeHistoryPort` implementation bound to the current project."""
+class ProjectStructureHistoryApplier:
+    """`StructureHistoryPort` implementation bound to the current project."""
 
     def __init__(self, project_provider: Callable[[], SpectroscopyProject | None]) -> None:
         """Store the lazy project provider."""
@@ -546,7 +546,7 @@ class ProjectOrganizeHistoryApplier:
 
     def replace_masks_exact(self, snapshots: tuple[MaskDefinitionSnapshot, ...]) -> ChangeSet:
         """Replace the exact ordered mask collection without observer dispatch."""
-        project = self._require_project("replace exact organize masks")
+        project = self._require_project("replace exact structure masks")
         masks = tuple(mask_from_snapshot(snapshot) for snapshot in snapshots)
         project.model.restore_mask_definitions_for_transaction(masks, model_was_valid=False)
         region_ids = tuple(
@@ -772,29 +772,31 @@ class ProjectIdentifyHistoryApplier:
             )
         return session
 
-    def restore_identify_candidates(
-        self, snapshots: tuple[CandidateLineSnapshot, ...]
+    def restore_identify_temporary_lines(
+        self, snapshots: tuple[TemporaryLineSnapshot, ...]
     ) -> ChangeSet:
-        """Restore identify candidate lines from typed snapshots."""
-        session = self._require_identify_session("restore identify candidates")
+        """Restore identify temporary lines from typed snapshots."""
+        session = self._require_identify_session("restore identify temporary lines")
         restored_ids: list[str] = []
         for snapshot in snapshots:
-            candidate = session.restore_candidate_line(candidate_line_from_snapshot(snapshot))
-            restored_ids.append(candidate.system_id)
-        return ChangeSet(changed_candidate_ids=tuple(restored_ids))
+            temporary_line = session.restore_temporary_line(temporary_line_from_snapshot(snapshot))
+            restored_ids.append(temporary_line.temporary_line_id)
+        return ChangeSet(changed_temporary_line_ids=tuple(restored_ids))
 
-    def remove_identify_candidates(self, system_ids: tuple[str, ...]) -> ChangeSet:
-        """Remove identify candidate lines by system ID."""
-        session = self._require_identify_session("remove identify candidates")
-        removed_ids = session.remove_candidate_lines(system_ids)
-        return ChangeSet(changed_candidate_ids=tuple(removed_ids))
+    def remove_identify_temporary_lines(self, temporary_line_ids: tuple[str, ...]) -> ChangeSet:
+        """Remove identify temporary lines by line ID."""
+        session = self._require_identify_session("remove identify temporary lines")
+        removed_ids = session.remove_temporary_lines(temporary_line_ids)
+        return ChangeSet(changed_temporary_line_ids=tuple(removed_ids))
 
-    def clear_identify_candidates(self) -> ChangeSet:
-        """Clear all identify candidate lines."""
-        session = self._require_identify_session("clear identify candidates")
-        cleared_ids = tuple(candidate.system_id for candidate in session.candidate_lines)
-        session.clear_candidate_lines()
-        return ChangeSet(changed_candidate_ids=cleared_ids)
+    def clear_identify_temporary_lines(self) -> ChangeSet:
+        """Clear all identify temporary lines."""
+        session = self._require_identify_session("clear identify temporary lines")
+        cleared_ids = tuple(
+            temporary_line.temporary_line_id for temporary_line in session.temporary_lines
+        )
+        session.clear_temporary_lines()
+        return ChangeSet(changed_temporary_line_ids=cleared_ids)
 
     def update_identify_region_analysis_ranges(self, region_ids: tuple[str, ...]) -> ChangeSet:
         """Update analysis ranges for identify-affected regions."""

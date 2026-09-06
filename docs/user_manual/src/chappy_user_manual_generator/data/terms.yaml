@@ -127,19 +127,35 @@ terms:
     category: objects
     stage: 6
 
-  - key: absorption_system
+  - key: absorption_line_object
     label:
       ja: ライン
       en: Line
     definition:
-      ja: 同一の天体・速度場に由来する複数の吸収線を一つの対象として扱ったもの。アプリではラインの作成・編集・確定ができ、Analysis Region Detailで作成する吸収線コンポーネントを格納します。
-      en: A set of absorption lines originating from the same physical system or velocity field. Stores absorption-line components created in Analysis Region Detail.
+      ja: 1つの原子・イオン遷移（Lyα、Lyβ など）を表す解析対象。Analysis Region Detailで作成する吸収線コンポーネントを格納します。
+      en: An analysis object representing one atomic or ionic transition, such as Lyα or Lyβ. It stores absorption components created in Analysis Region Detail.
     aliases:
       ja: [ライン]
       en: []
     do_not_use:
       ja: []
       en: []
+    category: objects
+    stage: 6
+
+  - key: linked_lines
+    label:
+      ja: 連結ライン
+      en: Linked Lines
+    definition:
+      ja: 同じ連結グループから登録され、赤方偏移が一致するラインの一組。構造編集ツリーでは、f 値が最大の代表ラインにまとめて1行で表示されます。連結元のプリセット設定については「連結グループ」を参照してください。
+      en: A set of lines registered from the same Preset Link Group with matching redshifts. In the Analysis Structure tree, the set appears as one row represented by the line with the largest f-value. See Preset Link Group for the preset setting that defines the links.
+    aliases:
+      ja: []
+      en: [Linked Line]
+    do_not_use:
+      ja: [システム]
+      en: [Line System]
     category: objects
     stage: 6
 
@@ -226,7 +242,7 @@ terms:
     category: detect
     stage: 4
 
-  - key: temporary_system
+  - key: temporary_line
     label:
       ja: 一時ライン
       en: Temporary Line
@@ -343,8 +359,8 @@ terms:
       ja: 連結グループ
       en: Preset Link Group
     definition:
-      ja: プリセット内の複数のラインを一緒に扱うための設定です。連結グループのラインを基準に候補を追加すると、グループ内のラインが一時ラインとしてまとめて作成されます。登録すると、ライン同士の連結関係も保存されます。Analysis Region Detailで連結されたラインにモデルを追加すると、各ラインのコンポーネントが作成され、初期状態では赤方偏移、カラム密度、b パラメータ、被覆率が共有されます。
-      en: "A setting that makes multiple preset lines act together. Adding a candidate from a linked line creates temporary lines for the whole group. Registering saves both the lines and their link. When a model is added in Analysis Region Detail, a component is created for each linked line; redshift, column density, b parameter, and covering factor are shared by default."
+      ja: プリセット内の複数のラインを一緒に扱うための設定です。連結グループのラインを基準に候補を追加すると、グループ内のラインが一時ラインとしてまとめて作成されます。登録すると、ライン同士の連結関係も保存され、連結ラインとして扱われます。Analysis Region Detailで連結されたラインにモデルを追加すると、各ラインのコンポーネントが作成され、初期状態では赤方偏移、カラム密度、b パラメータ、被覆率が共有されます。
+      en: "A setting that makes multiple preset lines act together. Adding a candidate from a linked line creates temporary lines for the whole group. Registering saves both the lines and their link, after which they are treated as Linked Lines. When a model is added in Analysis Region Detail, a component is created for each linked line; redshift, column density, b parameter, and covering factor are shared by default."
     aliases:
       ja: [リンクグループ]
       en: [Link Group]

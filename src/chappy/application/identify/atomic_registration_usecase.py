@@ -1,4 +1,4 @@
-"""Atomic transaction boundary for Identify candidate registration."""
+"""Atomic transaction boundary for Identify temporary-line registration."""
 
 from __future__ import annotations
 
@@ -20,10 +20,10 @@ from chappy.application.structure import (
 from chappy.core.change_set import ChangeSet
 
 from .models import (
-    CandidateLineSnapshot,
     ExistingRegionSnapshot,
     IdentifyRegistrationPlan,
     RegistrationOutcome,
+    TemporaryLineSnapshot,
 )
 from .registration_impact import (
     IdentifyRegistrationImpactPreviewUseCase,
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
     from chappy.core.absorption.models import AbsorptionLine
-    from chappy.core.identify_state import CandidateLine
+    from chappy.core.identify_state import TemporaryLine
     from chappy.core.velocity_ranges import MultipletGroupingVelocityTolerance
 
 
@@ -56,23 +56,25 @@ class AtomicIdentifyRegistrationProjectPort(
 
 
 class AtomicIdentifyRegistrationSessionPort(Protocol):
-    """Candidate session storage participating in registration rollback."""
+    """Temporary-line session storage participating in registration rollback."""
 
     @property
-    def candidate_lines(self) -> Sequence[CandidateLine]:
-        """Return current candidates in storage order."""
+    def temporary_lines(self) -> Sequence[TemporaryLine]:
+        """Return current temporary lines in storage order."""
         ...
 
-    def remove_candidate_lines(self, system_ids: Iterable[str]) -> list[str]:
-        """Remove processed candidate lines."""
+    def remove_temporary_lines(self, temporary_line_ids: Iterable[str]) -> list[str]:
+        """Remove processed temporary lines."""
         ...
 
-    def snapshot_candidate_lines_for_transaction(self) -> tuple[CandidateLine, ...]:
-        """Capture exact candidate object identity and order."""
+    def snapshot_temporary_lines_for_transaction(self) -> tuple[TemporaryLine, ...]:
+        """Capture exact temporary-line object identity and order."""
         ...
 
-    def replace_candidate_lines_for_transaction(self, candidates: Sequence[CandidateLine]) -> None:
-        """Restore exact candidate object identity and order."""
+    def replace_temporary_lines_for_transaction(
+        self, temporary_lines: Sequence[TemporaryLine]
+    ) -> None:
+        """Restore exact temporary-line object identity and order."""
         ...
 
 
@@ -86,7 +88,7 @@ class AtomicRegisterSelectedLinesRequest:
 
     project: AtomicIdentifyRegistrationProjectPort
     session: AtomicIdentifyRegistrationSessionPort
-    candidates: tuple[CandidateLineSnapshot, ...]
+    temporary_lines: tuple[TemporaryLineSnapshot, ...]
     existing_regions: tuple[ExistingRegionSnapshot, ...]
     region_line_memberships: tuple[tuple[str, tuple[str, ...]], ...]
     multiplet_grouping_tolerance: MultipletGroupingVelocityTolerance
@@ -125,11 +127,11 @@ class _RegistrationRuntimeSnapshot:
     """Project topology and Identify session state restored after an abort."""
 
     topology: StructureTopologySnapshot
-    candidate_lines: tuple[CandidateLine, ...]
+    temporary_lines: tuple[TemporaryLine, ...]
 
 
 class AtomicIdentifyRegistrationUseCase:
-    """Register candidates, invalidate analysis, and record history atomically."""
+    """Register temporary lines, invalidate analysis, and record history atomically."""
 
     def __init__(
         self,
@@ -167,7 +169,7 @@ class AtomicIdentifyRegistrationUseCase:
             }
             return _RegistrationRuntimeSnapshot(
                 topology=self._topology.capture(request.project),
-                candidate_lines=request.session.snapshot_candidate_lines_for_transaction(),
+                temporary_lines=request.session.snapshot_temporary_lines_for_transaction(),
             )
 
         def mutate() -> StructureMutationResult[RegisterSelectedLinesResult]:
@@ -195,7 +197,7 @@ class AtomicIdentifyRegistrationUseCase:
 
         def restore_runtime(snapshot: _RegistrationRuntimeSnapshot) -> None:
             self._topology.restore(request.project, snapshot.topology)
-            request.session.replace_candidate_lines_for_transaction(snapshot.candidate_lines)
+            request.session.replace_temporary_lines_for_transaction(snapshot.temporary_lines)
 
         def record_history(result: StructureMutationResult[RegisterSelectedLinesResult]) -> None:
             if request.record_history is None:
@@ -245,7 +247,7 @@ class AtomicIdentifyRegistrationUseCase:
         return IdentifyRegistrationImpactRequest(
             project=request.project,
             session=request.session,
-            candidates=request.candidates,
+            temporary_lines=request.temporary_lines,
             existing_regions=request.existing_regions,
             region_line_memberships=request.region_line_memberships,
             multiplet_grouping_tolerance=request.multiplet_grouping_tolerance,
@@ -272,14 +274,14 @@ class AtomicIdentifyRegistrationUseCase:
         if outcome.appended_region_ids != impact.affected_existing_region_ids:
             msg = "Identify registration outcome regions do not match its preview."
             raise RuntimeError(msg)
-        if outcome.failed_count != len(impact.rejected_system_ids):
-            msg = "Identify registration rejected candidates do not match its preview."
+        if outcome.failed_count != len(impact.rejected_temporary_line_ids):
+            msg = "Identify registration rejected lines do not match its preview."
             raise RuntimeError(msg)
-        if outcome.processed_system_ids != (
-            *impact.registerable_system_ids,
-            *impact.rejected_system_ids,
+        if outcome.processed_temporary_line_ids != (
+            *impact.registerable_temporary_line_ids,
+            *impact.rejected_temporary_line_ids,
         ):
-            msg = "Identify registration processed candidates do not match its preview."
+            msg = "Identify registration processed lines do not match its preview."
             raise RuntimeError(msg)
         if outcome.multi_overlap_warning is not impact.multi_overlap_warning:
             msg = "Identify registration overlap warning does not match its preview."

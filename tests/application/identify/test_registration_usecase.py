@@ -15,7 +15,7 @@ from chappy.application.identify import (
     BuildRegionPreviewsUseCase,
     BuildRegistrationOutcomeRequest,
     BuildRegistrationOutcomeUseCase,
-    CandidateLineSnapshot,
+    TemporaryLineSnapshot,
     ExistingRegionSnapshot,
     RegionAssignmentOperationKind,
     RegionPreviewSnapshot,
@@ -115,9 +115,9 @@ class _FakeSession:
         """Create fake session state."""
         self.removed_ids: list[str] = []
 
-    def remove_candidate_lines(self, system_ids: Iterable[str]) -> list[str]:
-        """Record removed candidate IDs."""
-        self.removed_ids = list(system_ids)
+    def remove_temporary_lines(self, temporary_line_ids: Iterable[str]) -> list[str]:
+        """Record removed temporary line IDs."""
+        self.removed_ids = list(temporary_line_ids)
         return self.removed_ids
 
 
@@ -168,8 +168,8 @@ class _FailingUnassignedProject(_FakeProject):
         raise RuntimeError(msg)
 
 
-def _candidate(
-    system_id: str,
+def _temporary_line(
+    temporary_line_id: str,
     lambda_min: float,
     lambda_max: float,
     *,
@@ -182,15 +182,15 @@ def _candidate(
     transition_name: str = "",
     creation_method: str = "test",
     tie_group_key: str | None = None,
-) -> CandidateLineSnapshot:
-    """Create a candidate line for tests."""
-    return CandidateLineSnapshot(
-        system_id=system_id,
+) -> TemporaryLineSnapshot:
+    """Create a temporary line for tests."""
+    return TemporaryLineSnapshot(
+        temporary_line_id=temporary_line_id,
         species=species,
         lambda_min=lambda_min,
         lambda_max=lambda_max,
         creation_method=creation_method,
-        line_id=system_id,
+        line_id=temporary_line_id,
         rest_wavelength=rest_wavelength,
         center_z=center_z,
         multiplet_id=multiplet_id,
@@ -206,7 +206,7 @@ def _candidate(
 def _register(
     project: _FakeProject,
     session: _FakeSession,
-    candidates: Sequence[CandidateLineSnapshot],
+    temporary_lines: Sequence[TemporaryLineSnapshot],
     existing_regions: Sequence[ExistingRegionSnapshot] = (),
 ):
     """Run the registration use case with default grouping inputs."""
@@ -216,7 +216,7 @@ def _register(
             session=session,
             plan=BuildIdentifyRegistrationPlanUseCase().build(
                 BuildRegionPreviewsRequest(
-                    candidates=tuple(candidates),
+                    temporary_lines=tuple(temporary_lines),
                     existing_regions=tuple(existing_regions),
                     multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(200.0),
                     unknown_label="Unknown",
@@ -242,14 +242,14 @@ def _existing_snapshots(project: _FakeProject) -> tuple[ExistingRegionSnapshot, 
     )
 
 
-def test_build_region_previews_groups_overlapping_candidates() -> None:
-    """Overlapping candidates should be grouped into one preview."""
-    first = _candidate("a", 1000.0, 1010.0)
-    second = _candidate("b", 1005.0, 1015.0)
+def test_build_region_previews_groups_overlapping_temporary_lines() -> None:
+    """Overlapping temporary lines should be grouped into one preview."""
+    first = _temporary_line("a", 1000.0, 1010.0)
+    second = _temporary_line("b", 1005.0, 1015.0)
 
     result = BuildRegionPreviewsUseCase().build(
         BuildRegionPreviewsRequest(
-            candidates=(first, second),
+            temporary_lines=(first, second),
             existing_regions=(),
             multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(200.0),
             unknown_label="Unknown",
@@ -257,13 +257,13 @@ def test_build_region_previews_groups_overlapping_candidates() -> None:
     )
 
     assert len(result.previews) == 1
-    assert set(result.previews[0].member_system_ids) == {"a", "b"}
+    assert set(result.previews[0].member_temporary_line_ids) == {"a", "b"}
     assert result.previews[0].existing_group_id is None
 
 
 def test_build_region_previews_detects_existing_region_overlap() -> None:
-    """Candidate overlapping an existing line range should target that region."""
-    candidate = _candidate("candidate", 995.0, 1005.0)
+    """Temporary line overlapping an existing line range should target that region."""
+    temporary_line = _temporary_line("candidate", 995.0, 1005.0)
     existing = ExistingRegionSnapshot(
         region_id="region-1",
         display_name="C IV @ 995.0-1005.0 (1)",
@@ -272,7 +272,7 @@ def test_build_region_previews_detects_existing_region_overlap() -> None:
 
     result = BuildRegionPreviewsUseCase().build(
         BuildRegionPreviewsRequest(
-            candidates=(candidate,),
+            temporary_lines=(temporary_line,),
             existing_regions=(existing,),
             multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(200.0),
             unknown_label="Unknown",
@@ -286,8 +286,8 @@ def test_build_region_previews_detects_existing_region_overlap() -> None:
 
 
 def test_discrete_existing_region_lines_do_not_create_continuous_overlap() -> None:
-    """Candidate between discrete existing line ranges should create a new preview."""
-    candidate = _candidate("candidate", 1095.0, 1105.0)
+    """Temporary line between discrete existing line ranges should create a new preview."""
+    temporary_line = _temporary_line("candidate", 1095.0, 1105.0)
     existing = ExistingRegionSnapshot(
         region_id="region-1",
         display_name="Test Region",
@@ -296,7 +296,7 @@ def test_discrete_existing_region_lines_do_not_create_continuous_overlap() -> No
 
     result = BuildRegionPreviewsUseCase().build(
         BuildRegionPreviewsRequest(
-            candidates=(candidate,),
+            temporary_lines=(temporary_line,),
             existing_regions=(existing,),
             multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(200.0),
             unknown_label="Unknown",
@@ -309,7 +309,7 @@ def test_discrete_existing_region_lines_do_not_create_continuous_overlap() -> No
 
 def test_build_region_previews_warns_when_overlapping_multiple_existing_regions() -> None:
     """Multi-region overlap absorbs into the first region and raises the warning."""
-    candidate = _candidate("candidate", 995.0, 1010.0)
+    temporary_line = _temporary_line("candidate", 995.0, 1010.0)
     first = ExistingRegionSnapshot(
         region_id="region-1", display_name="First", line_ranges=((994.0, 1000.0),)
     )
@@ -319,7 +319,7 @@ def test_build_region_previews_warns_when_overlapping_multiple_existing_regions(
 
     result = BuildRegionPreviewsUseCase().build(
         BuildRegionPreviewsRequest(
-            candidates=(candidate,),
+            temporary_lines=(temporary_line,),
             existing_regions=(first, second),
             multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(200.0),
             unknown_label="Unknown",
@@ -332,13 +332,13 @@ def test_build_region_previews_warns_when_overlapping_multiple_existing_regions(
 
 
 def test_same_multiplet_close_redshift_groups_without_wavelength_overlap() -> None:
-    """Same multiplet candidates within velocity window should be grouped."""
-    first = _candidate("m1", 1000.0, 1005.0, multiplet_id="M", center_z=1.0)
-    second = _candidate("m2", 1200.0, 1205.0, multiplet_id="M", center_z=1.0001)
+    """Same multiplet temporary lines within velocity window should be grouped."""
+    first = _temporary_line("m1", 1000.0, 1005.0, multiplet_id="M", center_z=1.0)
+    second = _temporary_line("m2", 1200.0, 1205.0, multiplet_id="M", center_z=1.0001)
 
     result = BuildRegionPreviewsUseCase().build(
         BuildRegionPreviewsRequest(
-            candidates=(first, second),
+            temporary_lines=(first, second),
             existing_regions=(),
             multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(200.0),
             unknown_label="Unknown",
@@ -346,21 +346,21 @@ def test_same_multiplet_close_redshift_groups_without_wavelength_overlap() -> No
     )
 
     assert len(result.previews) == 1
-    assert set(result.previews[0].member_system_ids) == {"m1", "m2"}
+    assert set(result.previews[0].member_temporary_line_ids) == {"m1", "m2"}
 
 
-def test_grouping_tolerance_is_independent_from_candidate_analysis_half_widths() -> None:
-    """Candidate scientific ranges must not leak into multiplet grouping policy."""
-    narrow = _candidate(
+def test_grouping_tolerance_is_independent_from_temporary_line_analysis_half_widths() -> None:
+    """Temporary line scientific ranges must not leak into multiplet grouping policy."""
+    narrow = _temporary_line(
         "narrow", 1000.0, 1005.0, multiplet_id="M", center_z=1.0, velocity_window_kms=10.0
     )
-    wide = _candidate(
+    wide = _temporary_line(
         "wide", 1200.0, 1205.0, multiplet_id="M", center_z=1.0005, velocity_window_kms=2000.0
     )
 
     grouped = BuildRegionPreviewsUseCase().build(
         BuildRegionPreviewsRequest(
-            candidates=(narrow, wide),
+            temporary_lines=(narrow, wide),
             existing_regions=(),
             multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(200.0),
             unknown_label="Unknown",
@@ -368,7 +368,7 @@ def test_grouping_tolerance_is_independent_from_candidate_analysis_half_widths()
     )
     separated = BuildRegionPreviewsUseCase().build(
         BuildRegionPreviewsRequest(
-            candidates=(narrow, wide),
+            temporary_lines=(narrow, wide),
             existing_regions=(),
             multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(100.0),
             unknown_label="Unknown",
@@ -381,10 +381,10 @@ def test_grouping_tolerance_is_independent_from_candidate_analysis_half_widths()
 
 def test_different_declared_keys_do_not_group_same_atomic_multiplet() -> None:
     """DB multiplet equality must not merge registration previews."""
-    first = _candidate(
+    first = _temporary_line(
         "first", 1000.0, 1005.0, multiplet_id="DB-GROUP", tie_group_key="declared-a", center_z=1.0
     )
-    second = _candidate(
+    second = _temporary_line(
         "second",
         1200.0,
         1205.0,
@@ -395,7 +395,7 @@ def test_different_declared_keys_do_not_group_same_atomic_multiplet() -> None:
 
     result = BuildRegionPreviewsUseCase().build(
         BuildRegionPreviewsRequest(
-            candidates=(first, second),
+            temporary_lines=(first, second),
             existing_regions=(),
             multiplet_grouping_tolerance=MultipletGroupingVelocityTolerance(200.0),
             unknown_label="Unknown",
@@ -408,15 +408,15 @@ def test_different_declared_keys_do_not_group_same_atomic_multiplet() -> None:
 def test_build_region_assignment_creates_region_for_new_preview() -> None:
     """Preview without an existing group should create a new region operation."""
     preview = RegionPreviewSnapshot(
-        group_id="preview-1", name="Preview", member_system_ids=("first", "second")
+        group_id="preview-1", name="Preview", member_temporary_line_ids=("first", "second")
     )
 
     result = BuildRegionAssignmentUseCase().build(
         BuildRegionAssignmentRequest(
             previews=(preview,),
             registered_lines=(
-                RegisteredLineReference(system_id="first", line_id="line-1"),
-                RegisteredLineReference(system_id="second", line_id="line-2"),
+                RegisteredLineReference(temporary_line_id="first", line_id="line-1"),
+                RegisteredLineReference(temporary_line_id="second", line_id="line-2"),
             ),
         )
     )
@@ -433,14 +433,16 @@ def test_build_region_assignment_adds_to_existing_region() -> None:
     preview = RegionPreviewSnapshot(
         group_id="add-to-region-1",
         name="Existing",
-        member_system_ids=("first",),
+        member_temporary_line_ids=("first",),
         existing_group_id="region-1",
     )
 
     result = BuildRegionAssignmentUseCase().build(
         BuildRegionAssignmentRequest(
             previews=(preview,),
-            registered_lines=(RegisteredLineReference(system_id="first", line_id="line-1"),),
+            registered_lines=(
+                RegisteredLineReference(temporary_line_id="first", line_id="line-1"),
+            ),
         )
     )
 
@@ -454,13 +456,15 @@ def test_build_region_assignment_adds_to_existing_region() -> None:
 def test_build_region_assignment_ignores_previews_without_registered_members() -> None:
     """Previews with no created members should not emit operations."""
     preview = RegionPreviewSnapshot(
-        group_id="preview-1", name="Preview", member_system_ids=("missing",)
+        group_id="preview-1", name="Preview", member_temporary_line_ids=("missing",)
     )
 
     result = BuildRegionAssignmentUseCase().build(
         BuildRegionAssignmentRequest(
             previews=(preview,),
-            registered_lines=(RegisteredLineReference(system_id="first", line_id="line-1"),),
+            registered_lines=(
+                RegisteredLineReference(temporary_line_id="first", line_id="line-1"),
+            ),
         )
     )
 
@@ -475,20 +479,20 @@ def test_build_registration_outcome_reports_history_ids() -> None:
             all_region_ids_after=("region-existing", "region-new"),
             registered_lines=(
                 RegisteredLineState(
-                    system_id="candidate-1", line_id="line-1", region_id="region-new"
+                    temporary_line_id="candidate-1", line_id="line-1", region_id="region-new"
                 ),
                 RegisteredLineState(
-                    system_id="candidate-2", line_id="line-2", region_id="region-new"
+                    temporary_line_id="candidate-2", line_id="line-2", region_id="region-new"
                 ),
             ),
-            failed_system_ids=("candidate-3",),
+            failed_temporary_line_ids=("candidate-3",),
             multi_overlap_warning=True,
         )
     )
 
     assert result.created_line_ids == ("line-1", "line-2")
     assert result.created_region_ids == ("region-new",)
-    assert result.processed_system_ids == ("candidate-1", "candidate-2", "candidate-3")
+    assert result.processed_temporary_line_ids == ("candidate-1", "candidate-2", "candidate-3")
     assert result.affected_region_ids == ("region-new",)
     assert result.appended_region_ids == ()
     assert result.confirmed_count == 2
@@ -504,10 +508,10 @@ def test_build_registration_outcome_reports_appended_existing_regions() -> None:
             all_region_ids_after=("region-existing",),
             registered_lines=(
                 RegisteredLineState(
-                    system_id="candidate-1", line_id="line-1", region_id="region-existing"
+                    temporary_line_id="candidate-1", line_id="line-1", region_id="region-existing"
                 ),
             ),
-            failed_system_ids=(),
+            failed_temporary_line_ids=(),
             multi_overlap_warning=False,
         )
     )
@@ -524,12 +528,12 @@ def test_build_registration_outcome_preserves_distinct_affected_region_order() -
             existing_region_ids=(),
             all_region_ids_after=(),
             registered_lines=(
-                RegisteredLineState(system_id="a", line_id="line-a", region_id="r2"),
-                RegisteredLineState(system_id="b", line_id="line-b", region_id="r1"),
-                RegisteredLineState(system_id="c", line_id="line-c", region_id="r2"),
-                RegisteredLineState(system_id="d", line_id="line-d", region_id=None),
+                RegisteredLineState(temporary_line_id="a", line_id="line-a", region_id="r2"),
+                RegisteredLineState(temporary_line_id="b", line_id="line-b", region_id="r1"),
+                RegisteredLineState(temporary_line_id="c", line_id="line-c", region_id="r2"),
+                RegisteredLineState(temporary_line_id="d", line_id="line-d", region_id=None),
             ),
-            failed_system_ids=(),
+            failed_temporary_line_ids=(),
             multi_overlap_warning=False,
         )
     )
@@ -541,15 +545,15 @@ def test_register_selected_lines_creates_region_and_cleans_session() -> None:
     """Register use case should group internally, create lines, and clean session."""
     project = _FakeProject()
     session = _FakeSession()
-    first = _candidate("first", 1000.0, 1010.0)
-    second = _candidate("second", 1005.0, 1015.0)
+    first = _temporary_line("first", 1000.0, 1010.0)
+    second = _temporary_line("second", 1005.0, 1015.0)
 
     result = _register(project, session, (first, second))
 
     assert result.outcome is not None
     assert result.outcome.created_line_ids == ("line-1", "line-2")
     assert result.outcome.created_region_ids == ("region-1", "unassigned")
-    assert set(result.outcome.processed_system_ids) == {"first", "second"}
+    assert set(result.outcome.processed_temporary_line_ids) == {"first", "second"}
     assert result.outcome.affected_region_ids == ("region-1",)
     assert result.outcome.appended_region_ids == ()
     assert result.outcome.multi_overlap_warning is False
@@ -561,8 +565,12 @@ def test_register_selected_lines_materializes_declared_key_without_db_multiplet(
     """Only the explicit key creates materialized absorption-line links."""
     project = _FakeProject()
     session = _FakeSession()
-    first = _candidate("first", 1000.0, 1005.0, multiplet_id="", tie_group_key="declared-group")
-    second = _candidate("second", 1200.0, 1205.0, multiplet_id="", tie_group_key="declared-group")
+    first = _temporary_line(
+        "first", 1000.0, 1005.0, multiplet_id="", tie_group_key="declared-group"
+    )
+    second = _temporary_line(
+        "second", 1200.0, 1205.0, multiplet_id="", tie_group_key="declared-group"
+    )
 
     _register(project, session, (first, second))
 
@@ -571,16 +579,16 @@ def test_register_selected_lines_materializes_declared_key_without_db_multiplet(
 
 
 def test_register_selected_lines_adds_to_existing_region() -> None:
-    """Candidates overlapping an existing region should be appended to it."""
+    """Temporary lines overlapping an existing region should be appended to it."""
     project = _FakeProject()
     project.regions["existing"] = AbsorptionRegion(region_id="existing")
     session = _FakeSession()
-    candidate = _candidate("candidate", 1000.0, 1005.0)
+    temporary_line = _temporary_line("candidate", 1000.0, 1005.0)
     existing = ExistingRegionSnapshot(
         region_id="existing", display_name="Existing", line_ranges=((1000.0, 1005.0),)
     )
 
-    result = _register(project, session, (candidate,), existing_regions=(existing,))
+    result = _register(project, session, (temporary_line,), existing_regions=(existing,))
 
     assert result.outcome is not None
     assert result.outcome.created_line_ids == ("line-1",)
@@ -590,30 +598,30 @@ def test_register_selected_lines_adds_to_existing_region() -> None:
     assert project.regions["existing"].line_ids == ["line-1"]
 
 
-def test_register_selected_lines_includes_failed_candidates_when_some_succeed() -> None:
-    """Failed candidates should be removed only when at least one line succeeds."""
+def test_register_selected_lines_includes_failed_temporary_lines_when_some_succeed() -> None:
+    """Failed temporary lines should be removed only when at least one line succeeds."""
     project = _FakeProject()
     session = _FakeSession()
-    valid = _candidate("valid", 1000.0, 1005.0)
-    invalid = _candidate("invalid", 1006.0, 1010.0, rest_wavelength=0.0)
+    valid = _temporary_line("valid", 1000.0, 1005.0)
+    invalid = _temporary_line("invalid", 1006.0, 1010.0, rest_wavelength=0.0)
 
     result = _register(project, session, (valid, invalid))
 
     assert result.outcome is not None
     assert result.outcome.created_line_ids == ("line-1",)
-    assert result.outcome.processed_system_ids == ("valid", "invalid")
+    assert result.outcome.processed_temporary_line_ids == ("valid", "invalid")
     assert result.outcome.failed_count == 1
     assert set(session.removed_ids) == {"valid", "invalid"}
 
 
 def test_register_selected_lines_propagates_project_mutation_failure() -> None:
-    """Project mutation failures should not be downgraded to failed candidates."""
+    """Project mutation failures should not be downgraded to failed temporary lines."""
     project = _FailingAddProject()
     session = _FakeSession()
-    candidate = _candidate("candidate", 1000.0, 1005.0)
+    temporary_line = _temporary_line("candidate", 1000.0, 1005.0)
 
     with pytest.raises(ValueError, match="project mutation failed"):
-        _register(project, session, (candidate,))
+        _register(project, session, (temporary_line,))
 
     assert session.removed_ids == []
 
@@ -622,10 +630,10 @@ def test_register_selected_lines_requires_unassigned_region_invariant() -> None:
     """Unassigned-region setup errors should fail fast after successful line creation."""
     project = _FailingUnassignedProject()
     session = _FakeSession()
-    candidate = _candidate("candidate", 1000.0, 1005.0)
+    temporary_line = _temporary_line("candidate", 1000.0, 1005.0)
 
     with pytest.raises(RuntimeError, match="unassigned region unavailable"):
-        _register(project, session, (candidate,))
+        _register(project, session, (temporary_line,))
 
     assert session.removed_ids == []
 
@@ -634,22 +642,22 @@ def test_register_selected_lines_requires_existing_preview_region() -> None:
     """Existing-region snapshots must reference a region present in the project."""
     project = _FakeProject()
     session = _FakeSession()
-    candidate = _candidate("candidate", 1000.0, 1005.0)
+    temporary_line = _temporary_line("candidate", 1000.0, 1005.0)
     missing = ExistingRegionSnapshot(
         region_id="missing", display_name="Missing", line_ranges=((1000.0, 1005.0),)
     )
 
     with pytest.raises(RuntimeError, match="Existing-region assignment target was not found"):
-        _register(project, session, (candidate,), existing_regions=(missing,))
+        _register(project, session, (temporary_line,), existing_regions=(missing,))
 
     assert session.removed_ids == []
 
 
-def test_register_selected_lines_leaves_session_when_all_candidates_fail() -> None:
+def test_register_selected_lines_leaves_session_when_all_temporary_lines_fail() -> None:
     """Session should remain untouched when no absorption lines are created."""
     project = _FakeProject()
     session = _FakeSession()
-    invalid = _candidate("invalid", 1000.0, 1005.0, rest_wavelength=0.0)
+    invalid = _temporary_line("invalid", 1000.0, 1005.0, rest_wavelength=0.0)
 
     result = _register(project, session, (invalid,))
 
@@ -664,7 +672,7 @@ def test_register_selected_lines_reports_multi_overlap_warning() -> None:
     project.regions["region-a"] = AbsorptionRegion(region_id="region-a")
     project.regions["region-b"] = AbsorptionRegion(region_id="region-b")
     session = _FakeSession()
-    candidate = _candidate("candidate", 995.0, 1010.0)
+    temporary_line = _temporary_line("candidate", 995.0, 1010.0)
     existing = (
         ExistingRegionSnapshot(
             region_id="region-a", display_name="A", line_ranges=((994.0, 1000.0),)
@@ -674,7 +682,7 @@ def test_register_selected_lines_reports_multi_overlap_warning() -> None:
         ),
     )
 
-    result = _register(project, session, (candidate,), existing_regions=existing)
+    result = _register(project, session, (temporary_line,), existing_regions=existing)
 
     assert result.outcome is not None
     assert result.outcome.multi_overlap_warning is True
@@ -683,9 +691,9 @@ def test_register_selected_lines_reports_multi_overlap_warning() -> None:
 
 
 def test_partial_registrations_converge_to_one_shot_structure() -> None:
-    """Registering candidates one by one yields the same regions as one shot."""
-    first = _candidate("first", 1000.0, 1010.0)
-    second = _candidate("second", 1005.0, 1015.0)
+    """Registering temporary lines one by one yields the same regions as one shot."""
+    first = _temporary_line("first", 1000.0, 1010.0)
+    second = _temporary_line("second", 1005.0, 1015.0)
 
     one_shot_project = _FakeProject()
     _register(one_shot_project, _FakeSession(), (first, second))
@@ -712,9 +720,9 @@ def test_partial_registrations_converge_to_one_shot_structure() -> None:
     assert region_structure(partial_project) == region_structure(one_shot_project)
 
 
-def test_build_absorption_line_registration_request_preserves_candidate_data() -> None:
-    """Registration request should contain the candidate's reproducible atomic data."""
-    candidate = _candidate(
+def test_build_absorption_line_registration_request_preserves_temporary_line_data() -> None:
+    """Registration request should contain the temporary line's reproducible atomic data."""
+    temporary_line = _temporary_line(
         "candidate",
         1547.0,
         1549.0,
@@ -725,11 +733,11 @@ def test_build_absorption_line_registration_request_preserves_candidate_data() -
         creation_method="velocity",
     )
 
-    result = BuildAbsorptionLineRegistrationRequestUseCase().build(candidate)
+    result = BuildAbsorptionLineRegistrationRequestUseCase().build(temporary_line)
 
     assert result.error_code is None
     assert result.request is not None
-    assert result.request.system_id == "candidate"
+    assert result.request.temporary_line_id == "candidate"
     assert result.request.atomic_line_id == "candidate"
     assert result.request.species == "C IV"
     assert result.request.rest_wavelength == 1000.0
@@ -743,17 +751,17 @@ def test_build_absorption_line_registration_request_preserves_candidate_data() -
     assert result.request.created_by == "velocity"
 
 
-def test_candidate_snapshot_rejects_zero_analysis_half_width() -> None:
-    """Candidate snapshots reject invalid scientific ranges at the typed boundary."""
+def test_temporary_line_snapshot_rejects_zero_analysis_half_width() -> None:
+    """Temporary line snapshots reject invalid scientific ranges at the typed boundary."""
     with pytest.raises(ValueError, match="between"):
-        _candidate("candidate", 1547.0, 1549.0, velocity_window_kms=0.0)
+        _temporary_line("candidate", 1547.0, 1549.0, velocity_window_kms=0.0)
 
 
 def test_registration_request_rejects_invalid_rest_wavelength() -> None:
     """Invalid rest wavelength should produce a typed registration error."""
-    candidate = _candidate("candidate", 1547.0, 1549.0, rest_wavelength=0.0)
+    temporary_line = _temporary_line("candidate", 1547.0, 1549.0, rest_wavelength=0.0)
 
-    result = BuildAbsorptionLineRegistrationRequestUseCase().build(candidate)
+    result = BuildAbsorptionLineRegistrationRequestUseCase().build(temporary_line)
 
     assert result.request is None
     assert result.error_code == RegistrationErrorCode.INVALID_REST_WAVELENGTH

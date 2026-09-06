@@ -92,7 +92,7 @@ _CONTEXT_TEXT_SOURCES: dict[str, _ContextTextSource] = {
     "identify.subtitle_default": _ContextTextSource(
         text=str(
             QT_TRANSLATE_NOOP(
-                "ModeShellCoordinator", "Associate detected regions with absorber systems"
+                "ModeShellCoordinator", "Associate detected regions with absorption lines"
             )
         )
     ),

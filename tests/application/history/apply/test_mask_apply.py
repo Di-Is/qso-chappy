@@ -104,7 +104,7 @@ def _history(
 
 def _delete_command(target: MaskDefinition, *, index: int) -> MaskHistoryCommand:
     return MaskHistoryCommand(
-        op_id=OperationId.GROUP_MASK_DELETE,
+        op_id=OperationId.MASK_DELETE,
         mask_id=target.identifier,
         before=mask_definition_snapshot(target),
         after=None,
@@ -121,7 +121,7 @@ def test_mask_create_undo_redo_restores_exact_insertion_position() -> None:
     last = _mask("last", "region-2", start=5005.0)
     project = _project((first, target, last))
     command = MaskHistoryCommand(
-        op_id=OperationId.GROUP_MASK_CREATE,
+        op_id=OperationId.MASK_CREATE,
         mask_id=target.identifier,
         before=None,
         after=mask_definition_snapshot(target),
@@ -180,7 +180,7 @@ def test_mask_update_invalidates_old_and_new_regions_once_with_deduped_scope() -
     after = _mask("target", "region-2", start=5002.0)
     project = _project((after,))
     command = MaskHistoryCommand(
-        op_id=OperationId.GROUP_MASK_EDIT,
+        op_id=OperationId.MASK_EDIT,
         mask_id="target",
         before=mask_definition_snapshot(before),
         after=mask_definition_snapshot(after),
@@ -215,7 +215,7 @@ def test_mask_exact_target_is_no_change_without_notification_or_freshness_churn(
     target = _mask("target", "region-1")
     project = _project(())
     command = MaskHistoryCommand(
-        op_id=OperationId.GROUP_MASK_CREATE,
+        op_id=OperationId.MASK_CREATE,
         mask_id=target.identifier,
         before=None,
         after=mask_definition_snapshot(target),
@@ -244,7 +244,7 @@ def test_mask_update_missing_storage_target_is_recoverable_and_stack_safe() -> N
     after = _mask("target", "region-1", start=5004.0)
     project = _project(())
     command = MaskHistoryCommand(
-        op_id=OperationId.GROUP_MASK_EDIT,
+        op_id=OperationId.MASK_EDIT,
         mask_id="target",
         before=mask_definition_snapshot(before),
         after=mask_definition_snapshot(after),

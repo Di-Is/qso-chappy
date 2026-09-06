@@ -59,7 +59,7 @@ class TestMultipletIdsCrossReference:
         mg2_2796, mg2_2803 = _find_mg2_doublet(atomic_data)
         redshift = 2.0
 
-        # Create two absorption lines (simulating what _materialize_temporary_system does)
+        # Create two absorption lines (simulating what _materialize_temporary_line does)
         line_2796 = project.add_absorption_line(
             species=mg2_2796.species,
             transition_name=mg2_2796.transition_name,

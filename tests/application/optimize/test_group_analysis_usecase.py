@@ -124,45 +124,6 @@ def test_mixed_line_freshness_is_stale_and_not_exportable() -> None:
     )
 
 
-def test_empty_region_is_unavailable_and_not_exportable() -> None:
-    """A region without assigned lines cannot expose an otherwise ready artifact."""
-    usecase = OptimizeGroupAnalysisUseCase()
-    project = _project()
-    usecase.record_successful_analysis(project, "region-1", FitSummary(chi_squared=1.0))
-    project.absorption_regions["region-1"].line_ids.clear()
-
-    assert usecase.analysis_readiness(project, "region-1") is AnalysisReadiness.UNAVAILABLE
-    assert usecase.export_controls_state(project, "region-1") == OptimizeExportControlsState(
-        export_enabled=False, needs_visible=False
-    )
-
-
-def test_region_with_missing_line_is_unavailable_and_not_exportable() -> None:
-    """A dangling region line reference invalidates analysis prerequisites."""
-    usecase = OptimizeGroupAnalysisUseCase()
-    project = _project()
-    usecase.record_successful_analysis(project, "region-1", FitSummary(chi_squared=1.0))
-    project.absorption_lines.pop("line-1")
-
-    assert usecase.analysis_readiness(project, "region-1") is AnalysisReadiness.UNAVAILABLE
-    assert usecase.export_controls_state(project, "region-1") == OptimizeExportControlsState(
-        export_enabled=False, needs_visible=False
-    )
-
-
-def test_region_with_mismatched_line_assignment_is_unavailable_and_not_exportable() -> None:
-    """A line assigned to another region invalidates analysis prerequisites."""
-    usecase = OptimizeGroupAnalysisUseCase()
-    project = _project()
-    usecase.record_successful_analysis(project, "region-1", FitSummary(chi_squared=1.0))
-    project.absorption_lines["line-1"].region_id = "region-2"
-
-    assert usecase.analysis_readiness(project, "region-1") is AnalysisReadiness.UNAVAILABLE
-    assert usecase.export_controls_state(project, "region-1") == OptimizeExportControlsState(
-        export_enabled=False, needs_visible=False
-    )
-
-
 def test_missing_group_returns_disabled_export_state() -> None:
     """Missing state should produce disabled export controls."""
     usecase = OptimizeGroupAnalysisUseCase()
@@ -170,7 +131,7 @@ def test_missing_group_returns_disabled_export_state() -> None:
     assert usecase.export_controls_state(None, None) == OptimizeExportControlsState(
         export_enabled=False, needs_visible=False
     )
-    assert usecase.analysis_readiness(None, None) is AnalysisReadiness.UNAVAILABLE
+    assert usecase.analysis_readiness(None, None) is AnalysisReadiness.NOT_ANALYZED
     assert usecase.mark_region_needs_optimization(None, None) is False
 
 

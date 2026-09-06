@@ -20,17 +20,14 @@ from chappy.gui.modes.identify.presets.preset_store import IdentifyPresetStore
 from chappy.gui.spectrum.velocity.overlay_widget import SpectrumVelocityOverlayWidget
 from chappy.gui.shell.composition import create_main_window
 from chappy.gui.shell.dependencies import ShellDependencies
-from chappy.gui.shell.tutorial_chapters import build_full_walkthrough_chapters
+from chappy.gui.shell.tutorial_chapters import build_advanced_walkthrough_chapters
 from chappy.infrastructure.composition import create_default_infrastructure_dependencies
 from chappy_user_manual_generator.data.keyboard_operations import SHARED_OPERATION_IDS_IN_USE
-
-
-def _all_steps() -> list[TutorialStep]:
-    return [step for chapter in build_full_walkthrough_chapters() for step in chapter.steps]
+from tests.helpers.tutorial_chapters import all_walkthrough_steps
 
 
 def _steps_with_operation() -> list[TutorialStep]:
-    return [step for step in _all_steps() if step.operation is not None]
+    return [step for step in all_walkthrough_steps() if step.operation is not None]
 
 
 def test_tutorial_steps_reference_registered_shared_operation_instances() -> None:
@@ -61,8 +58,8 @@ def test_tutorial_and_manual_reference_the_same_shared_operation_instances() -> 
         assert op_id in tutorial_op_ids, f"{op_id} used by the manual but not by any tutorial step"
 
 
-def test_full_only_chapters_link_every_matching_existing_shared_operation() -> None:
-    chapters = {chapter.chapter_id: chapter for chapter in build_full_walkthrough_chapters()}
+def test_advanced_chapters_link_every_matching_existing_shared_operation() -> None:
+    chapters = {chapter.chapter_id: chapter for chapter in build_advanced_walkthrough_chapters()}
 
     operation_ids = {
         chapter_id: {
@@ -75,7 +72,7 @@ def test_full_only_chapters_link_every_matching_existing_shared_operation() -> N
 
     assert operation_ids == {
         "preset_build": set(),
-        "velocity_identify": set(),
+        "velocity_identify": {"identify_toggle_velocity"},
         "analysis_structure": {"analysis_structure_merge", "analysis_structure_split"},
         "joint_fit": {"analysis_fit", "analysis_toggle_velocity", "optimize_velocity_shift_click"},
     }
@@ -133,7 +130,7 @@ def test_tutorial_target_object_names_exist_on_real_widgets(qtbot) -> None:
     velocity_overlay = SpectrumVelocityOverlayWidget(window)
     roots: tuple[QWidget, ...] = (window, preset_dialog, line_dialog, velocity_overlay)
 
-    for step in _all_steps():
+    for step in all_walkthrough_steps():
         for target in step.targets:
             resolved = any(
                 root.objectName() == target.object_name

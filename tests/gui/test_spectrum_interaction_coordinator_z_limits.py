@@ -16,7 +16,7 @@ from chappy.core.absorption.models import AbsorptionLine
 from chappy.core.analysis import RegionAnalysisState
 from chappy.core.components.absorber import AbsorberComponent
 from chappy.application.spectrum.range_usecase import RangeNavigationUseCase
-from chappy.gui.protocols.optimize_spectrum import OptimizeSystemInfo
+from chappy.gui.protocols.optimize_spectrum import OptimizeLineInfo
 from chappy.gui.protocols.intent_types import EndAbsorberDragIntent, StartAbsorberDragIntent
 from chappy.gui.shell.absorber_model_mutation_controller import (
     AbsorberModelMutationController,
@@ -203,13 +203,13 @@ class _Interactor:
 class _OptimizeIntegration:
     """Optimize integration fake returning line info for components."""
 
-    line_info: OptimizeSystemInfo | None = None
+    line_info: OptimizeLineInfo | None = None
     tree_update_count: int = 0
     focused_components: list[str] = field(default_factory=list)
 
     def get_line_info_for_component(
         self, _component: AbsorberComponent
-    ) -> OptimizeSystemInfo | None:
+    ) -> OptimizeLineInfo | None:
         """Return configured line information."""
         return self.line_info
 
@@ -333,7 +333,7 @@ def presenter(view: SimpleNamespace, data_bridge: _DataBridge) -> SpectrumIntera
     owner = AbsorberModelMutationController(
         ports=AbsorberModelMutationPorts(
             project_provider=lambda: data_bridge.project,  # type: ignore[return-value]
-            system_info_provider=presenter._get_system_info_for_component,
+            line_info_provider=presenter._get_line_info_for_component,
             history_provider=_History,
             plot_widget_provider=lambda: None,
             plot_refresh_callback=lambda: None,
@@ -389,10 +389,10 @@ def _complete_drag(
 class TestDragAndDropZLimits:
     """Test z-value restrictions during drag-and-drop operations."""
 
-    def test_drag_without_system_constraints(
+    def test_drag_without_line_constraints(
         self, presenter: SpectrumInteractionCoordinator, data_bridge: _DataBridge
     ) -> None:
-        """Test drag-and-drop without system constraints (no optimize integration)."""
+        """Test drag-and-drop without line constraints (no optimize integration)."""
         # Create test component
         component = AbsorberComponent(name="H I", wavelength=1215.67, redshift=2.0)
         component.id = "test_comp"
@@ -404,19 +404,19 @@ class TestDragAndDropZLimits:
 
         assert component.parameters["redshift"].value == 3.0  # No clamping
 
-    def test_drag_with_system_constraints(
+    def test_drag_with_line_constraints(
         self,
         presenter: SpectrumInteractionCoordinator,
         data_bridge: _DataBridge,
         optimize_integration: _OptimizeIntegration,
     ) -> None:
-        """Test drag-and-drop with system constraints."""
+        """Test drag-and-drop with line constraints."""
         # Create test component
         component = AbsorberComponent(name="H I", wavelength=1215.67, redshift=2.0)
         component.id = "test_comp"
         data_bridge.project.model.components = [component]
 
-        # Setup optimize integration with system info
+        # Setup optimize integration with line info
         optimize_integration.line_info = {
             "rest_wavelength": 1215.67,
             "lambda_range": (3500.0, 4000.0),  # z range: ~1.88 to ~2.29
@@ -439,7 +439,7 @@ class TestDragAndDropZLimits:
         component.id = "test_comp"
         data_bridge.project.model.components = [component]
 
-        # Setup optimize integration with system info
+        # Setup optimize integration with line info
         optimize_integration.line_info = {
             "rest_wavelength": 1215.67,
             "lambda_range": (3500.0, 4000.0),  # z range: ~1.88 to ~2.29
@@ -465,7 +465,7 @@ class TestDragAndDropZLimits:
         component.id = "test_comp"
         data_bridge.project.model.components = [component]
 
-        # Setup optimize integration with system info
+        # Setup optimize integration with line info
         optimize_integration.line_info = {
             "rest_wavelength": 1215.67,
             "lambda_range": (3500.0, 4000.0),  # z range: ~1.88 to ~2.29
@@ -491,7 +491,7 @@ class TestDragAndDropZLimits:
         component.id = "test_comp"
         data_bridge.project.model.components = [component]
 
-        # Setup optimize integration with very wide system range
+        # Setup optimize integration with very wide line range
         optimize_integration.line_info = {
             "rest_wavelength": 1215.67,
             "lambda_range": (100.0, 20000.0),  # Very wide range
@@ -505,26 +505,26 @@ class TestDragAndDropZLimits:
         clamped_value = component.parameters["redshift"].value
         assert clamped_value == -0.1
 
-    def test_drag_without_system_info(
+    def test_drag_without_line_info(
         self,
         presenter: SpectrumInteractionCoordinator,
         data_bridge: _DataBridge,
         optimize_integration: _OptimizeIntegration,
     ) -> None:
-        """Test drag-and-drop when system info is not available."""
+        """Test drag-and-drop when line info is not available."""
         # Create test component
         component = AbsorberComponent(name="Unknown", wavelength=1500.0, redshift=1.0)
         component.id = "test_comp"
         data_bridge.project.model.components = [component]
 
-        # Setup optimize integration that returns None for system info
+        # Setup optimize integration that returns None for line info
         optimize_integration.line_info = None
         presenter.attach_optimize_integration(optimize_integration)  # type: ignore[arg-type]
 
         # Drag to new redshift
         _complete_drag(presenter, component, 2.5)
 
-        # Should not be clamped (no system constraints)
+        # Should not be clamped (no line constraints)
         assert component.parameters["redshift"].value == 2.5
 
     def test_multiplet_constraints(
@@ -558,13 +558,13 @@ class TestDragAndDropZLimits:
 class TestModifyAbsorberParameterZLimits:
     """Test z-value restrictions when modifying absorber parameters (DoD operations)."""
 
-    def test_modify_redshift_clamped_to_system_range(
+    def test_modify_redshift_clamped_to_line_range(
         self,
         presenter: SpectrumInteractionCoordinator,
         data_bridge: _DataBridge,
         optimize_integration: _OptimizeIntegration,
     ) -> None:
-        """Redshift updates clamp to the system wavelength range."""
+        """Redshift updates clamp to the line wavelength range."""
         component = AbsorberComponent(name="H I", wavelength=1215.67, redshift=2.0)
         component.id = "comp-alpha"
         data_bridge.project.model.components = [component]
@@ -605,11 +605,11 @@ class TestModifyAbsorberParameterZLimits:
 class TestOptimizeIntegrationHelpers:
     """Test helper methods in OptimizeSpectrumIntegration."""
 
-    def test_get_system_info_for_component_with_system(self) -> None:
-        """Test getting system info when system exists."""
+    def test_get_line_info_for_component_with_line(self) -> None:
+        """Test getting line info when line exists."""
         # Create test line
         test_line = AbsorptionLine(
-            line_id="test_sys",
+            line_id="test_line",
             species="H I",
             rest_wavelength=1215.67,
             center_z=2.0,
@@ -626,7 +626,7 @@ class TestOptimizeIntegrationHelpers:
             _OptimizePresenter(), _OptimizePanel(test_line)
         )
 
-        # Get system info for component
+        # Get line info for component
         component = AbsorberComponent(component_id="component-1")
         info = integration.get_line_info_for_component(component)
 
@@ -634,14 +634,14 @@ class TestOptimizeIntegrationHelpers:
         assert info["rest_wavelength"] == 1215.67
         assert info["lambda_range"] == (3500.0, 4000.0)
 
-    def test_get_system_info_for_component_without_system(self) -> None:
-        """Test getting system info when system doesn't exist."""
+    def test_get_line_info_for_component_without_line(self) -> None:
+        """Test getting line info when line doesn't exist."""
         # Create integration
         integration = _build_optimize_spectrum_integration(
             _OptimizePresenter(), _OptimizePanel(None)
         )
 
-        # Get system info for component
+        # Get line info for component
         component = AbsorberComponent(component_id="component-1")
         info = integration.get_line_info_for_component(component)
 

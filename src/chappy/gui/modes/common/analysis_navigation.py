@@ -77,6 +77,19 @@ class OpenAnalysisRegionIntent:
             raise ValueError(msg)
 
 
+@dataclass(frozen=True, slots=True)
+class OpenAnalysisStructureIntent:
+    """Request the Overview structure editor for one stable current-project region ID."""
+
+    region_id: str
+
+    def __post_init__(self) -> None:
+        """Reject empty IDs at the intent boundary."""
+        if not self.region_id.strip():
+            msg = "region_id must not be empty."
+            raise ValueError(msg)
+
+
 class AnalysisNavigationPersistenceOperation(StrEnum):
     """Navigation persistence operation that failed without blocking project use."""
 
@@ -262,6 +275,7 @@ __all__ = [
     "AnalysisRegionFocusPort",
     "AnalysisSurface",
     "OpenAnalysisRegionIntent",
+    "OpenAnalysisStructureIntent",
     "StructureSelectionIds",
     "normalize_analysis_overview_column_state",
 ]

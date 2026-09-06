@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
 
     from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
-    from chappy.core.identify_state import CandidateLine
+    from chappy.core.identify_state import TemporaryLine
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
 
@@ -54,7 +54,7 @@ def _resolve_transition_name(
     species: str,
     *,
     rest_wavelength: float | None = None,
-    fallback: str = "System",
+    fallback: str = "Temporary Line",
 ) -> str:
     """Choose the most descriptive transition label available."""
     name = (transition_name or "").strip()
@@ -133,7 +133,7 @@ def compute_confirmed_line_regions(
 
 
 def compute_temporary_line_regions(
-    systems: Sequence[CandidateLine] | Iterable[CandidateLine],
+    lines: Sequence[TemporaryLine] | Iterable[TemporaryLine],
     *,
     alpha: float = 0.12,
     status_colors: Mapping[str, str] | None = None,
@@ -143,20 +143,20 @@ def compute_temporary_line_regions(
     palette = status_colors or DEFAULT_TEMP_COLORS
 
     overlays: list[RegionPayload] = []
-    for system in systems:
-        bounds = _temporary_bounds(system)
+    for line in lines:
+        bounds = _temporary_bounds(line)
         if bounds is None:
             continue
 
-        color = palette.get(system.status, DEFAULT_TEMP_COLORS["pending"])
-        label = _format_temporary_label(system)
-        center = system.center_wavelength
+        color = palette.get(line.status, DEFAULT_TEMP_COLORS["pending"])
+        label = _format_temporary_label(line)
+        center = line.center_wavelength
         if center is None or not math.isfinite(center):
             center = (bounds[0] + bounds[1]) / 2.0
 
         overlays.append(
             {
-                "id": system.system_id,
+                "id": line.temporary_line_id,
                 "lambda_start": bounds[0],
                 "lambda_end": bounds[1],
                 "color": color,
@@ -198,8 +198,8 @@ def _line_bounds(line: AbsorptionLine) -> tuple[float, float] | None:
     return _normalize_bounds(start, end)
 
 
-def _temporary_bounds(system: CandidateLine) -> tuple[float, float] | None:
-    return _normalize_bounds(system.lambda_min, system.lambda_max)
+def _temporary_bounds(line: TemporaryLine) -> tuple[float, float] | None:
+    return _normalize_bounds(line.lambda_min, line.lambda_max)
 
 
 def _normalize_bounds(low: float, high: float) -> tuple[float, float] | None:
@@ -235,27 +235,27 @@ def _format_confirmed_label(line: AbsorptionLine) -> str:
     return f"{name} {_format_redshift(line.center_z)}"
 
 
-def _temporary_center_redshift(system: CandidateLine) -> float | None:
-    center_z = system.center_z
+def _temporary_center_redshift(line: TemporaryLine) -> float | None:
+    center_z = line.center_z
     if _is_finite_float(center_z):
         return center_z
 
-    rest = system.rest_wavelength
-    center = system.center_wavelength
+    rest = line.rest_wavelength
+    center = line.center_wavelength
     if not _is_finite_float(rest) or rest <= 0.0 or not _is_finite_float(center):
         return None
 
     return (center / rest) - 1.0
 
 
-def _format_temporary_label(system: CandidateLine) -> str:
+def _format_temporary_label(line: TemporaryLine) -> str:
     name = _resolve_transition_name(
-        system.transition_name,
-        system.species,
-        rest_wavelength=system.rest_wavelength,
+        line.transition_name,
+        line.species,
+        rest_wavelength=line.rest_wavelength,
         fallback="Temporary",
     )
-    return f"{name} {_format_redshift(_temporary_center_redshift(system))}"
+    return f"{name} {_format_redshift(_temporary_center_redshift(line))}"
 
 
 def _sorted_overlays(overlays: list[RegionPayload]) -> list[RegionPayload]:

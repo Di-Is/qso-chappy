@@ -53,7 +53,7 @@ class FakeTemporaryLine:
         rest_wavelength: float | None = None,
     ) -> None:
         self.line_id = line_id
-        self.system_id = line_id  # For compatibility with CandidateLine interface
+        self.temporary_line_id = line_id  # For compatibility with TemporaryLine interface
         self.species = species
         self.lambda_min = lambda_min
         self.lambda_max = lambda_max
@@ -76,7 +76,7 @@ class DummyProject:
         return self._lines
 
 
-def test_compute_confirmed_system_regions_uses_group_color() -> None:
+def test_compute_confirmed_line_regions_uses_group_color() -> None:
     region = FakeRegion("g1", "#123456")
     line = FakeLine(
         "s1",
@@ -126,7 +126,7 @@ def test_compute_confirmed_line_regions_filters_by_region_id() -> None:
     assert [entry["id"] for entry in overlays] == [second_line.line_id]
 
 
-def test_compute_temporary_system_regions_respects_status_palette() -> None:
+def test_compute_temporary_line_regions_respects_status_palette() -> None:
     pending = FakeTemporaryLine("t1", "Si II", 5000.0, 5005.0, status="pending")
     preview = FakeTemporaryLine("t2", "O VI", 4800.0, 4804.0, status="preview")
 

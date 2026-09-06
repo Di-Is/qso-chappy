@@ -15,7 +15,7 @@ from chappy.gui.utils.absorption_overlays import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
-    from chappy.core.identify_state import CandidateLine
+    from chappy.core.identify_state import TemporaryLine
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
 
@@ -23,8 +23,8 @@ class IdentifyLineOverlaySessionPort(Protocol):
     """Session state required to build identify line overlays."""
 
     @property
-    def candidate_lines(self) -> Sequence[CandidateLine]:
-        """Return temporary identify candidate lines."""
+    def temporary_lines(self) -> Sequence[TemporaryLine]:
+        """Return temporary lines for identify overlays."""
         ...
 
 
@@ -59,7 +59,7 @@ class IdentifyLineOverlayController:
         if not include_temporary:
             return confirmed
 
-        temporary = compute_temporary_line_regions(self._ports.session_provider().candidate_lines)
+        temporary = compute_temporary_line_regions(self._ports.session_provider().temporary_lines)
         return merge_region_payloads(confirmed, temporary)
 
     def apply(self, include_temporary: bool | None = None) -> None:

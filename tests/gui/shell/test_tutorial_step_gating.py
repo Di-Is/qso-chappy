@@ -75,10 +75,12 @@ def test_gated_step_keeps_next_disabled_while_unmet(qtbot) -> None:
     host = QWidget()
     qtbot.addWidget(host)
     chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: False}
+        host,
+        chapters,
+        completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: False},
     )
 
     controller.start()
@@ -94,10 +96,12 @@ def test_unmet_gate_blocks_a_next_request_raised_outside_the_button(qtbot) -> No
     host = QWidget()
     qtbot.addWidget(host)
     chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: False}
+        host,
+        chapters,
+        completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: False},
     )
 
     controller.start()
@@ -114,10 +118,10 @@ def test_completion_met_enables_next_but_does_not_auto_advance(qtbot) -> None:
     qtbot.addWidget(host)
     met = False
     chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: met}
+        host, chapters, completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: met}
     )
 
     controller.start()
@@ -137,10 +141,10 @@ def test_completion_met_via_real_poll_timer_still_does_not_auto_advance(qtbot) -
     qtbot.addWidget(host)
     met = False
     chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: met}
+        host, chapters, completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: met}
     )
 
     controller.start()
@@ -160,11 +164,13 @@ def test_step_already_met_when_shown_is_enabled_immediately(qtbot) -> None:
     qtbot.addWidget(host)
     chapters = (
         _chapter(
-            "identify", steps=(_step(), _step(requires=TutorialCompletion.RECT_ZOOM_APPLIED))
+            "identify", steps=(_step(), _step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS))
         ),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: True}
+        host,
+        chapters,
+        completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: True},
     )
 
     controller.start()
@@ -172,14 +178,13 @@ def test_step_already_met_when_shown_is_enabled_immediately(qtbot) -> None:
 
     assert controller._bubble is not None
     assert controller._bubble._next_button.isEnabled()
-    assert not controller._completion_poll_timer.isActive()
 
 
 def test_missing_completion_check_counts_as_unmet(qtbot) -> None:
     host = QWidget()
     qtbot.addWidget(host)
     chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
     )
     controller = _controller(host, chapters)
 
@@ -204,10 +209,12 @@ def test_poll_timer_runs_for_a_gated_unsatisfied_step(qtbot) -> None:
     host = QWidget()
     qtbot.addWidget(host)
     chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: False}
+        host,
+        chapters,
+        completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: False},
     )
 
     controller.start()
@@ -215,39 +222,48 @@ def test_poll_timer_runs_for_a_gated_unsatisfied_step(qtbot) -> None:
     assert controller._completion_poll_timer.isActive()
 
 
-def test_poll_timer_does_not_run_for_an_already_met_gated_step(qtbot) -> None:
+def test_poll_timer_keeps_running_for_an_already_met_gated_step(qtbot) -> None:
+    """A met condition may close again, so the step keeps watching it."""
     host = QWidget()
     qtbot.addWidget(host)
     chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: True}
+        host,
+        chapters,
+        completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: True},
     )
 
     controller.start()
 
-    assert not controller._completion_poll_timer.isActive()
-
-
-def test_poll_timer_stops_once_condition_becomes_met(qtbot) -> None:
-    host = QWidget()
-    qtbot.addWidget(host)
-    met = False
-    chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
-    )
-    controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: met}
-    )
-
-    controller.start()
     assert controller._completion_poll_timer.isActive()
 
+
+def test_reclosed_gate_disables_next_again(qtbot) -> None:
+    """Next never stays enabled on a condition that stopped holding."""
+    host = QWidget()
+    qtbot.addWidget(host)
     met = True
-    controller._poll_step_completion()
+    chapters = (
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
+    )
+    controller = _controller(
+        host, chapters, completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: met}
+    )
 
-    assert not controller._completion_poll_timer.isActive()
+    controller.start()
+    assert controller._bubble is not None
+    assert controller._bubble._next_button.isEnabled()
+    assert controller._bubble._expected_label.text().startswith("\u2713")
+
+    met = False
+    qtbot.waitUntil(
+        lambda: controller._bubble is not None and not controller._bubble._next_button.isEnabled(),
+        timeout=2000,
+    )
+
+    assert not controller._bubble._expected_label.text().startswith("\u2713")
 
 
 def test_poll_timer_stops_when_the_step_changes(qtbot) -> None:
@@ -255,11 +271,13 @@ def test_poll_timer_stops_when_the_step_changes(qtbot) -> None:
     qtbot.addWidget(host)
     chapters = (
         _chapter(
-            "identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED), _step())
+            "identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS), _step())
         ),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: False}
+        host,
+        chapters,
+        completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: False},
     )
 
     controller.start()
@@ -275,10 +293,12 @@ def test_poll_timer_stops_on_controller_stop(qtbot) -> None:
     host = QWidget()
     qtbot.addWidget(host)
     chapters = (
-        _chapter("identify", steps=(_step(requires=TutorialCompletion.RECT_ZOOM_APPLIED),)),
+        _chapter("identify", steps=(_step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS),)),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: False}
+        host,
+        chapters,
+        completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: False},
     )
 
     controller.start()
@@ -293,7 +313,7 @@ def test_expected_source_shows_checkmark_when_completion_met(qtbot) -> None:
     host = QWidget()
     qtbot.addWidget(host)
     bubble = TutorialBubble(host)
-    step = _step(requires=TutorialCompletion.RECT_ZOOM_APPLIED)
+    step = _step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS)
 
     bubble.show_step(
         step, chapter_title_source="chapter", progress_text="1/1", completion_met=True
@@ -306,7 +326,7 @@ def test_expected_source_has_no_checkmark_when_completion_unmet(qtbot) -> None:
     host = QWidget()
     qtbot.addWidget(host)
     bubble = TutorialBubble(host)
-    step = _step(requires=TutorialCompletion.RECT_ZOOM_APPLIED)
+    step = _step(requires=TutorialCompletion.CONFIRMED_REGION_EXISTS)
 
     bubble.show_step(
         step, chapter_title_source="chapter", progress_text="1/1", completion_met=False
@@ -367,11 +387,14 @@ def test_mode_change_trigger_does_not_advance_while_the_gate_is_unmet(qtbot) -> 
     qtbot.addWidget(host)
     chapters = (
         _chapter(
-            "identify", steps=(_mode_change_step(TutorialCompletion.RECT_ZOOM_APPLIED), _step())
+            "identify",
+            steps=(_mode_change_step(TutorialCompletion.CONFIRMED_REGION_EXISTS), _step()),
         ),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: False}
+        host,
+        chapters,
+        completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: False},
     )
 
     controller.start()
@@ -386,11 +409,12 @@ def test_mode_change_trigger_advances_once_the_gate_is_met(qtbot) -> None:
     met = False
     chapters = (
         _chapter(
-            "identify", steps=(_mode_change_step(TutorialCompletion.RECT_ZOOM_APPLIED), _step())
+            "identify",
+            steps=(_mode_change_step(TutorialCompletion.CONFIRMED_REGION_EXISTS), _step()),
         ),
     )
     controller = _controller(
-        host, chapters, completion_checks={TutorialCompletion.RECT_ZOOM_APPLIED: lambda: met}
+        host, chapters, completion_checks={TutorialCompletion.CONFIRMED_REGION_EXISTS: lambda: met}
     )
 
     controller.start()

@@ -12,7 +12,6 @@ from chappy.gui.spectrum.absorber_interaction_controller import (
 from chappy.gui.spectrum.context_menu_controller import SpectrumContextMenuController
 from chappy.gui.spectrum.mask_interaction_controller import SpectrumMaskInteractionController
 from chappy.gui.spectrum.range_coordinator import RangeCoordinator
-from chappy.gui.spectrum.velocity_prompt_controller import VelocityPromptController
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -23,7 +22,6 @@ if TYPE_CHECKING:
     from chappy.core.components.absorber import AbsorberComponent
     from chappy.gui.protocols.context_menu import ContextMenuActionIntent
     from chappy.gui.protocols.optimize_spectrum import SpectrumModeIntegrationPort
-    from chappy.gui.protocols.velocity_mode import VelocityInteractionProvider
     from chappy.gui.spectrum.absorber_drag_coordinator import AbsorberDragApplyPort
     from chappy.gui.spectrum.absorber_interaction_controller import AbsorberModelMutationPort
     from chappy.gui.spectrum.context_menu_controller import ContextMenuActionProvider
@@ -34,11 +32,6 @@ if TYPE_CHECKING:
     from chappy.gui.spectrum.range_coordinator import RangeHistoryRecorder, RangeInputSyncPort
     from chappy.gui.spectrum.spectrum_data_bridge import SpectrumDataBridge
     from chappy.gui.spectrum.spectrum_plot import SpectrumPlotHost, SpectrumPlotSurfaceProtocol
-    from chappy.gui.spectrum.velocity_prompt_controller import (
-        SpectrumPlotHostPort,
-        StatusControllerPort,
-        VelocityPromptWidget,
-    )
     from chappy.presentation.interaction.interaction_contracts import (
         InteractionStateSnapshot,
         MaskSelectionContext,
@@ -114,24 +107,6 @@ class SpectrumInteractionControllerFactory:
             plot_host_provider=plot_host_provider,
             integration_provider=integration_provider,
             snapshot_callback=snapshot_callback,
-        )
-
-    def create_velocity_prompt_controller(
-        self,
-        *,
-        plot_host_provider: Callable[[], SpectrumPlotHostPort | None],
-        plot_widget_provider: Callable[[], VelocityPromptWidget | None],
-        interactor_provider: Callable[[], VelocityInteractionProvider | None],
-        status_controller_provider: Callable[[], StatusControllerPort | None],
-        parent: QObject,
-    ) -> VelocityPromptController:
-        """Create the velocity prompt controller."""
-        return VelocityPromptController(
-            plot_host_provider=plot_host_provider,
-            plot_widget_provider=plot_widget_provider,
-            interactor_provider=interactor_provider,
-            status_controller_provider=status_controller_provider,
-            parent=parent,
         )
 
     def create_context_menu_controller(

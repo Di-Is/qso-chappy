@@ -10,8 +10,8 @@ from .project_appliers import (
     ProjectContinuumHistoryApplier,
     ProjectIdentifyHistoryApplier,
     ProjectModelHistoryApplier,
-    ProjectOrganizeHistoryApplier,
     ProjectResolutionHistoryApplier,
+    ProjectStructureHistoryApplier,
 )
 from .usecase import HistoryApplyUseCase, HistoryRefreshPort
 
@@ -21,8 +21,8 @@ __all__ = [
     "ProjectContinuumHistoryApplier",
     "ProjectIdentifyHistoryApplier",
     "ProjectModelHistoryApplier",
-    "ProjectOrganizeHistoryApplier",
     "ProjectResolutionHistoryApplier",
+    "ProjectStructureHistoryApplier",
     "ResolvedParameterTarget",
     "effective_parameter_target",
     "parameter_matches_target",

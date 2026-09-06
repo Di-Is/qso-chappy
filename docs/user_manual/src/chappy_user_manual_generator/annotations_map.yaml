@@ -43,8 +43,9 @@
         - text: Pick a preset in the setup header at the top of the side panel, and use the manage button to open the [Preset Management dialog](../../../menus/main_window/dialogs/PresetListDialog.md) so you can add, edit, or remove presets.
         - text: Slide the detection threshold to rebuild the hit list.
         - text: Shift+click an absorption feature on the spectrum to add temporary lines; the temporary line list always shows how they will be grouped into regions.
-        - text: Hold Shift over an absorption feature and press V while the all-species preview is visible to verify that exact position in the Velocity Plot. Without a valid preview, press V and then select the velocity origin in the spectrum.
+        - text: Place the cursor over an absorption feature and press V to verify that exact position in the Velocity Plot; hold Shift first when you want to see the all-species preview before deciding. Right-clicking the spectrum and selecting [Show Velocity Plot (V)] opens the plot at the position you right-clicked.
         - text: Press Register all (N groups), or select rows and press Register selected (N groups), to save temporary groups immediately; the status bar reports the created or extended regions, and Undo reverts the registration.
+        - text: The confirmed regions in the side panel are the same regions that Analysis Overview lists in its region list. To delete, merge, split, or unlink one, right-click its row and choose Edit region to open Analysis Structure, then follow [Analysis Structure](../../../operations/analysis-structure.md).
       continuum:
         - text: Right-click the spectrum to add a control point, and drag existing points to shape the continuum curve.
         - text: Use Auto Estimate in the side panel to rebuild control points from the current spectrum.
@@ -210,18 +211,18 @@
     doc.labelKey:
       text: Selected region summary
     doc.descKey:
-      text: Shows review counts, selected-region reasons, read-only structure, and explicit navigation actions.
-- target: objectName:analysisOverviewStatusCard
-  props:
-    doc.include: false
-- target: objectName:analysisOverviewStatusUnavailable
+      text: Shows readiness counts, the read-only structure of the selected region, and actions to open or edit it.
+- target: objectName:analysisOverviewReadOnlyStructure
   props:
     doc.include: true
     doc.scope: analysis_overview
     doc.labelKey:
-      text: Unavailable count
+      text: Linked lines and lines
     doc.descKey:
-      text: Number of regions that cannot be analysed yet. Click to filter the region list.
+      text: Shows the linked-line and line counts for the selected region. When there are six or fewer linked lines, it also shows each redshift and transition name.
+- target: objectName:analysisOverviewStatusCard
+  props:
+    doc.include: false
 - target: objectName:analysisOverviewStatusNotAnalyzed
   props:
     doc.include: true
@@ -296,15 +297,15 @@
       text: Delete
     doc.descKey:
       text: Delete selected regions or lines after reviewing the impact confirmation.
-- target: objectName:organizeUnlinkSystemButton
+- target: objectName:structureUnlinkLinkedLinesButton
   props:
     doc.include: true
     doc.scope: analysis_structure
     doc.labelKey:
-      text: Unlink system
+      text: Unlink linked lines
     doc.descKey:
       text: Remove only the selected scientific link while keeping the lines.
-- target: objectName:organizeSidePanelBackButton
+- target: objectName:structureSidePanelBackButton
   props:
     doc.include: true
     doc.scope: analysis_structure
@@ -445,7 +446,7 @@
   props:
     doc.include: false
 
-- target: objectName:organizeSidePanel
+- target: objectName:structureSidePanel
   props:
     doc.include: true
     doc.scope: analysis_structure
@@ -461,15 +462,15 @@
       text: Absorber tree
     doc.descKey:
       text: Hierarchical view of regions, lines, and components with drag-and-drop editing and double-click focusing.
-- target: objectName:organizeSidePanelTreeContainer
+- target: objectName:structureSidePanelTreeContainer
   props:
     doc.include: false
 
-- target: objectName:organizeSidePanelEmptyState
+- target: objectName:structureSidePanelEmptyState
   props:
     doc.include: false
 
-- target: objectName:organizeSidePanelHeader
+- target: objectName:structureSidePanelHeader
   props:
     doc.include: false
 
@@ -520,7 +521,7 @@
     doc.labelKey:
       text: Identify Mode
     doc.descKey:
-      text: Identify absorption systems and assign them to line species and regions.
+      text: Identify absorption lines and assign them to line species and regions.
 - target: objectName:modeButton_ANALYSIS
   props:
     doc.labelKey:
@@ -649,7 +650,7 @@
       text: Single-column panel ordered along the identify workflow — the preset setup header, detection candidates, temporary lines with registration, and confirmed regions. Drag the grip handles between sections to resize them. See “Side Panel Details” below for control-by-control guidance.
     doc.section: identify_overview
 
-- target: objectName:collapsibleSectionSummary
+- target: objectName:disclosureHeaderSummary
   props:
     doc.include: false
 
@@ -796,7 +797,7 @@
     doc.labelKey:
       text: Confirmed regions
     doc.descKey:
-      text: Shows the hierarchy of confirmed regions and their lines. A single click selects a row; press Enter or double-click a region or line to move the spectrum view to its range.
+      text: Shows the hierarchy of confirmed regions and their lines. A single click only selects a row and does not move the spectrum view; press Enter or double-click a region or line to move the spectrum view to its range while Identify mode stays active. Right-click a region or line row to select it and choose Open region to open the region in Analysis Region Detail, or Edit region to open it in Analysis Structure; a right-click on a line row targets its parent region.
 
 - target: objectName:velocityPlotContainer
   props:
@@ -805,7 +806,7 @@
       text: Velocity Plot
     doc.descByScopeKey:
       identify:
-        text: Hold Shift over an absorption feature and press V while the all-species preview is visible to open the plot immediately at that exact wavelength. Dashed boundaries show the New-candidate analysis range; Display range reframes every subplot without changing candidate data.
+        text: Press V with the cursor over an absorption feature to open the plot immediately at that exact wavelength, or right-click the spectrum and select [Show Velocity Plot (V)]. Press V again or select [Back to Spectrum] to return. Dashed boundaries show the New-candidate analysis range; Display range reframes every subplot without changing candidate data.
       analysis_detail_velocity:
         text: Compare the current region's lines on a shared velocity axis. Display range reframes every subplot and page without changing the line analysis ranges.
     doc.sectionByScope:
@@ -991,7 +992,7 @@
     doc.operationsHeadingKey:
       text: Key Operations
     doc.operations:
-      - text: Choosing the JA 日本語 / EN English radio button updates the preview to that language.
+      - text: Choosing a language from the list updates the preview to that language.
       - text: Press OK to apply the selected language immediately.
       - text: Press Cancel to close without changing anything.
     doc.notesHeadingKey:
@@ -999,15 +1000,12 @@
     doc.notes:
       - text: Loading resources can take a few seconds after changing the language.
 
-- target: objectName:radio_ja
+- target: objectName:languageComboBox
   props:
+    doc.labelKey:
+      text: Display language
     doc.descKey:
-      text: Switch the user interface to Japanese.
-
-- target: objectName:radio_en
-  props:
-    doc.descKey:
-      text: Switch the user interface to English.
+      text: Choose the display language of the application. The preview below updates to the selected language.
 
 - target: objectName:previewSampleButton
   props:
@@ -1036,7 +1034,7 @@
     doc.descKey:
       text: Enter the path of the FITS file containing the observed flux. Browse... also opens a file picker.
 
-- target: objectName:fluxOrganizeButton
+- target: objectName:fluxBrowseButton
   props:
     doc.descKey:
       text: Choose the flux FITS file from a file dialog.
@@ -1046,7 +1044,7 @@
     doc.descKey:
       text: Specify the path of the FITS file containing the observed error. When omitted, the data is treated as having no error.
 
-- target: objectName:errorOrganizeButton
+- target: objectName:errorBrowseButton
   props:
     doc.descKey:
       text: Choose the error FITS file from a file dialog.
@@ -1061,7 +1059,7 @@
     doc.operations:
       - text: Enter the instrument's resolution in the Spectral Resolution R field.
       - text: Turning on Apply Instrument Resolution convolves the resolution into candidate detection in Identify mode and model calculations in Analysis Region Detail.
-      - text: Press OK to confirm the value, or Skip to keep the existing setting.
+      - text: Press OK to confirm the value, or Cancel to keep the existing setting.
     doc.notesHeadingKey:
       text: Notes & Caveats
     doc.notes:
@@ -1076,12 +1074,6 @@
   props:
     doc.descKey:
       text: When checked, the instrument resolution is convolved into the analysis model. When unchecked, the value is stored but not applied.
-
-- target: objectName:skipButton
-  props:
-    doc.descKey:
-      text: Close the dialog without changing the setting.
-
 
 - target: class:PresetListDialog
   props:
@@ -1313,18 +1305,6 @@
   props:
     doc.descKey:
       text: Clear the selected list at once when you want to start over.
-
-- target: objectName:selectionDestinationInfo
-  props:
-    doc.descKey:
-      text: When opened from Identify mode, shows the current absorption-region name and wavelength range.
-
-- target: objectName:selectionDestinationCombo
-  props:
-    doc.labelKey:
-      text: Destination
-    doc.descKey:
-      text: Choose the region to add the lines to, or specify creating a new region.
 
 - target: objectName:lineSelectionApplyButton
   props:

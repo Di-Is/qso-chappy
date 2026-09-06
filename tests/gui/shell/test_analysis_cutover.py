@@ -9,7 +9,11 @@ from chappy.core.absorption.models import UNASSIGNED_REGION_ID, AbsorptionLine, 
 from chappy.core.editing_mode import EditingMode
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.gui.modes.analysis.contracts import PanelState
-from chappy.gui.modes.common.analysis_navigation import AnalysisSurface, OpenAnalysisRegionIntent
+from chappy.gui.modes.common.analysis_navigation import (
+    AnalysisSurface,
+    OpenAnalysisRegionIntent,
+    OpenAnalysisStructureIntent,
+)
 from chappy.gui.common.shared_operations import AnalysisOperationSurface
 from chappy.gui.shell.main_window import MainWindow
 
@@ -34,30 +38,36 @@ def _project() -> SpectroscopyProject:
     return project
 
 
-def test_identify_open_intent_uses_validate_focus_destination_mode_order() -> None:
+class _Navigation:
+    """Navigation double recording the shell-driven Analysis entry order."""
+
+    def __init__(self, calls: list[tuple[str, object]], *, capable_region_id: str) -> None:
+        self._calls = calls
+        self._capable_region_id = capable_region_id
+
+    def focus_region(self, region_id: str) -> bool:
+        self._calls.append(("focus", region_id))
+        return region_id == self._capable_region_id
+
+    def set_surface(self, surface: AnalysisSurface) -> None:
+        self._calls.append(("surface", surface))
+
+
+class _ModeShell:
+    """Mode shell double recording top-level mode switches."""
+
+    def __init__(self, calls: list[tuple[str, object]]) -> None:
+        self._calls = calls
+
+    def switch_mode(self, mode: EditingMode) -> None:
+        self._calls.append(("mode", mode))
+
+
+def test_identify_open_intent_uses_focus_destination_mode_order() -> None:
     calls: list[tuple[str, object]] = []
-
-    class _Navigation:
-        def focus_region(self, region_id: str) -> bool:
-            calls.append(("focus", region_id))
-            return True
-
-        def set_surface(self, surface: AnalysisSurface) -> None:
-            calls.append(("surface", surface))
-
-    class _ModeShell:
-        def switch_mode(self, mode: EditingMode) -> None:
-            calls.append(("mode", mode))
-
-    class _Project:
-        def is_region_analysis_capable(self, region_id: str) -> bool:
-            calls.append(("validate", region_id))
-            return region_id == "region-1"
-
     window = SimpleNamespace(
-        current_project=_Project(),
-        _analysis_navigation=_Navigation(),
-        mode_shell_coordinator=_ModeShell(),
+        _analysis_navigation=_Navigation(calls, capable_region_id="region-1"),
+        mode_shell_coordinator=_ModeShell(calls),
     )
 
     MainWindow.handle_identify_open_analysis_region(
@@ -65,27 +75,66 @@ def test_identify_open_intent_uses_validate_focus_destination_mode_order() -> No
     )
 
     assert calls == [
-        ("validate", "region-1"),
         ("focus", "region-1"),
         ("surface", AnalysisSurface.REGION_DETAIL),
         ("mode", EditingMode.ANALYSIS),
     ]
 
 
-def test_identify_open_intent_rejects_invalid_region_before_navigation() -> None:
+def test_identify_open_intent_stops_when_focus_rejects_the_region() -> None:
+    calls: list[tuple[str, object]] = []
     window = SimpleNamespace(
-        current_project=_project(),
-        _analysis_navigation=SimpleNamespace(
-            focus_region=lambda _region_id: (_ for _ in ()).throw(AssertionError)
-        ),
-        mode_shell_coordinator=SimpleNamespace(
-            switch_mode=lambda _mode: (_ for _ in ()).throw(AssertionError)
-        ),
+        _analysis_navigation=_Navigation(calls, capable_region_id="region-1"),
+        mode_shell_coordinator=_ModeShell(calls),
     )
 
     MainWindow.handle_identify_open_analysis_region(
         cast("MainWindow", window), OpenAnalysisRegionIntent("missing")
     )
+
+    assert calls == [("focus", "missing")]
+
+
+def test_identify_structure_intent_opens_the_editor_after_entering_analysis() -> None:
+    calls: list[tuple[str, object]] = []
+    panel = SimpleNamespace(
+        restore_selection=lambda region_ids, line_ids: calls.append(
+            ("select", (tuple(region_ids), tuple(line_ids)))
+        )
+    )
+    window = SimpleNamespace(
+        _analysis_navigation=_Navigation(calls, capable_region_id="region-1"),
+        mode_shell_coordinator=_ModeShell(calls),
+        open_analysis_structure=lambda: bool(calls.append(("structure", True))) or True,
+        _require_dock_coordinator=lambda: SimpleNamespace(structure_panel=panel),
+    )
+
+    MainWindow.handle_identify_open_analysis_structure(
+        cast("MainWindow", window), OpenAnalysisStructureIntent("region-1")
+    )
+
+    assert calls == [
+        ("focus", "region-1"),
+        ("surface", AnalysisSurface.OVERVIEW),
+        ("mode", EditingMode.ANALYSIS),
+        ("structure", True),
+        ("select", (("region-1",), ())),
+    ]
+
+
+def test_identify_structure_intent_stops_when_focus_rejects_the_region() -> None:
+    calls: list[tuple[str, object]] = []
+    window = SimpleNamespace(
+        _analysis_navigation=_Navigation(calls, capable_region_id="region-1"),
+        mode_shell_coordinator=_ModeShell(calls),
+        open_analysis_structure=lambda: (_ for _ in ()).throw(AssertionError),
+    )
+
+    MainWindow.handle_identify_open_analysis_structure(
+        cast("MainWindow", window), OpenAnalysisStructureIntent("missing")
+    )
+
+    assert calls == [("focus", "missing")]
 
 
 def test_back_to_overview_focuses_current_region_row() -> None:
@@ -99,7 +148,7 @@ def test_back_to_overview_focuses_current_region_row() -> None:
         _require_analysis_surface_coordinator=lambda: SimpleNamespace(
             back_to_overview=lambda: True
         ),
-        _require_dock_coordinator=lambda: SimpleNamespace(organize_panel=panel),
+        _require_dock_coordinator=lambda: SimpleNamespace(structure_panel=panel),
     )
 
     assert MainWindow.back_to_analysis_overview(cast("MainWindow", window)) is True

@@ -7,13 +7,8 @@ from chappy.presentation.interaction.interaction_contracts import (
     ContinuumContext,
     MaskSelectionContext,
     RectZoomContext,
-    VelocityContext,
 )
 
 type SnapshotContext = (
-    RectZoomContext
-    | VelocityContext
-    | AbsorberDragContext
-    | MaskSelectionContext
-    | ContinuumContext
+    RectZoomContext | AbsorberDragContext | MaskSelectionContext | ContinuumContext
 )

@@ -41,7 +41,6 @@ class SpectrumPlotPolicy:
 class SpectrumTransitionCleanup:
     """Pending interaction state cancelled before applying a new policy."""
 
-    cancel_velocity_pending: bool = True
     cancel_mask_selection: bool = True
     cancel_absorber_drag: bool = True
     clear_interaction_mode: bool = True
@@ -94,7 +93,6 @@ def neutral_spectrum_policy() -> SpectrumPolicy:
         fit_model_enabled=False,
         start_overlay_active=True,
         transition_cleanup=SpectrumTransitionCleanup(
-            cancel_velocity_pending=False,
             cancel_mask_selection=False,
             cancel_absorber_drag=False,
             clear_interaction_mode=False,

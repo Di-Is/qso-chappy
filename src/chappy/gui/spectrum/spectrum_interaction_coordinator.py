@@ -7,16 +7,15 @@ components and manages their lifecycle.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from PySide6.QtCore import QObject, Qt, Signal
 
 from chappy.gui.protocols.optimize_spectrum import (
     OptimizeCursorMode,
-    OptimizeSystemInfo,
+    OptimizeLineInfo,
     SpectrumModeIntegrationPort,
 )
-from chappy.gui.protocols.velocity_mode import VelocityInteractionProvider
 from chappy.gui.spectrum.interaction_controller_factory import SpectrumInteractionControllerFactory
 from chappy.gui.spectrum.interaction_state_coordinator import (
     SpectrumInteractionSnapshot,
@@ -25,14 +24,6 @@ from chappy.gui.spectrum.interaction_state_coordinator import (
 from chappy.gui.spectrum.policy import SpectrumPolicyCleanupError
 from chappy.gui.spectrum.project_data_refresh_controller import (
     SpectrumProjectDataRefreshController,
-)
-from chappy.gui.spectrum.velocity_prompt_controller import (
-    CanvasOwner,
-    CursorTarget,
-    SpectrumPlotHostPort,
-    StatusControllerPort,
-    VelocityOriginPlotPort,
-    VelocityPromptWidget,
 )
 from chappy.presentation.interaction.interaction_contracts import (
     InteractionChannel,
@@ -109,10 +100,12 @@ class VelocityOverlayInfoProvider(Protocol):
 
 
 @runtime_checkable
-class StatusControllerOwner(Protocol):
-    """Window-like endpoint that exposes a status controller."""
+class CursorTarget(Protocol):
+    """Widget-like endpoint that accepts cursor updates."""
 
-    status_controller: StatusControllerPort | None
+    def setCursor(self, cursor: Qt.CursorShape) -> None:  # noqa: N802
+        """Set the cursor shape."""
+        ...
 
 
 @runtime_checkable
@@ -220,19 +213,9 @@ class SpectrumInteractionCoordinator(QObject):
                 snapshot_callback=self._publish_interaction_snapshot,
             )
         )
-        self._velocity_prompt_controller = (
-            interaction_controller_factory.create_velocity_prompt_controller(
-                plot_host_provider=self._velocity_prompt_plot_host,
-                plot_widget_provider=self._velocity_prompt_widget,
-                interactor_provider=self._velocity_interaction_provider,
-                status_controller_provider=self._status_controller,
-                parent=self,
-            )
-        )
         self._interaction_state_coordinator = SpectrumInteractionStateCoordinator(
             snapshot_publisher=self._publish_interaction_snapshot,
             mask_controller=self._mask_interaction_controller,
-            velocity_controller=self._velocity_prompt_controller,
         )
         self._context_menu_controller = (
             interaction_controller_factory.create_context_menu_controller(
@@ -254,27 +237,27 @@ class SpectrumInteractionCoordinator(QObject):
 
         logger.debug("SpectrumInteractionCoordinator initialized with DI support")
 
-    def _get_system_info_for_component(
+    def _get_line_info_for_component(
         self, component: AbsorberComponent
-    ) -> OptimizeSystemInfo | None:
-        """Get system information for a component.
+    ) -> OptimizeLineInfo | None:
+        """Get line information for a component.
 
         Args:
             component: The absorber component
 
         Returns:
-            Dict with system info (rest_wavelength, lambda_range) or None
+            Dict with line info (rest_wavelength, lambda_range) or None
         """
-        # Try to get system info through optimize integration if available
+        # Try to get line info through optimize integration if available
         if self._optimize_integration:
             return self._optimize_integration.get_line_info_for_component(component)
 
         # Fallback: extract basic info from component itself
-        return OptimizeSystemInfo(rest_wavelength=float(component.wavelength), lambda_range=None)
+        return OptimizeLineInfo(rest_wavelength=float(component.wavelength), lambda_range=None)
 
-    def system_info_for_component(self, component: AbsorberComponent) -> OptimizeSystemInfo | None:
-        """Return optimize system information for a component."""
-        return self._get_system_info_for_component(component)
+    def line_info_for_component(self, component: AbsorberComponent) -> OptimizeLineInfo | None:
+        """Return optimize line information for a component."""
+        return self._get_line_info_for_component(component)
 
     def _plot_widget(self) -> SpectrumPlotSurfaceProtocol | None:
         """Return the active plot widget from the typed plot host."""
@@ -475,24 +458,10 @@ class SpectrumInteractionCoordinator(QObject):
             interactor.sig_interaction_snapshot.connect(self.apply_interaction_state_snapshot)
             self._connected_signals.add(snapshot_key)
 
-        cursor_key = f"interactor:{interactor_key}:cursor_position"
-        if cursor_key not in self._connected_signals:
-            interactor.sig_cursor_position_changed.connect(
-                self._velocity_prompt_controller.update_origin_for_cursor
-            )
-            self._connected_signals.add(cursor_key)
-
         optimize_cursor_key = f"interactor:{interactor_key}:optimize_cursor"
         if optimize_cursor_key not in self._connected_signals:
             interactor.sig_cursor_position_changed.connect(self._on_interactor_cursor_position)
             self._connected_signals.add(optimize_cursor_key)
-
-    def _status_controller(self) -> StatusControllerPort | None:
-        """Return the main-window status controller when available."""
-        window = self.view.window()
-        if isinstance(window, StatusControllerOwner):
-            return window.status_controller
-        return None
 
     def _on_interactor_cursor_position(
         self, wavelength: float, _flux: float, modifiers: int
@@ -512,25 +481,6 @@ class SpectrumInteractionCoordinator(QObject):
             msg = f"Qt Shift modifier value must be int, got {type(shift_value).__name__}."
             raise TypeError(msg)
         integration.handle_cursor_position(wavelength, bool(modifiers & shift_value))
-
-    def _velocity_prompt_plot_host(self) -> SpectrumPlotHostPort | None:
-        """Return the plot host when it exposes velocity prompt plot access."""
-        if isinstance(self.plot_host, SpectrumPlotHostPort):
-            return self.plot_host
-        return None
-
-    def _velocity_prompt_widget(self) -> VelocityPromptWidget | None:
-        """Return the active plot widget when it supports velocity prompt feedback."""
-        plot_widget = self._plot_widget()
-        if isinstance(plot_widget, (CursorTarget, CanvasOwner, VelocityOriginPlotPort)):
-            return cast("VelocityPromptWidget", plot_widget)
-        return None
-
-    def _velocity_interaction_provider(self) -> VelocityInteractionProvider | None:
-        """Return the interactor when it exposes velocity prompt target state."""
-        if isinstance(self.interactor, VelocityInteractionProvider):
-            return self.interactor
-        return None
 
     def _velocity_overlay_info(self) -> VelocityOverlayInfo | None:
         """Return active velocity overlay metadata when the view exposes it."""
@@ -685,7 +635,6 @@ class SpectrumInteractionCoordinator(QObject):
     def cleanup_for_policy(self, policy: SpectrumPolicy) -> None:
         """Best-effort every irreversible cleanup stage in deterministic order."""
         cleanup = policy.transition_cleanup
-        interactor = self.interactor
         errors: list[Exception] = []
 
         def attempt(operation: Callable[[], object]) -> None:
@@ -694,14 +643,6 @@ class SpectrumInteractionCoordinator(QObject):
             except Exception as error:  # noqa: BLE001 - aggregate cleanup failures
                 errors.append(error)
 
-        if cleanup.cancel_velocity_pending and interactor is not None:
-            attempt(lambda: interactor.cancel_velocity_pending(reason="policy-transition"))
-        if cleanup.cancel_velocity_pending and self._velocity_prompt_controller.active:
-            attempt(
-                lambda: self._velocity_prompt_controller.deactivate(
-                    source="mode-change", show_cancelled_status=False, cancel_reason="mode-switch"
-                )
-            )
         if cleanup.cancel_mask_selection:
             attempt(self.cancel_mask_selection)
         if cleanup.cancel_absorber_drag:

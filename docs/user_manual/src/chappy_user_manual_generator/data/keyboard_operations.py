@@ -44,12 +44,7 @@ COMMON_ROWS: tuple[_RowRenderer, ...] = (
 
 # IDENTIFY mode specific
 IDENTIFY_ROWS: tuple[_RowRenderer, ...] = (
-    _local_row(
-        QT_TRANSLATE_NOOP(
-            "ManualExporter",
-            "| V | Open at the active Shift preview; otherwise select the velocity origin |",
-        )
-    ),
+    _shared_row("identify_toggle_velocity"),
     _shared_row("identify_shift_click"),
 )
 

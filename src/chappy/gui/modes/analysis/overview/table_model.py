@@ -26,7 +26,6 @@ from chappy.presentation.analysis import (
     AnalysisFitResultKind,
     AnalysisNextAction,
     AnalysisReviewRow,
-    AnalysisUnavailableCause,
 )
 
 if TYPE_CHECKING:
@@ -61,9 +60,6 @@ _COLUMN_LABEL_SOURCES: Final = {
     ),
 }
 _STATUS_LABEL_SOURCES: Final = {
-    AnalysisReadiness.UNAVAILABLE: str(
-        QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Unavailable")
-    ),
     AnalysisReadiness.NOT_ANALYZED: str(
         QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Not analyzed")
     ),
@@ -71,9 +67,6 @@ _STATUS_LABEL_SOURCES: Final = {
     AnalysisReadiness.LATEST: str(QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Latest")),
 }
 _FIT_RESULT_LABEL_SOURCES: Final = {
-    AnalysisFitResultKind.UNAVAILABLE: str(
-        QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Unavailable")
-    ),
     AnalysisFitResultKind.NOT_ANALYZED: str(QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "—")),
     AnalysisFitResultKind.STALE: str(
         QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Result stale")
@@ -89,21 +82,7 @@ _CHI_SQUARED_SOURCE: Final = str(QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "
 _FIT_RESULT_VALUE_SOURCE: Final = str(
     QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Fit result: {value}")
 )
-_UNAVAILABLE_CAUSE_LABEL_SOURCES: Final = {
-    AnalysisUnavailableCause.NO_LINES: str(
-        QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "No lines")
-    ),
-    AnalysisUnavailableCause.MISSING_LINE_REFERENCE: str(
-        QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Missing line reference")
-    ),
-}
-_UNAVAILABLE_CAUSE_SEPARATOR_SOURCE: Final = str(
-    QT_TRANSLATE_NOOP("AnalysisReviewTableModel", ", ")
-)
 _ACTION_LABEL_SOURCES: Final = {
-    AnalysisNextAction.RESOLVE_PREREQUISITES: str(
-        QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Resolve prerequisites")
-    ),
     AnalysisNextAction.ANALYZE: str(QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Analyze")),
     AnalysisNextAction.REANALYZE: str(QT_TRANSLATE_NOOP("AnalysisReviewTableModel", "Reanalyze")),
     AnalysisNextAction.OPEN_REGION: str(
@@ -448,14 +427,6 @@ def _fit_result_label(row: AnalysisReviewRow) -> str:
     return _tr(_FIT_RESULT_VALUE_SOURCE).format(value=f"{value:g}")
 
 
-def _unavailable_cause_labels(row: AnalysisReviewRow) -> str | None:
-    if not row.unavailable_causes:
-        return None
-    return _tr(_UNAVAILABLE_CAUSE_SEPARATOR_SOURCE).join(
-        _tr(_UNAVAILABLE_CAUSE_LABEL_SOURCES[cause]) for cause in row.unavailable_causes
-    )
-
-
 def _action_label(action: AnalysisNextAction) -> str:
     return _tr(_ACTION_LABEL_SOURCES[action])
 
@@ -473,8 +444,6 @@ def _display_value(row: AnalysisReviewRow, column: AnalysisReviewColumn) -> str:
 def _tooltip_value(row: AnalysisReviewRow, column: AnalysisReviewColumn) -> str | None:
     if column is AnalysisReviewColumn.REGION:
         return row.region.label
-    if column is AnalysisReviewColumn.STATUS:
-        return _unavailable_cause_labels(row)
     return None
 
 
@@ -514,7 +483,6 @@ def _search_text(row: AnalysisReviewRow) -> str:
         row.analysis_status.value,
         row.fit_result.kind.value,
         row.next_action.value,
-        *(cause.value for cause in row.unavailable_causes),
     )
     return "\n".join(values).casefold()
 
@@ -524,20 +492,18 @@ def _sort_key(row: AnalysisReviewRow, column: AnalysisReviewColumn) -> tuple[obj
     if column is AnalysisReviewColumn.REGION:
         return (row.region.label.casefold(), region_tiebreaker)
     readiness_rank = {
-        AnalysisReadiness.UNAVAILABLE: 0,
-        AnalysisReadiness.NOT_ANALYZED: 1,
-        AnalysisReadiness.STALE: 2,
-        AnalysisReadiness.LATEST: 3,
+        AnalysisReadiness.NOT_ANALYZED: 0,
+        AnalysisReadiness.STALE: 1,
+        AnalysisReadiness.LATEST: 2,
     }
     if column is AnalysisReviewColumn.STATUS:
         return (readiness_rank[row.analysis_status], region_tiebreaker)
     if column is AnalysisReviewColumn.FIT_RESULT:
         result = row.fit_result
         kind_rank = {
-            AnalysisFitResultKind.UNAVAILABLE: 0,
-            AnalysisFitResultKind.NOT_ANALYZED: 1,
-            AnalysisFitResultKind.STALE: 2,
-            AnalysisFitResultKind.NUMERICAL: 3,
+            AnalysisFitResultKind.NOT_ANALYZED: 0,
+            AnalysisFitResultKind.STALE: 1,
+            AnalysisFitResultKind.NUMERICAL: 2,
         }
         numerical_value = float("-inf")
         if result.summary is not None:

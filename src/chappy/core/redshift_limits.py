@@ -13,7 +13,7 @@ def calculate_dynamic_z_limits(
 
     Args:
         rest_wavelength: Rest wavelength of the absorption line in Angstrom.
-        lambda_range: System wavelength range in Angstrom, or None to use physical limits.
+        lambda_range: Line wavelength range in Angstrom, or None to use physical limits.
 
     Returns:
         Minimum and maximum allowed redshift.
@@ -42,7 +42,7 @@ def clamp_z_value(
     Args:
         z_value: Redshift value to clamp.
         rest_wavelength: Rest wavelength of the absorption line in Angstrom.
-        lambda_range: System wavelength range in Angstrom, or None to use physical limits.
+        lambda_range: Line wavelength range in Angstrom, or None to use physical limits.
 
     Returns:
         Clamped redshift value.

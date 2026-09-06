@@ -77,12 +77,8 @@ class _ModeShellCoordinatorPort(Protocol):
 class DockLayoutRefreshPort(Protocol):
     """Dock layout refresh surface needed by history operations."""
 
-    def refresh_organize_panel(self, *, preserve_selection: bool) -> None:
-        """Refresh the organize panel.
-
-        Args:
-            preserve_selection: Whether to restore the previous organize selection.
-        """
+    def refresh_structure_panel(self) -> None:
+        """Refresh the structure panel."""
 
     def refresh_optimize_panel_for_history(self, region_id: str | None) -> None:
         """Refresh optimize UI after a history operation.
@@ -184,7 +180,7 @@ class HistoryRefreshAdapter:
 
         if current_mode == EditingMode.ANALYSIS:
             dock_layout_coordinator = self._required_dock_layout(dock_layout_coordinator)
-            dock_layout_coordinator.refresh_organize_panel(preserve_selection=True)
+            dock_layout_coordinator.refresh_structure_panel()
 
         if current_mode is not None:
             mode_shell_coordinator = main_window.mode_shell_coordinator

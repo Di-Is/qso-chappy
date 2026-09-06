@@ -1,4 +1,4 @@
-"""Typed models for identify candidate use cases."""
+"""Typed models for identify application use cases."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ class DetectionErrorCode(StrEnum):
 
 
 class RegistrationErrorCode(StrEnum):
-    """Error categories for identify candidate registration preparation."""
+    """Error categories for identify temporary-line registration preparation."""
 
     INVALID_REST_WAVELENGTH = "invalid-rest-wavelength"
 
@@ -46,7 +46,7 @@ class RegionAssignmentOperationKind(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class AtomicLineSnapshot:
-    """Immutable atomic line data needed by identify candidate workflows."""
+    """Immutable atomic line data needed by identify temporary-line workflows."""
 
     line_id: str
     species: str
@@ -60,10 +60,10 @@ class AtomicLineSnapshot:
 
 
 @dataclass(frozen=True, slots=True)
-class CandidateLineSnapshot:
-    """Immutable candidate line data used by identify application workflows."""
+class TemporaryLineSnapshot:
+    """Immutable temporary line data used by identify application workflows."""
 
-    system_id: str
+    temporary_line_id: str
     species: str
     lambda_min: float
     lambda_max: float
@@ -103,14 +103,14 @@ class RegionPreviewSnapshot:
 
     group_id: str
     name: str
-    member_system_ids: tuple[str, ...] = ()
+    member_temporary_line_ids: tuple[str, ...] = ()
     overlap_warning: bool = False
     color: str | None = None
     existing_group_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
-class VelocityCandidateRequest:
+class VelocityTemporaryLineRequest:
     """Request for building identify velocity preview entries."""
 
     observed_wavelength: float
@@ -158,7 +158,7 @@ class VelocityPreview:
 
 @dataclass(frozen=True, slots=True)
 class VelocitySliceSelection:
-    """Selected velocity slice used to create identify candidates."""
+    """Selected velocity slice used to create identify temporary lines."""
 
     line_id: str | None
     label: str
@@ -167,7 +167,7 @@ class VelocitySliceSelection:
 
 
 @dataclass(frozen=True, slots=True)
-class VelocitySliceCandidateRequest:
+class VelocitySliceTemporaryLineRequest:
     """Request to create preview entries from selected velocity slices."""
 
     center_z: float
@@ -176,8 +176,8 @@ class VelocitySliceCandidateRequest:
 
 
 @dataclass(frozen=True, slots=True)
-class CandidateCreationEntry:
-    """Entry used to create one identify candidate line."""
+class TemporaryLineCreationEntry:
+    """Entry used to create one identify temporary line."""
 
     preview_entry: PreviewEntryModel
     redshift: float
@@ -185,18 +185,18 @@ class CandidateCreationEntry:
 
 
 @dataclass(frozen=True, slots=True)
-class CreatedCandidate:
-    """Snapshot of a candidate created by the application use case."""
+class CreatedTemporaryLine:
+    """Snapshot of a temporary line created by the application use case."""
 
-    system_id: str
+    temporary_line_id: str
     entry: PreviewEntryModel
 
 
 @dataclass(frozen=True, slots=True)
-class CandidateCreationResult:
-    """Result of creating identify candidates from preview entries."""
+class TemporaryLineCreationResult:
+    """Result of creating identify temporary lines from preview entries."""
 
-    created: tuple[CreatedCandidate, ...]
+    created: tuple[CreatedTemporaryLine, ...]
     duplicate_count: int
     limit_reached: bool
 
@@ -211,7 +211,7 @@ class DetectCandidateLinesRequest:
     continuum_flux: NDArray[np.float64] | None
     parameters: Search9Parameters
     existing_line_ranges: tuple[tuple[float, float], ...]
-    candidate_ranges: tuple[tuple[float, float], ...]
+    temporary_line_ranges: tuple[tuple[float, float], ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -234,18 +234,20 @@ class ExistingRegionSnapshot:
 
 @dataclass(frozen=True, slots=True)
 class IdentifyRegistrationMultipletGroup:
-    """Registerable candidate systems that will receive mutual multiplet links."""
+    """Registerable temporary lines that will receive mutual multiplet links."""
 
     tie_group_key: str
-    system_ids: tuple[str, ...]
+    temporary_line_ids: tuple[str, ...]
 
     def __post_init__(self) -> None:
         """Require a real, normalized multiplet group."""
         if not self.tie_group_key:
             msg = "Identify registration multiplet groups require a tie-group key."
             raise ValueError(msg)
-        if len(self.system_ids) < 2 or len(set(self.system_ids)) != len(self.system_ids):
-            msg = "Identify registration multiplet groups require distinct candidate systems."
+        if len(self.temporary_line_ids) < 2 or len(set(self.temporary_line_ids)) != len(
+            self.temporary_line_ids
+        ):
+            msg = "Identify registration multiplet groups require distinct temporary lines."
             raise ValueError(msg)
 
 
@@ -254,9 +256,9 @@ class IdentifyRegistrationImpactPreview:
     """Side-effect-free scientific impact of one normalized registration plan."""
 
     mutation_outcome: StructureMutationOutcome
-    normalized_system_ids: tuple[str, ...]
-    registerable_system_ids: tuple[str, ...]
-    rejected_system_ids: tuple[str, ...]
+    normalized_temporary_line_ids: tuple[str, ...]
+    registerable_temporary_line_ids: tuple[str, ...]
+    rejected_temporary_line_ids: tuple[str, ...]
     affected_existing_region_ids: tuple[str, ...]
     created_region_count: int
     created_line_count: int
@@ -268,9 +270,9 @@ class IdentifyRegistrationImpactPreview:
     def __post_init__(self) -> None:
         """Require normalized identities and an outcome consistent with the impact."""
         identity_fields = (
-            self.normalized_system_ids,
-            self.registerable_system_ids,
-            self.rejected_system_ids,
+            self.normalized_temporary_line_ids,
+            self.registerable_temporary_line_ids,
+            self.rejected_temporary_line_ids,
             self.affected_existing_region_ids,
             self.affected_model_component_ids,
             self.affected_mask_ids,
@@ -278,26 +280,27 @@ class IdentifyRegistrationImpactPreview:
         if any(len(values) != len(set(values)) for values in identity_fields):
             msg = "Identify registration impact identities must be unique and ordered."
             raise ValueError(msg)
-        normalized = set(self.normalized_system_ids)
-        registerable = set(self.registerable_system_ids)
-        rejected = set(self.rejected_system_ids)
+        normalized = set(self.normalized_temporary_line_ids)
+        registerable = set(self.registerable_temporary_line_ids)
+        rejected = set(self.rejected_temporary_line_ids)
         if registerable & rejected or registerable | rejected != normalized:
-            msg = "Identify registration systems must be partitioned by registration outcome."
+            msg = "Identify registration lines must be partitioned by registration outcome."
             raise ValueError(msg)
         if self.created_region_count < 0 or self.created_line_count < 0:
             msg = "Identify registration impact counts cannot be negative."
             raise ValueError(msg)
-        if self.created_line_count != len(self.registerable_system_ids):
-            msg = "Identify registration created-line impact must match registerable systems."
+        if self.created_line_count != len(self.registerable_temporary_line_ids):
+            msg = "Identify registration created-line impact must match registerable lines."
             raise ValueError(msg)
         if any(
-            not set(group.system_ids).issubset(registerable) for group in self.multiplet_groups
+            not set(group.temporary_line_ids).issubset(registerable)
+            for group in self.multiplet_groups
         ):
-            msg = "Identify registration multiplet groups must contain registerable systems."
+            msg = "Identify registration multiplet groups must contain registerable lines."
             raise ValueError(msg)
         if self.mutation_outcome is StructureMutationOutcome.NO_CHANGE:
             if (
-                self.registerable_system_ids
+                self.registerable_temporary_line_ids
                 or self.affected_existing_region_ids
                 or self.created_region_count
                 or self.created_line_count
@@ -308,29 +311,33 @@ class IdentifyRegistrationImpactPreview:
             ):
                 msg = "NoChange Identify registration cannot carry scientific impact."
                 raise ValueError(msg)
-        elif not self.registerable_system_ids:
-            msg = "Changed Identify registration requires a registerable candidate."
+        elif not self.registerable_temporary_line_ids:
+            msg = "Changed Identify registration requires a registerable temporary line."
             raise ValueError(msg)
 
 
 @dataclass(frozen=True, slots=True)
 class IdentifyRegistrationPlan:
-    """Normalized candidates, grouping decisions, and their typed impact."""
+    """Normalized temporary lines, grouping decisions, and their typed impact."""
 
-    normalized_candidates: tuple[CandidateLineSnapshot, ...]
+    normalized_temporary_lines: tuple[TemporaryLineSnapshot, ...]
     registration_requests: tuple[AbsorptionLineRegistrationRequest, ...]
     region_previews: tuple[RegionPreviewSnapshot, ...]
     impact: IdentifyRegistrationImpactPreview
 
     def __post_init__(self) -> None:
-        """Require plan candidates to match the normalized impact identities exactly."""
-        normalized_ids = tuple(candidate.system_id for candidate in self.normalized_candidates)
-        registerable_ids = tuple(request.system_id for request in self.registration_requests)
-        if normalized_ids != self.impact.normalized_system_ids:
-            msg = "Identify registration plan candidates do not match normalized systems."
+        """Require plan lines to match the normalized impact identities exactly."""
+        normalized_ids = tuple(
+            temporary_line.temporary_line_id for temporary_line in self.normalized_temporary_lines
+        )
+        registerable_ids = tuple(
+            request.temporary_line_id for request in self.registration_requests
+        )
+        if normalized_ids != self.impact.normalized_temporary_line_ids:
+            msg = "Identify registration plan lines do not match normalized lines."
             raise ValueError(msg)
-        if registerable_ids != self.impact.registerable_system_ids:
-            msg = "Identify registration plan candidates do not match registerable systems."
+        if registerable_ids != self.impact.registerable_temporary_line_ids:
+            msg = "Identify registration plan lines do not match registerable lines."
             raise ValueError(msg)
 
 
@@ -338,7 +345,7 @@ class IdentifyRegistrationPlan:
 class BuildRegionPreviewsRequest:
     """Request for building registration preview groups."""
 
-    candidates: tuple[CandidateLineSnapshot, ...]
+    temporary_lines: tuple[TemporaryLineSnapshot, ...]
     existing_regions: tuple[ExistingRegionSnapshot, ...]
     multiplet_grouping_tolerance: MultipletGroupingVelocityTolerance
     unknown_label: str
@@ -353,9 +360,9 @@ class BuildRegionPreviewsResult:
 
 @dataclass(frozen=True, slots=True)
 class RegisteredLineReference:
-    """Reference linking a candidate system ID to a created absorption line."""
+    """Reference linking a temporary line ID to a created absorption line."""
 
-    system_id: str
+    temporary_line_id: str
     line_id: str
 
 
@@ -363,7 +370,7 @@ class RegisteredLineReference:
 class RegisteredLineState:
     """State of a registered absorption line after region assignment."""
 
-    system_id: str
+    temporary_line_id: str
     line_id: str
     region_id: str | None
 
@@ -399,7 +406,7 @@ class BuildRegistrationOutcomeRequest:
     existing_region_ids: tuple[str, ...]
     all_region_ids_after: tuple[str, ...]
     registered_lines: tuple[RegisteredLineState, ...]
-    failed_system_ids: tuple[str, ...]
+    failed_temporary_line_ids: tuple[str, ...]
     multi_overlap_warning: bool
 
 
@@ -409,7 +416,7 @@ class RegistrationOutcome:
 
     created_line_ids: tuple[str, ...]
     created_region_ids: tuple[str, ...]
-    processed_system_ids: tuple[str, ...]
+    processed_temporary_line_ids: tuple[str, ...]
     affected_region_ids: tuple[str, ...]
     appended_region_ids: tuple[str, ...]
     confirmed_count: int
@@ -419,9 +426,9 @@ class RegistrationOutcome:
 
 @dataclass(frozen=True, slots=True)
 class AbsorptionLineRegistrationRequest:
-    """Request data required to create one absorption line from a candidate."""
+    """Request data required to create one absorption line from a temporary line."""
 
-    system_id: str
+    temporary_line_id: str
     atomic_line_id: str
     species: str
     rest_wavelength: float

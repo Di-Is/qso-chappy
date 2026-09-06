@@ -1,4 +1,4 @@
-"""Use case for creating identify candidates from velocity slices."""
+"""Use case for creating identify temporary lines from velocity slices."""
 
 from __future__ import annotations
 
@@ -6,27 +6,27 @@ import math
 from typing import TYPE_CHECKING
 
 from chappy.application.identify.group_labels import declarative_group_label
-from chappy.application.identify.models import PreviewEntryModel, VelocitySliceCandidateRequest
+from chappy.application.identify.models import PreviewEntryModel, VelocitySliceTemporaryLineRequest
 from chappy.core.constants import LIGHT_SPEED_KMS
 
 if TYPE_CHECKING:
     from chappy.core.atomic_data import AtomicLineData
 
 
-class BuildVelocitySliceCandidatesUseCase:
-    """Build candidate preview entries from selected velocity slices."""
+class BuildVelocitySliceTemporaryLinesUseCase:
+    """Build temporary-line preview entries from selected velocity slices."""
 
     def build(
-        self, request: VelocitySliceCandidateRequest, atomic_data: AtomicLineData
+        self, request: VelocitySliceTemporaryLineRequest, atomic_data: AtomicLineData
     ) -> tuple[PreviewEntryModel, ...]:
-        """Build preview entries for velocity slice candidate creation.
+        """Build preview entries for velocity slice temporary-line creation.
 
         Args:
-            request: Velocity slice candidate request.
+            request: Velocity slice temporary-line request.
             atomic_data: Atomic line repository for reproducible line metadata.
 
         Returns:
-            Preview entries suitable for candidate creation.
+            Preview entries suitable for temporary-line creation.
         """
         analysis_half_width_kms = request.new_candidate_analysis_half_width.kms
 

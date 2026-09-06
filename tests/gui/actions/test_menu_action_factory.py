@@ -353,6 +353,31 @@ def test_analysis_menu_excludes_velocity_plot(qtbot: QtBot) -> None:
     assert _normalize_label("Velocity Plot") not in action_texts
 
 
+def test_view_menu_excludes_identify_velocity_entry(qtbot: QtBot) -> None:
+    """The View menu no longer offers the identify velocity toggle."""
+    factory, _window = _create_factory_with_menu(qtbot)
+
+    menu_actions = {action for menu in factory.menus.values() for action in menu.actions()}
+
+    assert factory.actions[ShellActionId.TOGGLE_VELOCITY_PLOT_IDENTIFY] not in menu_actions
+    assert factory.actions[ShellActionId.TOGGLE_VELOCITY_PLOT_ANALYSIS] in set(
+        factory.menus["view"].actions()
+    )
+
+
+def test_identify_velocity_action_keeps_window_level_shortcut(qtbot: QtBot) -> None:
+    """Losing its menu entry must not cost the identify velocity action its V key."""
+    factory, window = _create_factory_with_menu(qtbot)
+
+    action = factory.actions[ShellActionId.TOGGLE_VELOCITY_PLOT_IDENTIFY]
+
+    assert action in window.actions()
+    assert {
+        sequence.toString(QKeySequence.SequenceFormat.PortableText)
+        for sequence in action.shortcuts()
+    } == {"V"}
+
+
 def test_zoom_action_shortcuts_use_control_modifier(qtbot: QtBot) -> None:
     """Ensure zoom action shortcuts rely solely on the Control/Command modifier.
 

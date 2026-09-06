@@ -16,7 +16,6 @@ from chappy.presentation.interaction.interaction_contracts import (
     InteractionStateSnapshot,
     MaskSelectionContext,
     RectZoomContext,
-    VelocityContext,
 )
 
 
@@ -99,11 +98,13 @@ def test_interaction_mode_coordinator_rejects_mismatched_snapshot_context() -> N
         interaction_id=InteractionId("bad-snapshot"),
         channel=InteractionChannel.RECT_ZOOM,
         phase=InteractionPhase.ARMED,
-        context=VelocityContext(
-            target_wavelength=5000.0,
-            trigger="keyboard-v",
-            modifiers=0,
-            confirmed_wavelength=None,
+        context=ContinuumContext(
+            operation_type=ContinuumOperationType.MOVE,
+            point_index=1,
+            start_position=(4100.0, 1.0),
+            current_position=(4200.0, 1.1),
+            end_position=None,
+            validation_result=None,
             cancel_reason=None,
         ),
     )

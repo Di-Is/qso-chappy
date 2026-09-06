@@ -15,7 +15,6 @@ from chappy.plotting.overlays.identify_preview import (
 from chappy.plotting.overlays.line_regions import AbsorptionLineRegion, LineRegionOverlay
 from chappy.plotting.overlays.mask_regions import MaskRegionOverlay
 from chappy.plotting.overlays.mask_selection import MaskSelectionOverlay
-from chappy.plotting.overlays.velocity_origin import VelocityOriginOverlay
 
 __all__ = [
     "AbsorberMarkerOverlay",
@@ -28,5 +27,4 @@ __all__ = [
     "LineRegionOverlay",
     "MaskRegionOverlay",
     "MaskSelectionOverlay",
-    "VelocityOriginOverlay",
 ]

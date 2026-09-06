@@ -107,7 +107,6 @@ class AnalysisOverviewReviewWidget(QWidget):
         self._readiness_filter.setObjectName("analysisOverviewReadinessFilter")
         for text, value in (
             (self.tr("All"), "all"),
-            (self.tr("Unavailable"), AnalysisReadiness.UNAVAILABLE.value),
             (self.tr("Not analyzed"), AnalysisReadiness.NOT_ANALYZED.value),
             (self.tr("Stale"), AnalysisReadiness.STALE.value),
             (self.tr("Latest"), AnalysisReadiness.LATEST.value),
@@ -184,9 +183,8 @@ class AnalysisOverviewReviewWidget(QWidget):
         return self._model.compact
 
     def set_project(self, project: SpectroscopyProject | None) -> None:
-        """Set the project used for read-only selected structure details."""
+        """Replace the project reference without rendering navigation state."""
         self._project = project
-        self.restore_navigation_state()
 
     def sync_rows(self, rows: Sequence[AnalysisReviewRow], summary: AnalysisReviewSummary) -> None:
         """Apply incremental row changes and preserve selection by region ID."""

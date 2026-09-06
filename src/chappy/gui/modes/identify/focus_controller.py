@@ -49,7 +49,7 @@ class IdentifyFocusMessages:
 
     candidate_template: str
     group_template: str
-    system_template: str
+    line_template: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,8 +68,8 @@ class IdentifySpectrumFocusController:
 
     GROUP_FOCUS_PADDING_FRACTION = 0.10
     GROUP_FOCUS_MIN_PADDING = 0.5
-    SYSTEM_FOCUS_PADDING_FRACTION = 0.05
-    SYSTEM_FOCUS_MIN_PADDING = 0.2
+    LINE_FOCUS_PADDING_FRACTION = 0.05
+    LINE_FOCUS_MIN_PADDING = 0.2
 
     def __init__(self, ports: IdentifyFocusPorts) -> None:
         """Initialize the controller."""
@@ -118,22 +118,20 @@ class IdentifySpectrumFocusController:
             self._ports.messages_provider().group_template.format(start=actual_min, end=actual_max)
         )
 
-    def focus_system(self, min_wave: float, max_wave: float) -> None:
-        """Focus the spectrum view on a confirmed system range."""
+    def focus_line(self, min_wave: float, max_wave: float) -> None:
+        """Focus the spectrum view on a confirmed line range."""
         padded_min, padded_max = self._expand_range(
             min_wave,
             max_wave,
-            fraction=self.SYSTEM_FOCUS_PADDING_FRACTION,
-            minimum=self.SYSTEM_FOCUS_MIN_PADDING,
+            fraction=self.LINE_FOCUS_PADDING_FRACTION,
+            minimum=self.LINE_FOCUS_MIN_PADDING,
         )
         focused_range = self._focus_spectrum_range(padded_min, padded_max)
         if focused_range is None:
             return
         actual_min, actual_max = focused_range
         self._ports.status_callback(
-            self._ports.messages_provider().system_template.format(
-                start=actual_min, end=actual_max
-            )
+            self._ports.messages_provider().line_template.format(start=actual_min, end=actual_max)
         )
 
     def _find_candidate_by_id(self, candidate_id: str) -> CandidateRow | None:

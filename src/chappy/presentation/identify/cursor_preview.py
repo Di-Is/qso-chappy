@@ -37,7 +37,6 @@ class CursorPreviewPayload(TypedDict, total=False):
     entries: list[PreviewEntry]
     observed_cursor: float
     modifiers: int
-    velocity_verification_wavelength: float
     hint_text: str
 
 

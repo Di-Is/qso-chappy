@@ -108,7 +108,7 @@ def test_action_state(inputs: RegionDetailActionInputs, expected: RegionDetailAc
         ),
         (
             RegionDetailActionState.NO_CONTEXT,
-            AnalysisReadiness.UNAVAILABLE,
+            AnalysisReadiness.NOT_ANALYZED,
             FitReadyView(),
             SummaryStatePlaceholder,
         ),
@@ -207,13 +207,13 @@ def test_summary_note_display_hidden_while_running() -> None:
     [
         (
             RegionDetailActionState.NO_CONTEXT,
-            AnalysisReadiness.UNAVAILABLE,
+            AnalysisReadiness.NOT_ANALYZED,
             FitBlockedReason.NO_SPECTRUM,
             SummaryNoteBlocked(reason=FitBlockedReason.NO_SPECTRUM),
         ),
         (
             RegionDetailActionState.NO_CONTEXT,
-            AnalysisReadiness.UNAVAILABLE,
+            AnalysisReadiness.NOT_ANALYZED,
             None,
             SummaryNoteHidden(),
         ),

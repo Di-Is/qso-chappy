@@ -20,7 +20,7 @@ def _request(
     continuum: np.ndarray | None,
     n_points: int = 120,
     existing_ranges: tuple[tuple[float, float], ...] = (),
-    candidate_ranges: tuple[tuple[float, float], ...] = (),
+    temporary_line_ranges: tuple[tuple[float, float], ...] = (),
 ) -> DetectCandidateLinesRequest:
     """Build a detection request for tests.
 
@@ -29,7 +29,7 @@ def _request(
         continuum: Continuum flux array.
         n_points: Number of samples.
         existing_ranges: Existing confirmed line ranges.
-        candidate_ranges: Temporary candidate ranges.
+        temporary_line_ranges: Wavelength ranges of existing temporary lines.
 
     Returns:
         Detection request.
@@ -45,7 +45,7 @@ def _request(
         continuum_flux=continuum,
         parameters=Search9Parameters(n_sigma=2.0),
         existing_line_ranges=existing_ranges,
-        candidate_ranges=candidate_ranges,
+        temporary_line_ranges=temporary_line_ranges,
     )
 
 

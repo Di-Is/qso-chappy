@@ -9,7 +9,7 @@ import pytest
 from chappy.core.absorption_display import format_region_display
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.spectroscopy_project import SpectroscopyProject
-from chappy.presentation.organize.tree_presenter import OrganizeTreePresenter
+from chappy.presentation.analysis.structure.tree_presenter import StructureTreePresenter
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
@@ -45,16 +45,16 @@ def _make_region(
     return AbsorptionRegion(region_id=region_id, line_ids=line_ids, analysis_range=analysis_range)
 
 
-class TestOrganizeSidePanelDynamicName:
-    """Tests for dynamic region name display in OrganizeSidePanel."""
+class TestStructureSidePanelDynamicName:
+    """Tests for dynamic region name display in StructureSidePanel."""
 
     def test_group_entry_label_uses_dynamic_name(self, qtbot: "QtBot") -> None:
         """_GroupEntry.label should use dynamic name from format_region_display.
 
         The label should be in the format:
-        '{species set} @ {wave_range} ({system_count})'
+        '{species set} @ {wave_range} ({linked_line_count})'
 
-        This test verifies that OrganizeTreePresenter.build_absorption_region_entry
+        This test verifies that StructureTreePresenter.build_absorption_region_entry
         generates the label using format_region_display() instead of region.name.
         """
         # Setup: Create project with a region containing Mg II doublet lines
@@ -124,10 +124,10 @@ class TestOrganizeSidePanelDynamicName:
         assert entry.label == expected_info.display_name
 
 
-def _make_presenter() -> OrganizeTreePresenter:
-    """Create a organize tree presenter with stable English templates."""
-    return OrganizeTreePresenter(
+def _make_presenter() -> StructureTreePresenter:
+    """Create a structure tree presenter with stable English templates."""
+    return StructureTreePresenter(
         range_tooltip_template="{minimum:.2f} - {maximum:.2f} A",
-        system_header_template="{species} {wavelengths} [z={redshift}, +/-{window} km/s]",
+        linked_line_header_template=("{species} {wavelengths} [z={redshift}, +/-{window} km/s]"),
         unknown_label="Unknown",
     )

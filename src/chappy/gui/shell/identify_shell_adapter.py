@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from chappy.gui.modes.identify.shell_ports import IdentifyShellPorts
+from chappy.gui.shell.actions.ids import ShellActionId
+from chappy.gui.shell.shortcuts import get_runtime_shortcut_display
 
 if TYPE_CHECKING:
     from chappy.gui.modes.identify.shell_ports import IdentifySpectrumView
@@ -28,4 +30,5 @@ def build_identify_shell_ports(main_window: MainWindow) -> IdentifyShellPorts:
         history_recorder_provider=lambda: main_window.identify_history_recorder,
         velocity_runtime_provider=lambda: main_window.identify_velocity_runtime,
         preset_dialog_provider=lambda: main_window.preset_dialog_port,
+        undo_shortcut_provider=lambda: get_runtime_shortcut_display(ShellActionId.UNDO),
     )

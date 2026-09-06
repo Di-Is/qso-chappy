@@ -195,11 +195,11 @@ class ToggleIdentifyPreviewLockIntent(IdentifyIntent):
 
 
 @dataclass
-class AddIdentifyCandidateIntent(IdentifyIntent):
-    """Intent to place identify-mode candidate(s) at a wavelength."""
+class AddIdentifyTemporaryLineIntent(IdentifyIntent):
+    """Intent to place identify-mode temporary lines at a wavelength."""
 
     wavelength: float
-    """Observed wavelength where the candidate should be placed."""
+    """Observed wavelength where the temporary line should be placed."""
 
     flux: float | None = None
     """Observed flux at the placement point (optional)."""
@@ -293,6 +293,6 @@ type SpectrumInteractionIntent = (
     | AbsorberActionIntent
     | ShowContextMenuIntent
     | ToggleVelocityPlotIntent
-    | AddIdentifyCandidateIntent
+    | AddIdentifyTemporaryLineIntent
     | CenterOnWavelengthIntent
 )

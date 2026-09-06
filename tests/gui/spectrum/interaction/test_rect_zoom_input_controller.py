@@ -46,8 +46,6 @@ class _RectZoomOwnerFake:
     controller: _RectZoomStateControllerFake = field(default_factory=_RectZoomStateControllerFake)
     active_channel: InteractionChannel | None = None
     cursor_states: list[bool] = field(default_factory=list)
-    velocity_pending: bool = False
-    velocity_cancel_reasons: list[str] = field(default_factory=list)
     acquired_count: int = 0
     cleared_count: int = 0
 
@@ -74,15 +72,6 @@ class _RectZoomOwnerFake:
         """Record cursor feedback."""
         self.cursor_states.append(active)
 
-    def is_velocity_pending(self) -> bool:
-        """Return configured velocity pending state."""
-        return self.velocity_pending
-
-    def cancel_velocity_pending(self, *, reason: str) -> None:
-        """Record velocity pending cancellation."""
-        self.velocity_cancel_reasons.append(reason)
-        self.velocity_pending = False
-
 
 def test_enable_acquires_channel_and_crosshair_cursor() -> None:
     """Enable should arm rectangle zoom input without starting a drag."""
@@ -107,17 +96,6 @@ def test_enable_is_ignored_when_another_channel_is_active() -> None:
     assert owner.active_channel is InteractionChannel.MASK_SELECTION
     assert owner.acquired_count == 0
     assert owner.cursor_states == []
-
-
-def test_enable_cancels_velocity_pending_first() -> None:
-    """Enable should cancel velocity pending mode before arming rect zoom."""
-    owner = _RectZoomOwnerFake(velocity_pending=True)
-    controller = RectZoomInputController(owner=owner)
-
-    controller.set_mode_enabled(True)
-
-    assert owner.velocity_cancel_reasons == ["rect-zoom-switch"]
-    assert owner.active_channel is InteractionChannel.RECT_ZOOM
 
 
 def test_disable_cancels_only_when_rect_zoom_is_active() -> None:

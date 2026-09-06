@@ -3,14 +3,14 @@ name = "spectral-database"
 version = "0.1.0"
 description = "NIST spectral line database generator for astronomical spectroscopy"
 readme = "README.md"
-authors = [{ name = "Di-Is", email = "rohoxbox@gmail.com" }]
-license = "MIT"
 requires-python = "~=3.12.0"
+license = "MIT"
+authors = [{ name = "Di-Is", email = "rhoxbox@gmail.com" }]
 dependencies = [
-    "astroquery>=0.4.7",
-    "astropy>=6.0",
-    "requests>=2.28",
-    "numpy>=1.26",
+  "astropy>=6.0",
+  "astroquery>=0.4.7",
+  "numpy>=1.26",
+  "requests>=2.28",
 ]
 
 [project.scripts]
@@ -18,18 +18,18 @@ spectral-database = "spectral_database.__main__:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",
-    "mypy>=1.8",
-    "ruff>=0.6",
+  "pytest>=8.0",
+  "mypy>=1.8",
+  "ruff>=0.6",
+]
+
+[dependency-groups]
+dev = [
+  "matplotlib>=3.10.6",
+  "pytest>=8.4.2",
+  "pytest-cov>=7.0.0",
 ]
 
 [build-system]
 requires = ["uv_build>=0.8.22,<0.9.0"]
 build-backend = "uv_build"
-
-[dependency-groups]
-dev = [
-    "matplotlib>=3.10.6",
-    "pytest>=8.4.2",
-    "pytest-cov>=7.0.0",
-]

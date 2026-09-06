@@ -1,4 +1,4 @@
-"""Shared confirmation dialog for organize structure deletion."""
+"""Shared confirmation dialog for structure structure deletion."""
 
 from __future__ import annotations
 
@@ -18,17 +18,17 @@ if TYPE_CHECKING:
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
 
-_CONTEXT = "OrganizeDeleteConfirmation"
-_TITLE_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeDeleteConfirmation", "Delete selected structure?"))
+_CONTEXT = "StructureDeleteConfirmation"
+_TITLE_SOURCE = str(QT_TRANSLATE_NOOP("StructureDeleteConfirmation", "Delete selected structure?"))
 _BODY_SOURCE = str(
     #: Keep {undo_shortcut} unchanged; it is replaced for the running OS.
     QT_TRANSLATE_NOOP(
-        "OrganizeDeleteConfirmation",
+        "StructureDeleteConfirmation",
         "Deleted regions, lines, and components can be restored with Undo ({undo_shortcut}).",
     )
 )
-_DELETE_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeDeleteConfirmation", "Delete"))
-_CANCEL_SOURCE = str(QT_TRANSLATE_NOOP("OrganizeDeleteConfirmation", "Cancel"))
+_DELETE_SOURCE = str(QT_TRANSLATE_NOOP("StructureDeleteConfirmation", "Delete"))
+_CANCEL_SOURCE = str(QT_TRANSLATE_NOOP("StructureDeleteConfirmation", "Cancel"))
 
 
 def confirm_structure_delete(
@@ -72,8 +72,8 @@ def create_structure_delete_confirmation(
         _tr(_DELETE_SOURCE), QMessageBox.ButtonRole.DestructiveRole
     )
     cancel_button = message_box.addButton(_tr(_CANCEL_SOURCE), QMessageBox.ButtonRole.RejectRole)
-    delete_button.setObjectName("organizeStructureDeleteConfirmButton")
-    cancel_button.setObjectName("organizeStructureDeleteCancelButton")
+    delete_button.setObjectName("structureDeleteConfirmButton")
+    cancel_button.setObjectName("structureDeleteCancelButton")
     apply_button_variant(delete_button, "danger")
     apply_button_variant(cancel_button, "secondary")
     message_box.setDefaultButton(cancel_button)

@@ -2,8 +2,8 @@
 
 These tests verify that:
 1. old_member_count uses group_lines_by_multiplet() for multiplet-consolidated count
-2. new_systems_count uses system_id_to_row lookup for multiplet-consolidated count
-3. member_count = old_member_count + new_systems_count (both consolidated)
+2. new_lines_count uses temporary_line_id_to_row lookup for multiplet-consolidated count
+3. member_count = old_member_count + new_lines_count (both consolidated)
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import pytest
 
 from chappy.core.absorption.models import AbsorptionLine
 from chappy.core.absorption_display import group_lines_by_multiplet
-from chappy.gui.modes.identify.panel.panel_models import CandidateLineRow
+from chappy.gui.modes.identify.panel.panel_models import TemporaryLineRow
 
 
 class TestGroupLinesByMultiplet:
@@ -175,13 +175,13 @@ class TestGroupLinesByMultiplet:
         assert len(groups) == 2, "Should have 2 groups: 1 single + 1 doublet"
 
 
-class TestSystemIdToRowLookup:
-    """Tests for system_id_to_row lookup used in new_systems_count calculation."""
+class TestLineIdToRowLookup:
+    """Tests for temporary_line_id_to_row lookup used in new_lines_count calculation."""
 
     def test_lookup_finds_row_by_primary_id(self) -> None:
-        """Lookup should find CandidateLineRow by primary system_id."""
-        row = CandidateLineRow(
-            system_ids=("primary_id", "secondary_id"),
+        """Lookup should find TemporaryLineRow by primary temporary_line_id."""
+        row = TemporaryLineRow(
+            temporary_line_ids=("primary_id", "secondary_id"),
             species="Mg II",
             lambda_start=6990.0,
             lambda_end=7015.0,
@@ -191,18 +191,18 @@ class TestSystemIdToRowLookup:
         rows = [row]
 
         # Build lookup
-        system_id_to_row: dict[str, CandidateLineRow] = {}
+        temporary_line_id_to_row: dict[str, TemporaryLineRow] = {}
         for r in rows:
-            for sid in r.system_ids:
-                system_id_to_row[sid] = r
+            for sid in r.temporary_line_ids:
+                temporary_line_id_to_row[sid] = r
 
-        assert system_id_to_row.get("primary_id") is row
-        assert system_id_to_row.get("secondary_id") is row
+        assert temporary_line_id_to_row.get("primary_id") is row
+        assert temporary_line_id_to_row.get("secondary_id") is row
 
     def test_unique_row_count_for_multiplet(self) -> None:
         """Multiple IDs from same row should count as 1 unique row."""
-        row = CandidateLineRow(
-            system_ids=("mg2_2796", "mg2_2803"),
+        row = TemporaryLineRow(
+            temporary_line_ids=("mg2_2796", "mg2_2803"),
             species="Mg II",
             lambda_start=6990.0,
             lambda_end=7015.0,
@@ -212,16 +212,16 @@ class TestSystemIdToRowLookup:
         rows = [row]
 
         # Build lookup
-        system_id_to_row: dict[str, CandidateLineRow] = {}
+        temporary_line_id_to_row: dict[str, TemporaryLineRow] = {}
         for r in rows:
-            for sid in r.system_ids:
-                system_id_to_row[sid] = r
+            for sid in r.temporary_line_ids:
+                temporary_line_id_to_row[sid] = r
 
         # Simulate counting unique rows for preview
-        member_system_ids = ["mg2_2796", "mg2_2803"]  # Both IDs
+        member_temporary_line_ids = ["mg2_2796", "mg2_2803"]  # Both IDs
         unique_rows: set[int] = set()
-        for sid in member_system_ids:
-            matched_row = system_id_to_row.get(sid)
+        for sid in member_temporary_line_ids:
+            matched_row = temporary_line_id_to_row.get(sid)
             if matched_row is not None:
                 unique_rows.add(id(matched_row))
 
@@ -229,16 +229,16 @@ class TestSystemIdToRowLookup:
 
     def test_two_separate_rows_count_as_two(self) -> None:
         """Two separate rows should count as 2."""
-        row1 = CandidateLineRow(
-            system_ids=("mg2_2796", "mg2_2803"),
+        row1 = TemporaryLineRow(
+            temporary_line_ids=("mg2_2796", "mg2_2803"),
             species="Mg II",
             lambda_start=6990.0,
             lambda_end=7015.0,
             creation_method="manual",
             transition_name="Mg II 2796.4",
         )
-        row2 = CandidateLineRow(
-            system_ids=("civ_1548", "civ_1551"),
+        row2 = TemporaryLineRow(
+            temporary_line_ids=("civ_1548", "civ_1551"),
             species="C IV",
             lambda_start=3870.0,
             lambda_end=3886.0,
@@ -248,16 +248,16 @@ class TestSystemIdToRowLookup:
         rows = [row1, row2]
 
         # Build lookup
-        system_id_to_row: dict[str, CandidateLineRow] = {}
+        temporary_line_id_to_row: dict[str, TemporaryLineRow] = {}
         for r in rows:
-            for sid in r.system_ids:
-                system_id_to_row[sid] = r
+            for sid in r.temporary_line_ids:
+                temporary_line_id_to_row[sid] = r
 
         # Simulate counting unique rows for preview
-        member_system_ids = ["mg2_2796", "mg2_2803", "civ_1548", "civ_1551"]
+        member_temporary_line_ids = ["mg2_2796", "mg2_2803", "civ_1548", "civ_1551"]
         unique_rows: set[int] = set()
-        for sid in member_system_ids:
-            matched_row = system_id_to_row.get(sid)
+        for sid in member_temporary_line_ids:
+            matched_row = temporary_line_id_to_row.get(sid)
             if matched_row is not None:
                 unique_rows.add(id(matched_row))
 
@@ -265,15 +265,15 @@ class TestSystemIdToRowLookup:
 
 
 class TestMemberCountCalculation:
-    """Tests for member_count = old_member_count + new_systems_count."""
+    """Tests for member_count = old_member_count + new_lines_count."""
 
     def test_member_count_with_no_existing_group(self) -> None:
-        """New group should have member_count = new_systems_count."""
+        """New group should have member_count = new_lines_count."""
         # Simulate new group with 1 doublet
         old_member_count = None
-        new_systems_count = 1  # 1 doublet (consolidated)
+        new_lines_count = 1  # 1 doublet (consolidated)
 
-        member_count = new_systems_count + (old_member_count or 0)
+        member_count = new_lines_count + (old_member_count or 0)
         assert member_count == 1
 
     def test_member_count_with_existing_group(self) -> None:
@@ -281,9 +281,9 @@ class TestMemberCountCalculation:
         # Existing group has 2 lines (1 doublet consolidated)
         old_member_count = 1  # 1 doublet (consolidated)
         # Adding 1 new doublet (consolidated)
-        new_systems_count = 1
+        new_lines_count = 1
 
-        member_count = new_systems_count + (old_member_count or 0)
+        member_count = new_lines_count + (old_member_count or 0)
         assert member_count == 2
 
     def test_member_count_matches_confirmed_display(self) -> None:
@@ -357,8 +357,8 @@ class TestMemberCountCalculation:
         assert old_member_count == 2, "4 lines forming 2 doublets = 2 groups"
 
         # Simulate new row (OVI doublet, already consolidated)
-        new_row = CandidateLineRow(
-            system_ids=("ovi_1032", "ovi_1038"),
+        new_row = TemporaryLineRow(
+            temporary_line_ids=("ovi_1032", "ovi_1038"),
             species="O VI",
             lambda_start=2580.0,
             lambda_end=2600.0,
@@ -368,21 +368,21 @@ class TestMemberCountCalculation:
         rows = [new_row]
 
         # Build lookup
-        system_id_to_row: dict[str, CandidateLineRow] = {}
+        temporary_line_id_to_row: dict[str, TemporaryLineRow] = {}
         for r in rows:
-            for sid in r.system_ids:
-                system_id_to_row[sid] = r
+            for sid in r.temporary_line_ids:
+                temporary_line_id_to_row[sid] = r
 
-        # Calculate new_systems_count
-        member_system_ids = ["ovi_1032", "ovi_1038"]
+        # Calculate new_lines_count
+        member_temporary_line_ids = ["ovi_1032", "ovi_1038"]
         unique_rows: set[int] = set()
-        for sid in member_system_ids:
-            matched_row = system_id_to_row.get(sid)
+        for sid in member_temporary_line_ids:
+            matched_row = temporary_line_id_to_row.get(sid)
             if matched_row is not None:
                 unique_rows.add(id(matched_row))
-        new_systems_count = len(unique_rows)
-        assert new_systems_count == 1, "1 doublet = 1 group"
+        new_lines_count = len(unique_rows)
+        assert new_lines_count == 1, "1 doublet = 1 group"
 
         # Calculate member_count
-        member_count = new_systems_count + (old_member_count or 0)
+        member_count = new_lines_count + (old_member_count or 0)
         assert member_count == 3, "2 existing + 1 new = 3 total"

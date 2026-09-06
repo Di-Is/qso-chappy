@@ -9,16 +9,16 @@ from chappy.core.absorption import AbsorptionLine
 from chappy.core.components.absorber import AbsorberComponent
 from chappy.core.components.base import Parameter
 from chappy.gui.dialogs.parameter_adjustment_dialog import ParameterAdjustmentDialog
-from chappy.gui.modes.analysis.overview.panel import OrganizeSidePanel
+from chappy.gui.modes.analysis.overview.panel import StructureSidePanel
 from chappy.gui.modes.analysis.overview.review_controller import AnalysisOverviewReviewController
 from chappy.gui.modes.identify.panel.panel import IdentifySidePanel
 from chappy.gui.modes.identify.panel.panel_models import (
-    CandidateLineRow,
     CandidateRow,
     ConfirmedLineRow,
     ConfirmedRegionRow,
     LineListItem,
     RegionPreviewRow,
+    TemporaryLineRow,
 )
 from chappy.gui.spectrum.velocity import SpectrumVelocityOverlayWidget, VelocityGridWidget
 from chappy.gui.theme import Colors, get_application_stylesheet
@@ -94,7 +94,7 @@ class AnalysisStructureDocWindow(QMainWindow):
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        panel = OrganizeSidePanel(container)
+        panel = StructureSidePanel(container)
         panel.setProperty("doc.include", True)
         panel.setProperty("doc.scope", "analysis_structure")
         panel.resize(420, 700)
@@ -235,10 +235,10 @@ class IdentifyPanelDocWindow(QMainWindow):
         )
         panel.set_sigma_threshold(5.0)
 
-        panel.set_temporary_systems(
+        panel.set_temporary_lines(
             [
-                CandidateLineRow(
-                    system_ids=("temp_civ",),
+                TemporaryLineRow(
+                    temporary_line_ids=("temp_civ",),
                     species="C IV",
                     lambda_start=3544.8,
                     lambda_end=3546.3,
@@ -255,8 +255,8 @@ class IdentifyPanelDocWindow(QMainWindow):
                     member_count=1,
                     warning=False,
                     is_existing_group=False,
-                    new_systems_count=1,
-                    member_system_ids=["temp_civ"],
+                    new_lines_count=1,
+                    member_temporary_line_ids=["temp_civ"],
                 )
             ],
         )
@@ -268,9 +268,9 @@ class IdentifyPanelDocWindow(QMainWindow):
                     label=translate_manual_text(
                         _EXPORTER_CONTEXT, QT_TRANSLATE_NOOP("ManualExporter", "Region 1")
                     ),
-                    systems=[
+                    lines=[
                         ConfirmedLineRow(
-                            system_id="sys_civ_1548",
+                            line_id="civ_1548",
                             species="C IV",
                             redshift=1.292,
                             lambda_start=3548.0,

@@ -71,7 +71,7 @@ def test_write_operation_flow_supports_section_only_flow(tmp_path):
                 items=(
                     OperationSectionItem(
                         title="状態を確認する",
-                        description="サイドパネルでグループとシステムを選択し、メタデータを確認します。",
+                        description="サイドパネルでグループとラインを選択し、メタデータを確認します。",
                     ),
                 ),
                 blocks=(

@@ -22,8 +22,8 @@ class WelcomeDialog(QDialog):
     class Choice(Enum):
         """Possible outcomes of the welcome dialog."""
 
-        START_SHORT_WALKTHROUGH = auto()
-        START_FULL_WALKTHROUGH = auto()
+        START_ESSENTIAL_WALKTHROUGH = auto()
+        START_ADVANCED_WALKTHROUGH = auto()
         DISMISS = auto()
 
     def __init__(self, parent: QWidget | None = None, *, sample_available: bool = True) -> None:
@@ -87,33 +87,35 @@ class WelcomeDialog(QDialog):
         buttons = QHBoxLayout()
         buttons.setSpacing(12)
 
-        self._full_walkthrough_button = QPushButton(self)
-        self._full_walkthrough_button.setDefault(False)
-        self._full_walkthrough_button.setAutoDefault(False)
-        apply_button_variant(self._full_walkthrough_button, "secondary")
-        self._full_walkthrough_button.setEnabled(self._sample_available)
+        self._advanced_walkthrough_button = QPushButton(self)
+        self._advanced_walkthrough_button.setDefault(False)
+        self._advanced_walkthrough_button.setAutoDefault(False)
+        apply_button_variant(self._advanced_walkthrough_button, "secondary")
+        self._advanced_walkthrough_button.setEnabled(self._sample_available)
 
-        self._short_walkthrough_button = QPushButton(self)
-        self._short_walkthrough_button.setDefault(True)
-        self._short_walkthrough_button.setAutoDefault(True)
-        apply_button_variant(self._short_walkthrough_button, "primary")
-        self._short_walkthrough_button.setEnabled(self._sample_available)
+        self._essential_walkthrough_button = QPushButton(self)
+        self._essential_walkthrough_button.setDefault(True)
+        self._essential_walkthrough_button.setAutoDefault(True)
+        apply_button_variant(self._essential_walkthrough_button, "primary")
+        self._essential_walkthrough_button.setEnabled(self._sample_available)
 
-        apply_action_row_sizing(self._full_walkthrough_button, self._short_walkthrough_button)
+        apply_action_row_sizing(
+            self._advanced_walkthrough_button, self._essential_walkthrough_button
+        )
 
         buttons.addStretch()
-        buttons.addWidget(self._full_walkthrough_button)
-        buttons.addWidget(self._short_walkthrough_button)
+        buttons.addWidget(self._advanced_walkthrough_button)
+        buttons.addWidget(self._essential_walkthrough_button)
 
         layout.addLayout(buttons)
 
-        self.setTabOrder(self._full_walkthrough_button, self._short_walkthrough_button)
-        self._short_walkthrough_button.setFocus(Qt.FocusReason.OtherFocusReason)
+        self.setTabOrder(self._advanced_walkthrough_button, self._essential_walkthrough_button)
+        self._essential_walkthrough_button.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def _wire_signals(self) -> None:
         """Connect dialog buttons to their selection handlers."""
-        self._full_walkthrough_button.clicked.connect(self._on_full_walkthrough_clicked)
-        self._short_walkthrough_button.clicked.connect(self._on_short_walkthrough_clicked)
+        self._advanced_walkthrough_button.clicked.connect(self._on_advanced_walkthrough_clicked)
+        self._essential_walkthrough_button.clicked.connect(self._on_essential_walkthrough_clicked)
 
     def _retranslate_ui(self) -> None:
         """Apply translated text while preserving the current dialog state."""
@@ -128,7 +130,7 @@ class WelcomeDialog(QDialog):
         self._workflow_label.setText(
             self.tr(
                 "The workflow: load observation data, identify absorption"
-                " systems, optimize the fit, organize regions and lines, and"
+                " lines, optimize the fit, organize regions and lines, and"
                 " correct the continuum when needed before saving your"
                 " project."
             )
@@ -138,9 +140,12 @@ class WelcomeDialog(QDialog):
                 self.tr(
                     "Learn how to use chappy by working with the bundled"
                     " sample (Q0329-385). [Try the Essential Workflow] covers"
-                    " loading data, identifying an absorption system, fitting"
-                    " it, and saving. [Explore All Features] continues with"
-                    " region editing and continuum correction."
+                    " loading data, identifying an absorption line, fitting"
+                    " it, and saving. [Continue with Advanced Topics] picks up"
+                    " from there with custom presets, the velocity plot, region"
+                    " editing, cross-ion ties, and continuum correction. Each"
+                    " one reloads the sample and runs on its own, so you can"
+                    " take them on separate occasions."
                 )
             )
         else:
@@ -152,19 +157,19 @@ class WelcomeDialog(QDialog):
                 )
             )
 
-        self._full_walkthrough_button.setText(self.tr("Explore All Features"))
-        self._short_walkthrough_button.setText(self.tr("Try the Essential Workflow"))
+        self._advanced_walkthrough_button.setText(self.tr("Continue with Advanced Topics"))
+        self._essential_walkthrough_button.setText(self.tr("Try the Essential Workflow"))
 
         enforce_translated_minimum_size(
             self, floor=QSize(DialogMetrics.MIN_WIDTH_DEFAULT, DialogMetrics.MIN_HEIGHT_DEFAULT)
         )
 
-    def _on_full_walkthrough_clicked(self) -> None:
-        """Accept the dialog after recording the full walkthrough choice."""
-        self._choice = WelcomeDialog.Choice.START_FULL_WALKTHROUGH
+    def _on_advanced_walkthrough_clicked(self) -> None:
+        """Accept the dialog after recording the advanced walkthrough choice."""
+        self._choice = WelcomeDialog.Choice.START_ADVANCED_WALKTHROUGH
         self.accept()
 
-    def _on_short_walkthrough_clicked(self) -> None:
-        """Accept the dialog after recording the short walkthrough choice."""
-        self._choice = WelcomeDialog.Choice.START_SHORT_WALKTHROUGH
+    def _on_essential_walkthrough_clicked(self) -> None:
+        """Accept the dialog after recording the essential walkthrough choice."""
+        self._choice = WelcomeDialog.Choice.START_ESSENTIAL_WALKTHROUGH
         self.accept()

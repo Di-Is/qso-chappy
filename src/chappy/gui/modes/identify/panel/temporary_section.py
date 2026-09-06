@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
     from PySide6.QtGui import QResizeEvent
 
-    from chappy.gui.modes.identify.panel.panel_models import CandidateLineRow, RegionPreviewRow
+    from chappy.gui.modes.identify.panel.panel_models import RegionPreviewRow, TemporaryLineRow
 
 from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtWidgets import (
@@ -42,7 +42,7 @@ from chappy.gui.visual_tokens import LayoutMetrics, SidePanelMetrics
 
 
 class IdentifyTemporarySection(QWidget):
-    """Temporary systems grouped by registration result, with one-click register."""
+    """Temporary lines grouped by registration result, with one-click register."""
 
     compact_height_changed = Signal()
     temporary_delete_requested = Signal(list)
@@ -51,10 +51,10 @@ class IdentifyTemporarySection(QWidget):
     temporary_selection_changed = Signal(list)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Construct the temporary systems section."""
+        """Construct the temporary lines section."""
         super().__init__(parent)
         self.setObjectName("identifyTemporarySection")
-        self._candidate_rows: list[CandidateLineRow] = []
+        self._temporary_line_rows: list[TemporaryLineRow] = []
         self._preview_rows: list[RegionPreviewRow] = []
         self._tree_renderer = IdentifyWorkflowTreeRenderer()
         self._selection_controller = IdentifyWorkflowSelectionController()
@@ -62,7 +62,7 @@ class IdentifyTemporarySection(QWidget):
         self._build_layout()
         self._unconstrained_maximum_height = self.maximumHeight()
         self.retranslate_ui()
-        self.set_temporary_systems([])
+        self.set_temporary_lines([])
 
     def _build_layout(self) -> None:
         root = QVBoxLayout(self)
@@ -176,33 +176,33 @@ class IdentifyTemporarySection(QWidget):
         self._more_button.setAccessibleName(self.tr("More actions"))
         self._clear_action.setText(self.tr("Clear All"))
         self._update_button_states()
-        if self._candidate_rows:
-            self.set_temporary_systems(self._candidate_rows, self._preview_rows)
+        if self._temporary_line_rows:
+            self.set_temporary_lines(self._temporary_line_rows, self._preview_rows)
         else:
             self._apply_content_layout(has_rows=False)
 
-    def set_temporary_systems(
-        self, systems: Sequence[CandidateLineRow], previews: Sequence[RegionPreviewRow] = ()
+    def set_temporary_lines(
+        self, lines: Sequence[TemporaryLineRow], previews: Sequence[RegionPreviewRow] = ()
     ) -> None:
-        """Display temporary systems grouped by the live registration result."""
+        """Display temporary lines grouped by the live registration result."""
         selected_primary_ids = self._selection_controller.selected_temporary_primary_id_set(
             self._temporary_tree
         )
 
-        self._candidate_rows = list(systems)
+        self._temporary_line_rows = list(lines)
         self._preview_rows = list(previews)
 
         self._temporary_tree.blockSignals(True)
-        self._tree_renderer.render_temporary_systems(
+        self._tree_renderer.render_temporary_lines(
             self._temporary_tree,
-            self._candidate_rows,
+            self._temporary_line_rows,
             self._preview_rows,
             selected_primary_ids=selected_primary_ids,
             text=self._tree_text(),
         )
         self._temporary_tree.blockSignals(False)
 
-        has_rows = bool(self._candidate_rows)
+        has_rows = bool(self._temporary_line_rows)
         self._apply_content_layout(has_rows=has_rows)
         self._update_heading()
         self._update_button_states()
@@ -268,7 +268,7 @@ class IdentifyTemporarySection(QWidget):
     @property
     def has_rows(self) -> bool:
         """Return whether temporary groups are available."""
-        return bool(self._candidate_rows)
+        return bool(self._temporary_line_rows)
 
     @property
     def has_registration_feedback(self) -> bool:
@@ -318,8 +318,8 @@ class IdentifyTemporarySection(QWidget):
         )
 
     def _update_heading(self) -> None:
-        group_count = len(self._candidate_rows)
-        line_count = sum(len(row.system_ids) for row in self._candidate_rows)
+        group_count = len(self._temporary_line_rows)
+        line_count = sum(len(row.temporary_line_ids) for row in self._temporary_line_rows)
         #: {groups} and {lines} are localized count-and-unit phrases.
         template = self.tr("To register: {groups} / {lines}")
         self._temporary_label.setText(
@@ -336,11 +336,11 @@ class IdentifyTemporarySection(QWidget):
         self.temporary_selection_changed.emit(selected_ids)
 
     def _emit_delete_requested(self) -> None:
-        system_ids = self._selection_controller.selected_temporary_primary_ids(
+        temporary_line_ids = self._selection_controller.selected_temporary_primary_ids(
             self._temporary_tree
         )
-        if system_ids:
-            self.temporary_delete_requested.emit(system_ids)
+        if temporary_line_ids:
+            self.temporary_delete_requested.emit(temporary_line_ids)
 
     def _emit_registration_requested(self) -> None:
         selected_ids = self._selection_controller.selected_temporary_primary_ids(
@@ -353,9 +353,9 @@ class IdentifyTemporarySection(QWidget):
             self._selection_controller.selected_temporary_primary_ids(self._temporary_tree)
         )
         has_selection = selected_count > 0
-        has_rows = bool(self._candidate_rows)
+        has_rows = bool(self._temporary_line_rows)
 
-        target_count = selected_count if has_selection else len(self._candidate_rows)
+        target_count = selected_count if has_selection else len(self._temporary_line_rows)
         groups = self._group_count_text(target_count)
         if has_selection:
             #: {groups} is a localized group count such as "2 groups".

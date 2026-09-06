@@ -23,11 +23,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-WorkPhase = Literal["candidate_add"]
+WorkPhase = Literal["temporary_line_add"]
 TemporaryStatus = Literal["pending", "preview", "confirmed"]
 RegionStatus = Literal["identified", "candidate", "unused"]
 
-IDENTIFY_TEMP_SYSTEM_LIMIT = 1000
+IDENTIFY_TEMPORARY_LINE_LIMIT = 1000
 # Identify retains its staged UI vocabulary while sharing the canonical limits.
 DEFAULT_VELOCITY_WINDOW_KMS = DEFAULT_ANALYSIS_HALF_WIDTH_KMS
 MIN_VELOCITY_WINDOW_KMS = MIN_ANALYSIS_HALF_WIDTH_KMS
@@ -47,8 +47,8 @@ class DetectedRegion:
 
 
 @dataclass(slots=True)
-class CandidateLineContext:
-    """Metadata from AtomicLine used when creating temporary systems.
+class TemporaryLineContext:
+    """Metadata from AtomicLine used when creating temporary lines.
 
     All fields are required for scientific reproducibility - values are
     injected from AtomicLine at creation time and stored with the project.
@@ -69,14 +69,14 @@ class CandidateLineContext:
 
 
 @dataclass(slots=True)
-class CandidateLine:
+class TemporaryLine:
     """Working copy of an absorption line prior to grouping.
 
     Atomic line data fields are required for scientific reproducibility.
     """
 
     # Required identification fields
-    system_id: str
+    temporary_line_id: str
     species: str
     lambda_min: float
     lambda_max: float
@@ -106,11 +106,11 @@ class CandidateLine:
 
 @dataclass(slots=True)
 class RegionPreview:
-    """Grouping result showing how candidate lines will be registered."""
+    """Grouping result showing how temporary lines will be registered."""
 
     group_id: str
     name: str
-    member_system_ids: list[str] = field(default_factory=list)
+    member_temporary_line_ids: list[str] = field(default_factory=list)
     overlap_warning: bool = False  # True when overlapping multiple existing regions
     color: str | None = None
     existing_group_id: str | None = None  # If set, add to existing group
@@ -120,53 +120,53 @@ class IdentifySessionState:
     """In-memory model capturing identify mode working data."""
 
     def __init__(self) -> None:
-        self._candidate_lines: OrderedDict[str, CandidateLine] = OrderedDict()
+        self._temporary_lines: OrderedDict[str, TemporaryLine] = OrderedDict()
         self._detected_regions: dict[str, DetectedRegion] = {}
         self._new_candidate_analysis_half_width = NewCandidateAnalysisHalfWidth(
             DEFAULT_ANALYSIS_HALF_WIDTH_KMS
         )
         self.reference_z: float = 0.0
-        self.work_phase: WorkPhase = "candidate_add"
+        self.work_phase: WorkPhase = "temporary_line_add"
         self.last_added_wavelength: float | None = None
         self.last_click_wavelength: float | None = None
 
     @property
     def temporary_count(self) -> int:
-        return len(self._candidate_lines)
+        return len(self._temporary_lines)
 
     @property
-    def candidate_lines(self) -> Sequence[CandidateLine]:
-        return list(self._candidate_lines.values())
+    def temporary_lines(self) -> Sequence[TemporaryLine]:
+        return list(self._temporary_lines.values())
 
-    def add_candidate_line(
+    def add_temporary_line(
         self,
         species: str,
         lambda_min: float,
         lambda_max: float,
         *,
         creation_method: str,
-        context: CandidateLineContext,
+        context: TemporaryLineContext,
         analysis_half_width: LineAnalysisHalfWidth | None = None,
-    ) -> CandidateLine:
-        """Add a new temporary system with atomic line metadata.
+    ) -> TemporaryLine:
+        """Add a new temporary line with atomic line metadata.
 
         Args:
             species: Element/ion species (e.g., "C IV").
             lambda_min: Minimum observed wavelength.
             lambda_max: Maximum observed wavelength.
-            creation_method: How this system was created.
+            creation_method: How this line was created.
             context: Required atomic line metadata for reproducibility.
             analysis_half_width: Scientific range copied into the new candidate. Defaults to
                 the current future-candidate draft for direct core callers.
 
         Returns:
-            The newly created CandidateLine.
+            The newly created TemporaryLine.
 
         Raises:
-            ValueError: If system limit is reached.
+            ValueError: If line limit is reached.
         """
-        if len(self._candidate_lines) >= IDENTIFY_TEMP_SYSTEM_LIMIT:
-            msg = "Temporary system limit reached"
+        if len(self._temporary_lines) >= IDENTIFY_TEMPORARY_LINE_LIMIT:
+            msg = "Temporary line limit reached"
             raise ValueError(msg)
 
         low, high = sorted((lambda_min, lambda_max))
@@ -180,9 +180,9 @@ class IdentifySessionState:
         if computed_center is None:
             computed_center = 0.0
 
-        system_id = uuid4().hex
-        system = CandidateLine(
-            system_id=system_id,
+        temporary_line_id = uuid4().hex
+        line = TemporaryLine(
+            temporary_line_id=temporary_line_id,
             species=species,
             lambda_min=low,
             lambda_max=high,
@@ -202,48 +202,51 @@ class IdentifySessionState:
                 else self._new_candidate_analysis_half_width.kms
             ),
         )
-        self._candidate_lines[system_id] = system
-        self.last_added_wavelength = system.center_wavelength
-        return system
+        self._temporary_lines[temporary_line_id] = line
+        self.last_added_wavelength = line.center_wavelength
+        return line
 
-    def remove_candidate_lines(self, system_ids: Iterable[str]) -> list[str]:
+    def remove_temporary_lines(self, temporary_line_ids: Iterable[str]) -> list[str]:
         removed: list[str] = []
-        for system_id in system_ids:
-            if system_id in self._candidate_lines:
-                self._candidate_lines.pop(system_id)
-                removed.append(system_id)
+        for temporary_line_id in temporary_line_ids:
+            if temporary_line_id in self._temporary_lines:
+                self._temporary_lines.pop(temporary_line_id)
+                removed.append(temporary_line_id)
         return removed
 
-    def clear_candidate_lines(self) -> None:
-        self._candidate_lines.clear()
+    def clear_temporary_lines(self) -> None:
+        self._temporary_lines.clear()
 
-    def restore_candidate_line(self, candidate: CandidateLine) -> CandidateLine:
-        """Restore a candidate line from a typed model object.
+    def restore_temporary_line(self, temporary_line: TemporaryLine) -> TemporaryLine:
+        """Restore a temporary line from a typed model object.
 
         Args:
-            candidate: Candidate line to restore.
+            temporary_line: Temporary line to restore.
 
         Returns:
-            Restored CandidateLine.
+            Restored TemporaryLine.
         """
-        self._candidate_lines[candidate.system_id] = candidate
-        return candidate
+        self._temporary_lines[temporary_line.temporary_line_id] = temporary_line
+        return temporary_line
 
-    def snapshot_candidate_lines_for_transaction(self) -> tuple[CandidateLine, ...]:
-        """Capture exact candidate object identity and order for atomic rollback."""
-        return tuple(self._candidate_lines.values())
+    def snapshot_temporary_lines_for_transaction(self) -> tuple[TemporaryLine, ...]:
+        """Capture exact temporary line object identity and order for atomic rollback."""
+        return tuple(self._temporary_lines.values())
 
-    def replace_candidate_lines_for_transaction(self, candidates: Iterable[CandidateLine]) -> None:
-        """Restore exact candidate object identity and order without notifications."""
-        replacements: OrderedDict[str, CandidateLine] = OrderedDict()
-        for candidate in candidates:
-            if candidate.system_id in replacements:
+    def replace_temporary_lines_for_transaction(
+        self, temporary_lines: Iterable[TemporaryLine]
+    ) -> None:
+        """Restore exact temporary line object identity and order without notifications."""
+        replacements: OrderedDict[str, TemporaryLine] = OrderedDict()
+        for temporary_line in temporary_lines:
+            if temporary_line.temporary_line_id in replacements:
                 msg = (
-                    f"Duplicate identify candidate in transaction snapshot: {candidate.system_id}"
+                    "Duplicate identify temporary line in transaction snapshot: "
+                    f"{temporary_line.temporary_line_id}"
                 )
                 raise ValueError(msg)
-            replacements[candidate.system_id] = candidate
-        self._candidate_lines = replacements
+            replacements[temporary_line.temporary_line_id] = temporary_line
+        self._temporary_lines = replacements
 
     @property
     def detected_regions(self) -> Sequence[DetectedRegion]:
@@ -267,10 +270,10 @@ class IdentifySessionState:
 
 __all__ = [
     "DEFAULT_VELOCITY_WINDOW_KMS",
-    "IDENTIFY_TEMP_SYSTEM_LIMIT",
-    "CandidateLine",
-    "CandidateLineContext",
+    "IDENTIFY_TEMPORARY_LINE_LIMIT",
     "DetectedRegion",
     "IdentifySessionState",
     "RegionPreview",
+    "TemporaryLine",
+    "TemporaryLineContext",
 ]

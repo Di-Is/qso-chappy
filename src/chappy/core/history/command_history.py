@@ -393,11 +393,6 @@ class CommandHistory:
         self._assert_owner_thread("query")
         return bool(self._redo_stack)
 
-    def has_undoable_operation(self, full_operation_id: str) -> bool:
-        """Return whether any undoable event carries this full operation ID."""
-        self._assert_owner_thread("query")
-        return any(event.full_operation_id == full_operation_id for event in self._undo_stack)
-
     def get_state(self) -> HistoryState:
         """Get current history state snapshot.
 

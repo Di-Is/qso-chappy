@@ -46,7 +46,7 @@ class HistoryEvent:
         Examples:
             - "draw.range_change"
             - "draw.range_change.nav"
-            - "ident.add_candidate"
+            - "ident.add_temporary_line"
         """
         base = self.operation_id.value
         if self.qualifier:

@@ -12,15 +12,15 @@ from chappy.application.identify import (
     AtomicRegisterSelectedLinesResult,
     BuildRegionPreviewsRequest,
     BuildRegionPreviewsUseCase,
-    CandidateLineSnapshot,
     ExistingRegionSnapshot,
     RegistrationOutcome,
+    TemporaryLineSnapshot,
 )
 from chappy.core.absorption_display import format_region_display
 from chappy.core.velocity_ranges import DEFAULT_IDENTIFY_MULTIPLET_GROUPING_TOLERANCE
 from chappy.gui.modes.identify.application_adapters import (
-    candidate_line_to_snapshot,
     region_preview_from_snapshot,
+    temporary_line_to_snapshot,
 )
 from chappy.gui.modes.identify.registration_controller import IdentifyRegistrationResult
 
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
     from chappy.application.history import AbsorptionRegionSnapshot
     from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
-    from chappy.core.identify_state import CandidateLine, IdentifySessionState, RegionPreview
+    from chappy.core.identify_state import IdentifySessionState, RegionPreview, TemporaryLine
     from chappy.core.spectroscopy_project import SpectroscopyProject
 
 
@@ -46,8 +46,8 @@ class IdentifyRegistrationHistoryRecorder(Protocol):
         project: SpectroscopyProject,
         created_line_ids: list[str],
         created_region_ids: list[str],
-        _removed_system_ids: list[str],
-        candidate_snapshots: tuple[CandidateLineSnapshot, ...],
+        _removed_temporary_line_ids: list[str],
+        temporary_line_snapshots: tuple[TemporaryLineSnapshot, ...],
         affected_region_ids: list[str],
         before_affected_region_snapshots: tuple[AbsorptionRegionSnapshot, ...],
     ) -> None:
@@ -70,8 +70,8 @@ class IdentifyRegistrationWorkflowMessages:
     """Translated messages emitted by registration workflow."""
 
     cannot_register_without_project: str
-    no_candidates_to_register: str
-    candidate_lines_could_not_register: str
+    no_temporary_lines_to_register: str
+    temporary_lines_could_not_register: str
     registered_template: str
     registered_details_template: str
     new_regions_template: str
@@ -79,6 +79,7 @@ class IdentifyRegistrationWorkflowMessages:
     detail_separator: str
     multi_overlap_warning: str
     missing_atomic_template: str
+    undo_hint: str
     unknown: str
 
 
@@ -94,7 +95,7 @@ class IdentifyRegistrationWorkflowPorts:
 
 
 class IdentifyRegistrationWorkflow:
-    """Build grouping results and register identify candidates immediately."""
+    """Build grouping results and register identify temporary lines immediately."""
 
     def __init__(
         self,
@@ -107,7 +108,7 @@ class IdentifyRegistrationWorkflow:
         self._preview_usecase = preview_usecase
         self._register_usecase = register_usecase
 
-    def expand_multiplet_candidate_lines(self, selected_ids: Sequence[str]) -> list[str]:
+    def expand_multiplet_temporary_lines(self, selected_ids: Sequence[str]) -> list[str]:
         """Expand selected primary IDs to all multiplet member IDs."""
         primary_to_members = self._ports.primary_members_provider()
         expanded: list[str] = []
@@ -125,15 +126,15 @@ class IdentifyRegistrationWorkflow:
 
         return expanded
 
-    def build_region_previews(self, systems: Sequence[CandidateLine]) -> list[RegionPreview]:
-        """Build registration previews for candidate systems."""
-        systems_list = list(systems)
-        if not systems_list:
+    def build_region_previews(self, lines: Sequence[TemporaryLine]) -> list[RegionPreview]:
+        """Build registration previews for temporary lines."""
+        lines_list = list(lines)
+        if not lines_list:
             return []
 
         result = self._preview_usecase.build(
             BuildRegionPreviewsRequest(
-                candidates=tuple(candidate_line_to_snapshot(system) for system in systems_list),
+                temporary_lines=tuple(temporary_line_to_snapshot(line) for line in lines_list),
                 existing_regions=tuple(self._existing_region_snapshots()),
                 multiplet_grouping_tolerance=DEFAULT_IDENTIFY_MULTIPLET_GROUPING_TOLERANCE,
                 unknown_label=self._messages().unknown,
@@ -148,11 +149,13 @@ class IdentifyRegistrationWorkflow:
             return region.region_id[:8]
         return self._get_region_display_name(project, region)
 
-    def register_candidates(self, systems: Sequence[CandidateLine]) -> IdentifyRegistrationResult:
-        """Register the given candidate systems immediately.
+    def register_temporary_lines(
+        self, lines: Sequence[TemporaryLine]
+    ) -> IdentifyRegistrationResult:
+        """Register the given temporary lines immediately.
 
         Args:
-            systems: Candidate systems selected for registration.
+            lines: Temporary lines selected for registration.
 
         Returns:
             Registration result with the typed outcome for status display.
@@ -167,10 +170,10 @@ class IdentifyRegistrationWorkflow:
                 refresh_candidates=False,
             )
 
-        candidate_snapshots = tuple(candidate_line_to_snapshot(system) for system in systems)
-        if not candidate_snapshots:
+        temporary_line_snapshots = tuple(temporary_line_to_snapshot(line) for line in lines)
+        if not temporary_line_snapshots:
             return IdentifyRegistrationResult(
-                messages.no_candidates_to_register,
+                messages.no_temporary_lines_to_register,
                 refresh_workflow=False,
                 refresh_candidates=False,
             )
@@ -188,8 +191,8 @@ class IdentifyRegistrationWorkflow:
                 project,
                 list(outcome.created_line_ids),
                 list(outcome.created_region_ids),
-                list(outcome.processed_system_ids),
-                candidate_snapshots,
+                list(outcome.processed_temporary_line_ids),
+                temporary_line_snapshots,
                 list(outcome.affected_region_ids),
                 tuple(
                     before_region_snapshots[region_id]
@@ -202,7 +205,7 @@ class IdentifyRegistrationWorkflow:
             AtomicRegisterSelectedLinesRequest(
                 project=project,
                 session=session,
-                candidates=candidate_snapshots,
+                temporary_lines=temporary_line_snapshots,
                 existing_regions=tuple(self._existing_region_snapshots()),
                 region_line_memberships=tuple(
                     (region.region_id, tuple(region.line_ids))
@@ -218,7 +221,7 @@ class IdentifyRegistrationWorkflow:
         )
 
         if result.outcome is None:
-            return IdentifyRegistrationResult(messages.candidate_lines_could_not_register)
+            return IdentifyRegistrationResult(messages.temporary_lines_could_not_register)
 
         sync_lines = [
             line
@@ -263,6 +266,8 @@ class IdentifyRegistrationWorkflow:
         if outcome.failed_count:
             warning = messages.missing_atomic_template.format(count=outcome.failed_count)
             message = f"{message} {warning}"
+        if outcome.confirmed_count:
+            message = f"{message} {messages.undo_hint}"
         return message
 
     def _existing_region_snapshots(self) -> list[ExistingRegionSnapshot]:

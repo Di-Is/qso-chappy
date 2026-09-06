@@ -77,7 +77,7 @@ class OptimizeGroupAnalysisUseCase:
     ) -> AnalysisReadiness:
         """Derive readiness from current authoritative project facts."""
         if project is None or not group_id:
-            return AnalysisReadiness.UNAVAILABLE
+            return AnalysisReadiness.NOT_ANALYZED
         return self._derive_readiness.execute(project, group_id)
 
     def region_needs_optimization(

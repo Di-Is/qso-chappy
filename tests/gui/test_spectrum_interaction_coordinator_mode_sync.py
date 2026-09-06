@@ -12,12 +12,12 @@ import pytest
 from chappy.core.editing_mode import EditingMode
 from chappy.gui.shell.mode_shell_coordinator import ModeShellCoordinator
 from chappy.presentation.interaction.interaction_contracts import (
+    AbsorberDragContext,
     InteractionChannel,
     InteractionId,
     InteractionPhase,
     InteractionStateSnapshot,
     RectZoomContext,
-    VelocityContext,
 )
 
 if TYPE_CHECKING:
@@ -338,16 +338,17 @@ def test_mode_shell_coordinator_double_update_prevention(
 def test_snapshot_fallback_detection(
     presenter: _PresenterStub, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Velocity snapshots are applied and forwarded without fallback warnings."""
-    velocity_snapshot = InteractionStateSnapshot(
-        interaction_id=InteractionId("velocity-fallback"),
-        channel=InteractionChannel.VELOCITY,
+    """Absorber drag snapshots are applied and forwarded without fallback warnings."""
+    drag_snapshot = InteractionStateSnapshot(
+        interaction_id=InteractionId("absorber-drag-fallback"),
+        channel=InteractionChannel.ABSORBER_DRAG,
         phase=InteractionPhase.ARMED,
-        context=VelocityContext(
-            target_wavelength=5000.0,
-            trigger="keyboard-v",
+        context=AbsorberDragContext(
+            absorber_id="abs-1",
+            start=(5000.0, 0.2),
+            current=None,
+            end=None,
             modifiers=0,
-            confirmed_wavelength=None,
             cancel_reason=None,
         ),
     )
@@ -355,9 +356,9 @@ def test_snapshot_fallback_detection(
     caplog.set_level(
         logging.WARNING, logger="chappy.gui.spectrum.spectrum_interaction_coordinator"
     )
-    presenter.apply_interaction_state_snapshot(velocity_snapshot)
+    presenter.apply_interaction_state_snapshot(drag_snapshot)
 
-    assert presenter.interaction_snapshot_applied.emissions == [(velocity_snapshot,)]
+    assert presenter.interaction_snapshot_applied.emissions == [(drag_snapshot,)]
     assert not caplog.records
 
 

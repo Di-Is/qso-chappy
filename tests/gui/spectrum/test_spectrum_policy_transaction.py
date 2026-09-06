@@ -198,37 +198,10 @@ def test_cleanup_failure_prevents_reversible_commit() -> None:
     assert view.plot_host.state is old.plot_policy
 
 
-class _Input:
-    def __init__(self, calls: list[str], fail_stage: str | None) -> None:
-        self.calls = calls
-        self.fail_stage = fail_stage
-
-    def cancel_velocity_pending(self, *, reason: str) -> None:
-        assert reason == "policy-transition"
-        self.calls.append("input-velocity")
-        if self.fail_stage == "input-velocity":
-            raise RuntimeError("input velocity cleanup failed")
-
-
-class _Prompt:
-    active = True
-
-    def __init__(self, calls: list[str], fail_stage: str | None) -> None:
-        self.calls = calls
-        self.fail_stage = fail_stage
-
-    def deactivate(self, **_kwargs: object) -> None:
-        self.calls.append("prompt-velocity")
-        if self.fail_stage == "prompt-velocity":
-            raise RuntimeError("prompt velocity cleanup failed")
-
-
 class _CleanupHarness:
     def __init__(self, fail_stage: str | None = None) -> None:
         self.calls: list[str] = []
         self.fail_stage = fail_stage
-        self.interactor = _Input(self.calls, fail_stage)
-        self._velocity_prompt_controller = _Prompt(self.calls, fail_stage)
         self._latest_interaction_snapshot = type(
             "Snapshot", (), {"phase": InteractionPhase.ACTIVE}
         )()
@@ -262,13 +235,12 @@ def test_cleanup_flags_control_each_step_and_preserve_declared_order() -> None:
     SpectrumInteractionCoordinator.cleanup_for_policy(
         cast("SpectrumInteractionCoordinator", enabled), policy
     )
-    assert enabled.calls == ["input-velocity", "prompt-velocity", "mask", "drag", "interaction"]
+    assert enabled.calls == ["mask", "drag", "interaction"]
 
     disabled = _CleanupHarness()
     no_cleanup = replace(
         policy,
         transition_cleanup=SpectrumTransitionCleanup(
-            cancel_velocity_pending=False,
             cancel_mask_selection=False,
             cancel_absorber_drag=False,
             clear_interaction_mode=False,
@@ -281,9 +253,7 @@ def test_cleanup_flags_control_each_step_and_preserve_declared_order() -> None:
     assert disabled.calls == []
 
 
-@pytest.mark.parametrize(
-    "failure_stage", ("input-velocity", "prompt-velocity", "mask", "drag", "interaction")
-)
+@pytest.mark.parametrize("failure_stage", ("mask", "drag", "interaction"))
 def test_cleanup_stage_failure_attempts_every_remaining_stage(failure_stage: str) -> None:
     """One irreversible cleanup failure cannot skip later cleanup stages."""
     harness = _CleanupHarness(failure_stage)
@@ -294,5 +264,5 @@ def test_cleanup_stage_failure_attempts_every_remaining_stage(failure_stage: str
             cast("SpectrumInteractionCoordinator", harness), policy
         )
 
-    assert harness.calls == ["input-velocity", "prompt-velocity", "mask", "drag", "interaction"]
+    assert harness.calls == ["mask", "drag", "interaction"]
     assert len(exc_info.value.errors) == 1

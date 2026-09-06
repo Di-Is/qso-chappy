@@ -21,28 +21,28 @@ from chappy.application.history import (
     ModelComponentHistoryCommand,
     ModelOptimizeApplyCommand,
     ModelParameterEditCommand,
-    OrganizeDeleteCommand,
-    OrganizeMergeCommand,
-    OrganizeMoveSystemsCommand,
-    OrganizeSplitCommand,
-    OrganizeUnlinkSystemsCommand,
     ResolutionHistoryCommand,
     ScientificHistoryApplyExecutor,
+    StructureDeleteCommand,
+    StructureMergeCommand,
+    StructureMoveLinkedLinesCommand,
+    StructureSplitCommand,
+    StructureUnlinkLinkedLinesCommand,
     TieSetEditCommand,
 )
 from chappy.application.history.apply.continuum_apply import ContinuumApply
 from chappy.application.history.apply.identify_apply import IdentifyApply
 from chappy.application.history.apply.mask_apply import MaskApply
 from chappy.application.history.apply.model_apply import ModelApply
-from chappy.application.history.apply.organize_apply import OrganizeApply
 from chappy.application.history.apply.project_appliers import (
     ProjectContinuumHistoryApplier,
     ProjectIdentifyHistoryApplier,
     ProjectModelHistoryApplier,
-    ProjectOrganizeHistoryApplier,
     ProjectResolutionHistoryApplier,
+    ProjectStructureHistoryApplier,
 )
 from chappy.application.history.apply.resolution_apply import ResolutionApply
+from chappy.application.history.apply.structure_apply import StructureApply
 from chappy.application.history.apply.tie_set_apply import TieSetApply
 from chappy.application.optimize.model_topology_usecase import AbsorberModelTopologyUseCase
 from chappy.application.structure import (
@@ -60,7 +60,7 @@ if TYPE_CHECKING:
         RangeHistoryPort,
         ScientificHistoryApplyExecution,
     )
-    from chappy.application.organize import ResolutionChangeNotifier
+    from chappy.application.spectrum import ResolutionChangeNotifier
     from chappy.core.change_set import ChangeSet as DomainChangeSet
     from chappy.core.history import HistoryEvent
     from chappy.core.identify_state import IdentifySessionState
@@ -100,7 +100,7 @@ class HistoryApplyUseCase:
         absorber_topology = AbsorberModelTopologyUseCase()
 
         self._model_applier = ProjectModelHistoryApplier(project_provider)
-        self._organize_applier = ProjectOrganizeHistoryApplier(project_provider)
+        self._structure_applier = ProjectStructureHistoryApplier(project_provider)
         self._identify_applier = ProjectIdentifyHistoryApplier(project_provider)
         self._continuum_applier = ProjectContinuumHistoryApplier(project_provider)
         self._resolution_applier = ProjectResolutionHistoryApplier(project_provider)
@@ -110,7 +110,7 @@ class HistoryApplyUseCase:
         self._continuum_apply = ContinuumApply(self._scientific_executor, self._continuum_applier)
         self._mask_apply = MaskApply(self._scientific_executor)
         self._resolution_apply = ResolutionApply(self._scientific_executor)
-        self._organize_apply = OrganizeApply(self._structure_executor, structure_topology)
+        self._structure_apply = StructureApply(self._structure_executor, structure_topology)
         self._identify_apply = IdentifyApply(self._structure_executor, structure_topology)
 
     def apply_history_event(  # noqa: PLR0911 - one typed branch per command family
@@ -207,25 +207,25 @@ class HistoryApplyUseCase:
             )
             self._publish_commit(project, result, domain_changes)
             return result.success
-        if isinstance(command, OrganizeMoveSystemsCommand):
-            project = self._require_project("apply organize move history")
-            result, domain_changes = self._organize_apply.apply_move(
+        if isinstance(command, StructureMoveLinkedLinesCommand):
+            project = self._require_project("apply structure move history")
+            result, domain_changes = self._structure_apply.apply_move(
                 project, command, context=context, is_undo=is_undo
             )
             self._publish_commit(project, result, domain_changes)
             return result.success
         if isinstance(
-            command, (OrganizeSplitCommand, OrganizeMergeCommand, OrganizeDeleteCommand)
+            command, (StructureSplitCommand, StructureMergeCommand, StructureDeleteCommand)
         ):
-            project = self._require_project("apply organize structure history")
-            result, domain_changes = self._organize_apply.apply_structure(
+            project = self._require_project("apply structure structure history")
+            result, domain_changes = self._structure_apply.apply_structure(
                 project, command, context=context, is_undo=is_undo
             )
             self._publish_commit(project, result, domain_changes)
             return result.success
-        if isinstance(command, OrganizeUnlinkSystemsCommand):
-            project = self._require_project("apply organize unlink history")
-            result, domain_changes = self._organize_apply.apply_unlink(
+        if isinstance(command, StructureUnlinkLinkedLinesCommand):
+            project = self._require_project("apply structure unlink history")
+            result, domain_changes = self._structure_apply.apply_unlink(
                 project, command, context=context, is_undo=is_undo
             )
             self._publish_commit(project, result, domain_changes)
@@ -241,7 +241,7 @@ class HistoryApplyUseCase:
         return HistoryCommandContext(
             range_port=self._range_port,
             model_port=self._model_applier,
-            organize_port=self._organize_applier,
+            structure_port=self._structure_applier,
             identify_port=self._identify_applier,
             continuum_port=self._continuum_applier,
             resolution_port=self._resolution_applier,

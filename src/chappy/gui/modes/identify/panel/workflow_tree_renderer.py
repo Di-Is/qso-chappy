@@ -9,13 +9,13 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 from chappy.gui.modes.identify.panel.panel_models import (
-    CandidateLineRow,
     ConfirmedGroupItemPayload,
+    ConfirmedLineItemPayload,
     ConfirmedLineRow,
     ConfirmedRegionRow,
-    ConfirmedSystemItemPayload,
     RegionPreviewRow,
-    TemporarySystemItemPayload,
+    TemporaryLineItemPayload,
+    TemporaryLineRow,
 )
 
 if TYPE_CHECKING:
@@ -39,10 +39,10 @@ class IdentifyWorkflowTreeRenderer:
     def __init__(self) -> None:
         """Initialize the renderer."""
 
-    def render_temporary_systems(
+    def render_temporary_lines(
         self,
         tree: QTreeWidget,
-        systems: Sequence[CandidateLineRow],
+        lines: Sequence[TemporaryLineRow],
         previews: Sequence[RegionPreviewRow],
         *,
         selected_primary_ids: set[str],
@@ -51,19 +51,19 @@ class IdentifyWorkflowTreeRenderer:
         """Populate the temporary tree grouped by registration previews.
 
         Group heading rows are non-selectable; child rows carry the temporary
-        system payloads and restore the previous selection by primary ID.
+        line payloads and restore the previous selection by primary ID.
         """
         tree.clear()
 
-        row_lookup: dict[str, CandidateLineRow] = {}
-        for row in systems:
-            for system_id in row.system_ids:
-                row_lookup[system_id] = row
+        row_lookup: dict[str, TemporaryLineRow] = {}
+        for row in lines:
+            for temporary_line_id in row.temporary_line_ids:
+                row_lookup[temporary_line_id] = row
 
         display_index = 0
         rendered_row_ids: set[int] = set()
         for preview in previews:
-            member_rows = self._unique_member_rows(preview.member_system_ids, row_lookup)
+            member_rows = self._unique_member_rows(preview.member_temporary_line_ids, row_lookup)
             if not member_rows:
                 continue
             heading = QTreeWidgetItem(tree)
@@ -84,7 +84,7 @@ class IdentifyWorkflowTreeRenderer:
                 )
             heading.setExpanded(True)
 
-        for row in self._sorted_rows(systems):
+        for row in self._sorted_rows(lines):
             if id(row) in rendered_row_ids:
                 continue
             display_index += 1
@@ -110,7 +110,7 @@ class IdentifyWorkflowTreeRenderer:
                 tree=tree,
                 group_id=group.group_id,
                 label=group.label,
-                systems=group.systems,
+                lines=group.lines,
                 is_expanded=group.is_expanded,
                 text=text,
             )
@@ -121,70 +121,70 @@ class IdentifyWorkflowTreeRenderer:
         tree: QTreeWidget,
         group_id: str,
         label: str,
-        systems: Sequence[ConfirmedLineRow],
+        lines: Sequence[ConfirmedLineRow],
         is_expanded: bool,
         text: IdentifyWorkflowTreeText,
     ) -> QTreeWidgetItem:
-        """Create a confirmed group item and its system children."""
+        """Create a confirmed group item and its line children."""
         group_item = QTreeWidgetItem(tree)
         group_item.setText(0, label)
         group_item.setData(0, Qt.ItemDataRole.UserRole, ConfirmedGroupItemPayload(group_id))
 
-        for system in systems:
-            self.add_confirmed_system_item(group_item, system, text=text)
+        for line in lines:
+            self.add_confirmed_line_item(group_item, line, text=text)
 
         group_item.setExpanded(is_expanded)
         return group_item
 
-    def add_confirmed_system_item(
-        self, parent: QTreeWidgetItem, system: ConfirmedLineRow, *, text: IdentifyWorkflowTreeText
+    def add_confirmed_line_item(
+        self, parent: QTreeWidgetItem, line: ConfirmedLineRow, *, text: IdentifyWorkflowTreeText
     ) -> QTreeWidgetItem:
-        """Add a confirmed system item as a child of the given parent."""
-        base_label = self._system_display_name(system, text=text)
-        system_label = f"{system.display_id}. {base_label}" if system.display_id else base_label
-        system_text = f"{system_label} [z={system.redshift:.4f}]"
+        """Add a confirmed line item as a child of the given parent."""
+        base_label = self._line_display_name(line, text=text)
+        line_label = f"{line.display_id}. {base_label}" if line.display_id else base_label
+        line_text = f"{line_label} [z={line.redshift:.4f}]"
 
-        system_item = QTreeWidgetItem(parent)
-        system_item.setText(0, system_text)
-        system_item.setData(
-            0, Qt.ItemDataRole.UserRole, ConfirmedSystemItemPayload(system.system_id)
-        )
-        return system_item
+        line_item = QTreeWidgetItem(parent)
+        line_item.setText(0, line_text)
+        line_item.setData(0, Qt.ItemDataRole.UserRole, ConfirmedLineItemPayload(line.line_id))
+        return line_item
 
-    def format_candidate_line(self, system: CandidateLineRow, *, display_index: int) -> str:
-        """Format a candidate line for list display."""
-        base_label = self.temporary_display_name(system)
+    def format_temporary_line(self, line: TemporaryLineRow, *, display_index: int) -> str:
+        """Format a temporary line for list display."""
+        base_label = self.temporary_display_name(line)
         prefix = f"{display_index}. "
-        z_part = f"[z={system.redshift:.4f}]" if system.redshift is not None else ""
-        range_part = f"@ {system.lambda_start:.1f}-{system.lambda_end:.1f}"
+        z_part = f"[z={line.redshift:.4f}]" if line.redshift is not None else ""
+        range_part = f"@ {line.lambda_start:.1f}-{line.lambda_end:.1f}"
         return f"{prefix}{base_label} {z_part} {range_part}".strip()
 
-    def temporary_display_name(self, system: CandidateLineRow) -> str:
-        """Return the preferred display label for a temporary system."""
-        if system.multiplet_label:
-            return system.multiplet_label
-        return system.transition_name
+    def temporary_display_name(self, line: TemporaryLineRow) -> str:
+        """Return the preferred display label for a temporary line."""
+        if line.multiplet_label:
+            return line.multiplet_label
+        return line.transition_name
 
     def _add_temporary_item(
         self,
         parent: QTreeWidget | QTreeWidgetItem,
-        system: CandidateLineRow,
+        line: TemporaryLineRow,
         *,
         display_index: int,
         selected_primary_ids: set[str],
         text: IdentifyWorkflowTreeText,
     ) -> None:
-        primary_id = system.system_ids[0]
+        primary_id = line.temporary_line_ids[0]
         tree_item = QTreeWidgetItem(
-            [self.format_candidate_line(system, display_index=display_index)]
+            [self.format_temporary_line(line, display_index=display_index)]
         )
         tree_item.setData(
             0,
             Qt.ItemDataRole.UserRole,
-            TemporarySystemItemPayload(primary_system_id=primary_id, system_ids=system.system_ids),
+            TemporaryLineItemPayload(
+                primary_temporary_line_id=primary_id, temporary_line_ids=line.temporary_line_ids
+            ),
         )
 
-        member_count = len(system.system_ids)
+        member_count = len(line.temporary_line_ids)
         if member_count > 1:
             tree_item.setToolTip(0, text.grouped_template.format(count=member_count))
 
@@ -198,7 +198,7 @@ class IdentifyWorkflowTreeRenderer:
     def _group_heading_text(
         self,
         preview: RegionPreviewRow,
-        member_rows: Sequence[CandidateLineRow],
+        member_rows: Sequence[TemporaryLineRow],
         *,
         text: IdentifyWorkflowTreeText,
     ) -> str:
@@ -219,11 +219,11 @@ class IdentifyWorkflowTreeRenderer:
 
     @staticmethod
     def _unique_member_rows(
-        member_system_ids: Sequence[str], row_lookup: dict[str, CandidateLineRow]
-    ) -> list[CandidateLineRow]:
-        rows: list[CandidateLineRow] = []
+        member_temporary_line_ids: Sequence[str], row_lookup: dict[str, TemporaryLineRow]
+    ) -> list[TemporaryLineRow]:
+        rows: list[TemporaryLineRow] = []
         seen: set[int] = set()
-        for member_id in member_system_ids:
+        for member_id in member_temporary_line_ids:
             row = row_lookup.get(member_id)
             if row is None or id(row) in seen:
                 continue
@@ -232,17 +232,15 @@ class IdentifyWorkflowTreeRenderer:
         return rows
 
     @staticmethod
-    def _sorted_rows(rows: Sequence[CandidateLineRow]) -> list[CandidateLineRow]:
+    def _sorted_rows(rows: Sequence[TemporaryLineRow]) -> list[TemporaryLineRow]:
         return sorted(
             rows, key=lambda row: row.redshift if row.redshift is not None else float("inf")
         )
 
-    def _system_display_name(
-        self, system: ConfirmedLineRow, *, text: IdentifyWorkflowTreeText
-    ) -> str:
-        label = (system.transition_name or "").strip()
+    def _line_display_name(self, line: ConfirmedLineRow, *, text: IdentifyWorkflowTreeText) -> str:
+        label = (line.transition_name or "").strip()
         if not label:
-            label = (system.species or "").strip()
+            label = (line.species or "").strip()
         if label:
             return label
         return text.unknown

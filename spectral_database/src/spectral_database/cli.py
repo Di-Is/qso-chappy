@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from spectral_database.csv_writer import write_csv
 from spectral_database.data_models import FilterOptions
+from spectral_database.excitation import annotate_excitation_labels
 from spectral_database.filters import collect_level_decay_totals, to_records
 from spectral_database.hydrogen import synthesize_hydrogen_series
 from spectral_database.multiplet import process_multiplets
@@ -276,6 +277,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # Process multiplets using new spec.md algorithm
     multiplet_metrics = process_multiplets(records)
+
+    annotate_excitation_labels(records)
 
     # Sort by absorption_multiplet_id, then wavelength (spec.md §5.6)
     records.sort(key=lambda r: (r.absorption_multiplet_id or "", r.wavelength))

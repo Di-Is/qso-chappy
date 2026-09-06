@@ -47,6 +47,7 @@ def test_zoom_factor_keeps_cursor_relative_position() -> None:
     )
 
     assert result.wavelength_range == pytest.approx((1450.0, 1950.0))
+    assert result.source is SpectrumRangeSource.INTENT
 
 
 def test_zoom_rect_returns_flux_range_and_rect_source() -> None:

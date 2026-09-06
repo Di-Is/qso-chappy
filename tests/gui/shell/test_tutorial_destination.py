@@ -21,8 +21,8 @@ from chappy.gui.common.tutorial import (
     TutorialTargetProminence,
     TutorialTargetRole,
 )
-from chappy.gui.shell.tutorial_chapters import build_full_walkthrough_chapters
 from chappy.gui.shell.tutorial_tour_controller import TutorialTourController
+from tests.helpers.tutorial_chapters import all_walkthrough_chapters
 
 
 def _step() -> TutorialStep:
@@ -583,7 +583,7 @@ def test_getting_started_own_data_observe_step_blocks_real_new_button_click(qtbo
     """Clicking the highlighted New position must not emit its file-dialog action."""
     source_chapter = next(
         chapter
-        for chapter in build_full_walkthrough_chapters()
+        for chapter in all_walkthrough_chapters()
         if chapter.chapter_id == "getting_started"
     )
     own_data_step = next(
@@ -625,7 +625,7 @@ def test_getting_started_interact_step_delivers_click_to_real_sample_button(qtbo
     """A real walkthrough INTERACT definition must expose its button's clicked signal."""
     source_chapter = next(
         chapter
-        for chapter in build_full_walkthrough_chapters()
+        for chapter in all_walkthrough_chapters()
         if chapter.chapter_id == "getting_started"
     )
     zoom_step = next(

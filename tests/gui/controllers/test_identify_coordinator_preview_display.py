@@ -17,13 +17,13 @@ from chappy.application.identify import (
     BuildRegionPreviewsUseCase,
 )
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
-from chappy.core.identify_state import CandidateLine, CandidateLineContext, IdentifySessionState
+from chappy.core.identify_state import TemporaryLine, TemporaryLineContext, IdentifySessionState
 from chappy.core.presets import Preset
 from chappy.core.spectroscopy_project import SpectroscopyProject
 from chappy.gui.modes.identify.coordinator import IdentifyModeCoordinator
 from chappy.gui.modes.identify.panel.panel import IdentifySidePanel
 from chappy.gui.modes.identify.panel.panel_models import (
-    CandidateLineRow,
+    TemporaryLineRow,
     ConfirmedRegionRow,
     RegionPreviewRow,
 )
@@ -40,18 +40,19 @@ pytestmark = pytest.mark.usefixtures("qapp")
 
 
 IDENTIFY_COORDINATOR_QT_SOURCES = {
-    "Added {count} candidate line(s).",
-    "Added {count} candidate line(s) from the velocity plot.",
-    "Added {created} candidate line(s); skipped {skipped} duplicate(s).",
+    "Added {count} temporary line(s).",
+    "Added {count} temporary line(s) from the velocity plot.",
+    "Added {created} temporary line(s); skipped {skipped} duplicate(s).",
     "Baseline line updated for the active preset.",
     "Candidate table",
-    "Candidate line added for {species} (λ = {start:.2f}–{end:.2f} Å).",
-    "Candidate line already exists at this location.",
-    "Candidate line limit reached (1000 entries).",
-    "Candidate lines cleared.",
-    "Candidate lines could not be registered.",
+    "Temporary line added for {species} (λ = {start:.2f}–{end:.2f} Å).",
+    "A temporary line already exists at this location.",
+    "Temporary line limit reached (1000 entries).",
+    "Temporary lines cleared.",
+    "Temporary lines could not be registered.",
     "Cannot register lines without an active project.",
     "Registered {count} line(s)",
+    "Undo ({undo_shortcut}) reverts this registration.",
     " ({details})",
     "{count} new region(s)",
     "added to {region}",
@@ -65,22 +66,22 @@ IDENTIFY_COORDINATOR_QT_SOURCES = {
     "Focused spectrum view on line range (λ = {start:.1f}–{end:.1f} Å).",
     "Insufficient data for detection (minimum 100 samples).",
     "Manual placement",
-    "No candidate lines selected.",
-    "No candidate lines to clear.",
+    "No temporary lines selected.",
+    "No temporary lines to clear.",
     "No lines were selected.",
     "Please specify a valid wavelength position",
     "Preset could not be selected because it no longer exists.",
-    "Removed {count} candidate line(s).",
+    "Removed {count} temporary line(s).",
     "Select a baseline line before opening the velocity plot.",
     "Select at least one line in the velocity plot.",
-    "Selected candidate lines were not removed.",
-    "Unable to create candidate lines from the selected lines.",
+    "Selected temporary lines were not removed.",
+    "Unable to create temporary lines from the selected lines.",
     "Unknown",
     "Velocity plot",
     "Velocity plot centered at z = {z:.4f} for {label}.",
     "Velocity plot closed.",
     "New candidates ±{value:g} km/s  ·  V: Verify in Velocity Plot",
-    "{count} system(s) could not be registered due to missing atomic data.",
+    "{count} temporary line(s) could not be registered due to missing atomic data.",
 }
 
 
@@ -190,15 +191,15 @@ class _WorkflowPanel:
 
     def __init__(self) -> None:
         """Initialize captured row containers."""
-        self.candidate_lines: list[CandidateLineRow] = []
+        self.temporary_lines: list[TemporaryLineRow] = []
         self.region_previews: list[RegionPreviewRow] = []
         self.confirmed_regions: list[ConfirmedRegionRow] = []
 
-    def set_temporary_systems(
-        self, systems: Sequence[CandidateLineRow], previews: Sequence[RegionPreviewRow] = ()
+    def set_temporary_lines(
+        self, lines: Sequence[TemporaryLineRow], previews: Sequence[RegionPreviewRow] = ()
     ) -> None:
-        """Store temporary system and preview rows for assertions."""
-        self.candidate_lines = list(systems)
+        """Store temporary line and preview rows for assertions."""
+        self.temporary_lines = list(lines)
         self.region_previews = list(previews)
 
     def set_confirmed_regions(self, regions: Sequence[ConfirmedRegionRow]) -> None:
@@ -219,6 +220,7 @@ def _build_coordinator(project: SpectroscopyProject | None = None) -> IdentifyMo
             history_recorder_provider=lambda: main_window.identify_history_recorder,
             velocity_runtime_provider=lambda: main_window.identify_velocity_runtime,
             preset_dialog_provider=lambda: main_window.preset_dialog_port,
+            undo_shortcut_provider=lambda: "Ctrl+Z",
         ),
         atomic_data=get_atomic_data(),
         preset_store=main_window.preset_store,
@@ -237,8 +239,8 @@ def _registration_messages() -> IdentifyRegistrationWorkflowMessages:
     """Return deterministic registration workflow messages."""
     return IdentifyRegistrationWorkflowMessages(
         cannot_register_without_project="No project",
-        no_candidates_to_register="No candidates",
-        candidate_lines_could_not_register="Failed",
+        no_temporary_lines_to_register="No candidates",
+        temporary_lines_could_not_register="Failed",
         registered_template="Registered {count}",
         registered_details_template=" ({details})",
         new_regions_template="{count} new region(s)",
@@ -246,6 +248,7 @@ def _registration_messages() -> IdentifyRegistrationWorkflowMessages:
         detail_separator=", ",
         multi_overlap_warning="Overlaps multiple existing regions.",
         missing_atomic_template="Missing {count}",
+        undo_hint="Undo (Ctrl+Z) reverts this registration.",
         unknown="Unknown",
     )
 
@@ -268,22 +271,22 @@ def _build_registration_workflow(
     )
 
 
-def _candidate_line(
-    system_id: str,
+def _temporary_line(
+    temporary_line_id: str,
     creation_method: str,
     *,
     species: str = "Mg II",
     lambda_min: float = 5000.0,
     lambda_max: float = 5010.0,
-) -> CandidateLine:
-    """Create a candidate line for workflow tests."""
-    return CandidateLine(
-        system_id=system_id,
+) -> TemporaryLine:
+    """Create a temporary line for workflow tests."""
+    return TemporaryLine(
+        temporary_line_id=temporary_line_id,
         species=species,
         lambda_min=lambda_min,
         lambda_max=lambda_max,
         creation_method=creation_method,
-        line_id=f"{system_id}-line",
+        line_id=f"{temporary_line_id}-line",
         rest_wavelength=2796.352,
         center_z=0.788,
         multiplet_id="",
@@ -295,17 +298,17 @@ def _candidate_line(
     )
 
 
-def _add_candidate_line(
+def _add_temporary_line(
     session: IdentifySessionState,
-    system_id: str,
+    temporary_line_id: str,
     creation_method: str,
     *,
     lambda_min: float,
     lambda_max: float,
-) -> CandidateLine:
-    """Add a candidate line through the session API."""
-    context = CandidateLineContext(
-        line_id=f"{system_id}-line",
+) -> TemporaryLine:
+    """Add a temporary line through the session API."""
+    context = TemporaryLineContext(
+        line_id=f"{temporary_line_id}-line",
         rest_wavelength=2796.352,
         center_z=0.788,
         multiplet_id="",
@@ -315,7 +318,7 @@ def _add_candidate_line(
         gamma_value=2.6e8,
         tie_group_key="",
     )
-    return session.add_candidate_line(
+    return session.add_temporary_line(
         species="Mg II",
         lambda_min=lambda_min,
         lambda_max=lambda_max,
@@ -339,19 +342,19 @@ def test_workflow_labels_use_qt_source_text() -> None:
     coordinator = _build_coordinator(project=None)
     panel = _WorkflowPanel()
     coordinator._panel = cast(IdentifySidePanel, panel)
-    _add_candidate_line(
+    _add_temporary_line(
         coordinator._session, "candidate", "candidate_table", lambda_min=5000.0, lambda_max=5005.0
     )
-    _add_candidate_line(
+    _add_temporary_line(
         coordinator._session, "manual", "manual", lambda_min=5010.0, lambda_max=5015.0
     )
-    _add_candidate_line(
+    _add_temporary_line(
         coordinator._session, "velocity", "velocity_plot", lambda_min=5020.0, lambda_max=5025.0
     )
 
     coordinator._refresh_workflow()
 
-    assert {row.creation_method for row in panel.candidate_lines} == {
+    assert {row.creation_method for row in panel.temporary_lines} == {
         "Candidate table",
         "Manual placement",
         "Velocity plot",
@@ -371,11 +374,11 @@ def test_cursor_preview_hint_reports_current_state_and_next_action() -> None:
 def test_region_preview_and_default_group_name_use_qt_source_text() -> None:
     """Verify migrated fallback labels use Qt source text."""
     workflow = _build_registration_workflow(project=None)
-    candidate = _candidate_line(
+    temporary_line = _temporary_line(
         "unknown", "manual", species="", lambda_min=5100.0, lambda_max=5110.0
     )
 
-    previews = workflow.build_region_previews([candidate])
+    previews = workflow.build_region_previews([temporary_line])
 
     assert previews[0].name == "Unknown @ 5100.0-5110.0Å"
 

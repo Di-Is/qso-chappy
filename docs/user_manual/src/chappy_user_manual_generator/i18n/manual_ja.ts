@@ -4,518 +4,493 @@
 <context>
     <name>ManualAnnotations</name>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="19"/>
+        <location filename="_annotations_extraction_bridge.py" line="16"/>
         <source>**Colour indicator**: The colour chip beside each region matches the vertical band in the spectrum. Double-click when you need to refocus on the matching range.</source>
         <oldsource>**Browse mode side panel**: Collapse the tree while reviewing each line’s type, wavelength span, redshift, velocity window, and Needs badge. The colour chip beside each region matches the spectrum overlay; see [Browse mode side panel](#browse-mode-side-panel) for a quick reference.</oldsource>
         <translation>**色付きインジケータ**: 各領域の左側にある色がスペクトルの縦帯と対応します。色で追いづらい場合はダブルクリックで対象範囲を再表示できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="27"/>
+        <location filename="_annotations_extraction_bridge.py" line="18"/>
         <source>**Fitting linked lines**: When you add a model to one linked line, components are created for every line in the link. By default, redshift, column density, b parameter, and covering factor are shared; changing one updates all linked components.</source>
         <translation>**連結ラインのフィット**: 連結されたラインの 1 つにモデルを追加すると、連結されたすべてのラインにコンポーネントが作成されます。初期状態では赤方偏移、カラム密度、b パラメータ、被覆率が共有され、いずれかを変更すると連結された全コンポーネントに反映されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="31"/>
+        <location filename="_annotations_extraction_bridge.py" line="19"/>
         <source>**Link groups**: When you add a candidate using a line in a link group, a temporary line is created for every line in that group. After you register them, those lines remain linked in the project.</source>
         <oldsource>**Link groups**: When you add a candidate using a line in a link group, a temporary line is created for every line in that group. After you confirm region registration, those lines remain linked in the project.</oldsource>
         <translation>**連結グループ**: 連結グループのラインを基準に候補を追加すると、グループ内の各ラインが一時ラインとして作成されます。登録した後も、ライン同士の連結関係がプロジェクトに保存されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="35"/>
+        <location filename="_annotations_extraction_bridge.py" line="20"/>
         <source>**Linked-line display**: Lines registered from the same preset link group are displayed as a single representative line with the highest f-value.</source>
         <oldsource>**Multiplet display**: Multiplets are displayed as a single representative line with the highest f-value, but optimization runs on all members.</oldsource>
         <translation>**連結ライン表示**: 同じプリセット連結グループから登録されたラインは、f 値が最大の代表ラインにまとめて表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="39"/>
+        <location filename="_annotations_extraction_bridge.py" line="21"/>
         <source>**Spectrum display**: Double-click an absorption region (region) to jump the spectrum to the wavelength span that contains all of its absorption lines (lines); the coloured bands highlight that range.</source>
-        <translation>**スペクトル表示**: 領域をダブルクリックすると、その領域に含まれるライン（システム）が存在する波長範囲へスペクトルが移動し、縦帯の色で範囲が示されます。</translation>
+        <translation>**スペクトル表示**: 領域をダブルクリックすると、その領域に含まれるラインが存在する波長範囲へスペクトルが移動し、縦帯の色で範囲が示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="47"/>
+        <location filename="_annotations_extraction_bridge.py" line="23"/>
         <source>A Needs badge marks regions that still require optimisation.</source>
         <translation>要最適化バッジが付いている領域は、パラメータの手動変更、コンポーネントの追加、連続光モデルの変更等で最適化が必要であることを示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="50"/>
+        <location filename="_annotations_extraction_bridge.py" line="24"/>
         <source>A component that needs re-optimization shows its value without an uncertainty, since the previous fit&apos;s uncertainty no longer applies; hover the cell to see that previous value in the tooltip.</source>
         <translation>要再最適化のコンポーネントは値のみを表示し、誤差は表示しません。前回のフィットで得た誤差は現在の値に対応しないためです。セルにカーソルを合わせるとツールチップでその前回の誤差を確認できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="58"/>
+        <location filename="_annotations_extraction_bridge.py" line="26"/>
         <source>A warning shown when the filter conditions conflict, such as an invalid wavelength range. It hides automatically once the conditions are fixed.</source>
         <oldsource>A temporary line is saved to a region only after the Region → Confirm sequence; pressing the Region button alone does not save it.</oldsource>
         <translation>波長範囲の指定が不正な場合など、フィルター条件が矛盾しているときに表示される警告です。条件を修正すると自動的に非表示になります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="62"/>
+        <location filename="_annotations_extraction_bridge.py" line="27"/>
         <source>Absorber tree</source>
         <translation>領域ツリー</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="63"/>
+        <location filename="_annotations_extraction_bridge.py" line="28"/>
         <source>Add component</source>
         <translation>コンポーネントを追加</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="64"/>
+        <location filename="_annotations_extraction_bridge.py" line="29"/>
         <source>Add lines with Add Line and remove them with Remove Selected.</source>
         <translation>線種を追加 からラインを追加し、選択項目を削除 で除去します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="67"/>
+        <location filename="_annotations_extraction_bridge.py" line="30"/>
         <source>Add new presets, edit membership (lines in or out), or delete unused presets.</source>
         <translation>プリセット管理ダイアログを表示し、プリセットの追加・削除・編集（スペクトル線の追加、削除）を行います。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="76"/>
+        <location filename="_annotations_extraction_bridge.py" line="33"/>
         <source>Add the selected lines to the calling preset and close the dialog.</source>
         <translation>選択済みのラインを呼び出し元のプリセットへ追加してダイアログを閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="79"/>
+        <location filename="_annotations_extraction_bridge.py" line="34"/>
         <source>Additional Notes</source>
         <translation>補足</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="84"/>
+        <location filename="_annotations_extraction_bridge.py" line="36"/>
         <source>Adjust the continuum curve with control points.</source>
         <oldsource>Adjust the continuum and masks.</oldsource>
         <translation>制御点で連続光モデルを調整します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="110"/>
+        <location filename="_annotations_extraction_bridge.py" line="47"/>
         <source>Anchor line</source>
         <translation>基準線</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="111"/>
+        <location filename="_annotations_extraction_bridge.py" line="48"/>
         <source>Appears when further adjustments are required for a region, highlighting items that need optimization.</source>
         <translation>コンポーネントの手動編集などが実施され、最適化が必要な領域がある場合に表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="118"/>
+        <location filename="_annotations_extraction_bridge.py" line="50"/>
         <source>Apply the Planck 2018 recommended parameters (67.4, 0.315, 0.685) to the fields.</source>
         <translation>Planck 2018 の推奨パラメータ (67.4, 0.315, 0.685) を各フィールドへ適用します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="122"/>
+        <location filename="_annotations_extraction_bridge.py" line="51"/>
         <source>Auto Adjust</source>
         <translation>自動調整</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="123"/>
+        <location filename="_annotations_extraction_bridge.py" line="52"/>
         <source>Auto Estimate</source>
         <translation>自動推定</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="124"/>
+        <location filename="_annotations_extraction_bridge.py" line="53"/>
         <source>Auto estimation overwrites existing control points; save the current state first.</source>
         <translation>自動推定は既存の制御点を上書きするため、実行前に状態を保存してください。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="54"/>
+        <location filename="_annotations_extraction_bridge.py" line="25"/>
         <source>A link group contains at least two lines of the same ion, and each line can belong to only one link group.</source>
         <translation>連結グループには同じイオンのラインが 2 本以上必要で、各ラインが所属できる連結グループは 1 つだけです。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="94"/>
+        <location filename="_annotations_extraction_bridge.py" line="40"/>
         <source>Analysis Overview reviews every region&apos;s readiness, fit result, and next action.</source>
         <translation>解析概要では、各領域の解析状態、フィット結果、次の操作を確認します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="115"/>
+        <location filename="_annotations_extraction_bridge.py" line="49"/>
         <source>Apply all currently valid link suggestions to the custom preset.</source>
         <translation>現在有効な連結候補をすべてカスタムプリセットに適用します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="131"/>
+        <location filename="_annotations_extraction_bridge.py" line="57"/>
         <source>Built-in presets cannot be edited; duplicate one and save it as a custom preset.</source>
         <translation>組み込みプリセットは編集できず、複製してカスタムプリセットとして保存してください。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="136"/>
+        <location filename="_annotations_extraction_bridge.py" line="59"/>
         <source>Central canvas that shows the observed spectrum and fitted models with zoom and measurement tools.</source>
         <translation>観測フラックス、観測誤差等を表示し、ズーム等の各種操作を行うメイン画面です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="140"/>
+        <location filename="_annotations_extraction_bridge.py" line="61"/>
         <source>Choose the error FITS file from a file dialog.</source>
         <translation>誤差用 FITS ファイルをファイルダイアログから選択します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="141"/>
+        <location filename="_annotations_extraction_bridge.py" line="62"/>
         <source>Choose the flux FITS file from a file dialog.</source>
         <translation>フラックス用 FITS ファイルをファイルダイアログから選択します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="142"/>
+        <location filename="_annotations_extraction_bridge.py" line="63"/>
         <source>Choose the preset&apos;s anchor line. When set, it is selected as the default anchor in Identify mode.</source>
         <translation>プリセットの基準線を選択します。指定すると同定モードでデフォルトで基準線として選択されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="146"/>
-        <source>Choose the region to add the lines to, or specify creating a new region.</source>
-        <translation>ラインを追加する領域を選択するか、新規領域の作成を指定します。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="150"/>
+        <location filename="_annotations_extraction_bridge.py" line="64"/>
         <source>Choose the single line used as the identification anchor. The popup lists every line in the preset with its rest wavelength; hover an item to see its oscillator strength and full-precision wavelength.</source>
         <translation>同定の基準として使用するラインを 1 つ選択します。ポップアップにはプリセットの全ラインが静止波長付きで一覧表示されます。項目にカーソルを合わせると振動子強度（f 値）と全精度の波長を確認できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="154"/>
-        <source>Choosing the JA 日本語 / EN English radio button updates the preview to that language.</source>
-        <translation>JA 日本語 / EN English のラジオボタンを選ぶとプレビューが対象言語に更新されます。</translation>
+        <location filename="_annotations_extraction_bridge.py" line="65"/>
+        <source>Choosing a language from the list updates the preview to that language.</source>
+        <translation>一覧から言語を選ぶと、プレビューがその言語に切り替わります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="158"/>
+        <location filename="_annotations_extraction_bridge.py" line="66"/>
         <source>Clear Control Points</source>
         <translation>制御点をクリア</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="159"/>
+        <location filename="_annotations_extraction_bridge.py" line="67"/>
         <source>Clear the selected list at once when you want to start over.</source>
         <translation>選択済み一覧を一括でクリアし、やり直す際に利用します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="173"/>
+        <location filename="_annotations_extraction_bridge.py" line="72"/>
         <source>Close the dialog without applying the search results.</source>
         <translation>検索結果を反映せずにダイアログを閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="176"/>
-        <source>Close the dialog without changing the setting.</source>
-        <translation>設定を変更せずダイアログを閉じます。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="181"/>
+        <location filename="_annotations_extraction_bridge.py" line="74"/>
         <source>Component parameter table</source>
         <translation>コンポーネントパラメータ一覧</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="187"/>
+        <location filename="_annotations_extraction_bridge.py" line="77"/>
         <source>Confirmed regions</source>
         <translation>確定領域</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="188"/>
+        <location filename="_annotations_extraction_bridge.py" line="78"/>
         <source>Continuum Mode</source>
         <translation>連続光モード</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="193"/>
+        <location filename="_annotations_extraction_bridge.py" line="80"/>
         <source>Control Point List</source>
         <translation>制御点リスト</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="194"/>
+        <location filename="_annotations_extraction_bridge.py" line="81"/>
         <source>Control Point Table</source>
         <translation>制御点テーブル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="195"/>
+        <location filename="_annotations_extraction_bridge.py" line="82"/>
         <source>Controls for adjusting the spectrum view range and scaling.</source>
         <translation>スペクトル表示範囲とスケールを調整するコントロール群です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="198"/>
+        <location filename="_annotations_extraction_bridge.py" line="83"/>
         <source>Coordinate Readout</source>
         <translation>座標表示</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="199"/>
+        <location filename="_annotations_extraction_bridge.py" line="84"/>
         <source>Create a link group from two or more selected lines of the same ion.</source>
         <translation>選択した同じイオンのライン 2 本以上から連結グループを作成します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="202"/>
+        <location filename="_annotations_extraction_bridge.py" line="85"/>
         <source>Create an empty preset ready for any line composition.</source>
         <translation>空のプリセットを作成し、任意のライン構成を追加できる状態にします。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="205"/>
+        <location filename="_annotations_extraction_bridge.py" line="86"/>
         <source>Create an empty workspace with “New Project” when starting from scratch.</source>
         <translation>最初から始める場合は［新規プロジェクト］で空のワークスペースを作成します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="209"/>
+        <location filename="_annotations_extraction_bridge.py" line="87"/>
         <source>Create and adjust wavelength masks to exclude regions from the fit.</source>
         <translation>波長マスクを追加・編集して、フィットから除外する領域を制御します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="212"/>
+        <location filename="_annotations_extraction_bridge.py" line="88"/>
         <source>Data Controls</source>
         <translation>データ制御パネル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="214"/>
+        <location filename="_annotations_extraction_bridge.py" line="90"/>
         <source>Delete selected regions or lines after reviewing the impact confirmation.</source>
         <translation>影響確認の内容を確認してから、選択した領域またはラインを削除します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="218"/>
+        <location filename="_annotations_extraction_bridge.py" line="91"/>
         <source>Delete selection</source>
         <translation>選択を削除</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="219"/>
+        <location filename="_annotations_extraction_bridge.py" line="92"/>
         <source>Delete the selected custom preset.</source>
         <translation>選択中のカスタムプリセットを削除します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="220"/>
-        <source>Destination</source>
-        <translation>追加先</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="221"/>
+        <location filename="_annotations_extraction_bridge.py" line="93"/>
         <source>Detail preview</source>
         <translation>詳細プレビュー</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="222"/>
+        <location filename="_annotations_extraction_bridge.py" line="94"/>
         <source>Detection candidate table</source>
         <translation>検出候補一覧</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="223"/>
+        <location filename="_annotations_extraction_bridge.py" line="95"/>
         <source>Detection candidates</source>
         <translation>検出候補</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="224"/>
+        <location filename="_annotations_extraction_bridge.py" line="96"/>
         <source>Discard the changes and close the dialog.</source>
         <translation>変更内容を破棄してダイアログを閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="228"/>
+        <location filename="_annotations_extraction_bridge.py" line="101"/>
         <source>Displays application status, messages, and cursor readouts.</source>
         <translation>現在の状態、メッセージ、カーソル情報を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="231"/>
+        <location filename="_annotations_extraction_bridge.py" line="102"/>
         <source>Displays the current mode and project state.</source>
         <translation>現在のモードやプロジェクト状態を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="232"/>
+        <location filename="_annotations_extraction_bridge.py" line="103"/>
         <source>Displays wavelength, flux, and action columns for every control point; double-click to edit values.</source>
         <translation>各制御点の波長・フラックス・操作列を表示します。ダブルクリックで数値を編集できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="237"/>
+        <location filename="_annotations_extraction_bridge.py" line="105"/>
         <source>Double-click on the spectrum view to center the display on that wavelength (zoom level is preserved).</source>
         <translation>スペクトルビューをダブルクリックすると、その波長を中心に表示範囲が移動します（ズーム倍率は維持）。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="241"/>
+        <location filename="_annotations_extraction_bridge.py" line="106"/>
         <source>Drag a rectangle to zoom into that region of the spectrum.</source>
         <translation>ドラッグした矩形範囲を拡大して表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="244"/>
+        <location filename="_annotations_extraction_bridge.py" line="107"/>
         <source>Drag and drop the flux/error FITS pair or a .h5 project onto the main view.</source>
         <translation>スペクトル表示領域へ FITS（フラックスと誤差）や .h5 プロジェクトをドラッグ＆ドロップします。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="248"/>
+        <location filename="_annotations_extraction_bridge.py" line="108"/>
         <source>Duplicate the selected preset into an editable copy.</source>
         <translation>選択中のプリセットを複製し、編集可能なコピーを作成します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="257"/>
+        <location filename="_annotations_extraction_bridge.py" line="111"/>
         <source>Edit presets with the New / Duplicate / Rename / Delete buttons.</source>
         <translation>新規／複製／名前を変更／削除 ボタンでプリセットを編集します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="261"/>
+        <location filename="_annotations_extraction_bridge.py" line="113"/>
         <source>Editing H₀, Ωm, or ΩΛ immediately recomputes Ωk and the flatness indicator.</source>
         <translation>H₀・Ωm・ΩΛ を編集すると Ωk とフラット表示が即座に再計算されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="265"/>
+        <location filename="_annotations_extraction_bridge.py" line="114"/>
         <source>Element</source>
         <translation>元素</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="266"/>
+        <location filename="_annotations_extraction_bridge.py" line="115"/>
         <source>Enter an element symbol, line ID, transition name, or similar for partial-match search.</source>
         <translation>元素記号やライン ID、遷移名などを入力して部分一致検索を行います。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="270"/>
+        <location filename="_annotations_extraction_bridge.py" line="116"/>
         <source>Enter the instrument&apos;s resolution in the Spectral Resolution R field.</source>
         <translation>波長分解能 R フィールドに装置の分解能値を入力します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="274"/>
+        <location filename="_annotations_extraction_bridge.py" line="117"/>
         <source>Enter the matter density Ωm in the range 0.000–1.000. Changing it updates Ωk.</source>
         <translation>物質密度 Ωm を 0.000 ～ 1.000 の範囲で入力します。変更すると Ωk が更新されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="282"/>
+        <location filename="_annotations_extraction_bridge.py" line="119"/>
         <source>Enter the path of the FITS file containing the observed flux. Browse... also opens a file picker.</source>
         <translation>観測フラックスを含む FITS ファイルのパスを入力します。参照... でファイル選択も可能です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="286"/>
+        <location filename="_annotations_extraction_bridge.py" line="120"/>
         <source>Enter the percentile threshold for automatic continuum estimation. The spectrum is divided into 100Å bins, and the flux value at the specified percentile within each bin is used as a control point. Higher values (closer to 99%) avoid absorption lines and capture peaks; lower values (closer to 50%) capture the median.</source>
         <translation>連続光自動推定のパーセンタイルしきい値を入力します。スペクトルを100Åごとのビンに分割し、各ビン内のフラックスの指定パーセンタイル位置の値を制御点とします。高い値（99%に近い）は吸収線の影響を避けてピークを捉え、低い値（50%に近い）は中央値を捉えます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="290"/>
+        <location filename="_annotations_extraction_bridge.py" line="121"/>
         <source>Entered values are stored in the user settings and restored on the next launch.</source>
         <translation>入力値はユーザー設定に保存され、次回起動時に復元されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="298"/>
+        <location filename="_annotations_extraction_bridge.py" line="123"/>
         <source>Export results</source>
         <translation>結果の書き出し</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="299"/>
+        <location filename="_annotations_extraction_bridge.py" line="124"/>
         <source>Export the selected preset as JSON.</source>
         <translation>選択中プリセットを JSON として書き出します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="304"/>
+        <location filename="_annotations_extraction_bridge.py" line="126"/>
         <source>Filter review rows by region identity or analysis state.</source>
         <translation>領域または解析状態でレビュー行を絞り込みます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="300"/>
+        <location filename="_annotations_extraction_bridge.py" line="125"/>
         <source>Filter candidates by element in atomic-number order. Type an element symbol to select it from the suggestions; an empty field removes the restriction.</source>
         <oldsource>Filter the candidates by element. Choosing &quot;All&quot; removes the restriction.</oldsource>
         <translation>候補を原子番号順の元素で絞り込みます。元素記号を入力して候補から選択します。空欄にすると元素の制限が解除されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="307"/>
+        <location filename="_annotations_extraction_bridge.py" line="127"/>
         <source>Filter warning</source>
         <translation>フィルタ警告</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="309"/>
+        <location filename="_annotations_extraction_bridge.py" line="129"/>
         <source>Flux Range</source>
         <translation>フラックス範囲</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="310"/>
+        <location filename="_annotations_extraction_bridge.py" line="130"/>
         <source>Flux/error FITS files that follow the `*_f.fits` and `*_e.fits` pattern are paired automatically; when you pick files with other names, use the prompt to assign flux and error roles.</source>
         <translation>`*_f.fits` / `*_e.fits` のペアは自動で割り当てられます。別名の FITS を選んだ場合はポップアップでフラックス／誤差を指定してください。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="314"/>
+        <location filename="_annotations_extraction_bridge.py" line="131"/>
         <source>Hierarchical view of regions, lines, and components with drag-and-drop editing and double-click focusing.</source>
         <translation>領域、ラインを階層表示し、ドラッグ＆ドロップや右クリックでの編集、ダブルクリックでのフォーカス、領域名の変更ができます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="318"/>
+        <location filename="_annotations_extraction_bridge.py" line="132"/>
         <source>High-S/N spectra can produce many absorption-region candidates and slow down interaction; adjust the detection threshold to keep the list manageable.</source>
         <translation>S/Nが高いスペクトルでは吸収線領域の候補が多くなり、操作が重くなることがあります。しきい値を調整してください。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="338"/>
+        <location filename="_annotations_extraction_bridge.py" line="135"/>
         <source>Identify Mode</source>
         <translation>同定モード</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="347"/>
+        <location filename="_annotations_extraction_bridge.py" line="138"/>
         <source>Identify side panel</source>
         <translation>同定モードサイドパネル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="348"/>
+        <location filename="_annotations_extraction_bridge.py" line="139"/>
         <source>Indicates the current subplot page and the total number of pages.</source>
         <translation>現在表示しているサブプロットページと総ページ数を示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="351"/>
+        <location filename="_annotations_extraction_bridge.py" line="140"/>
         <source>Insert a new component at the selected wavelength or region.</source>
         <translation>選択した位置に新しいコンポーネントを追加します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="354"/>
+        <location filename="_annotations_extraction_bridge.py" line="141"/>
         <source>Inspect observed flux, model, and residuals in the spectrum view.</source>
         <translation>スペクトル表示パネルで観測フラックス・モデル・残差を確認します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="357"/>
+        <location filename="_annotations_extraction_bridge.py" line="142"/>
         <source>Ionisation stage</source>
         <translation>電離度</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="359"/>
+        <location filename="_annotations_extraction_bridge.py" line="144"/>
         <source>Key Operations</source>
         <translation>主な操作</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="360"/>
+        <location filename="_annotations_extraction_bridge.py" line="145"/>
         <source>Keyword</source>
         <translation>キーワード</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="362"/>
+        <location filename="_annotations_extraction_bridge.py" line="147"/>
         <source>Line species list</source>
         <translation>線種一覧</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="363"/>
+        <location filename="_annotations_extraction_bridge.py" line="148"/>
         <source>Lines already in the preset are tagged as selected, and duplicate additions are prevented automatically.</source>
         <translation>既存プリセットに含まれるラインは選択済みタグが付き、重複追加は自動で防がれます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="367"/>
+        <location filename="_annotations_extraction_bridge.py" line="149"/>
         <source>Link suggestions are not applied automatically.</source>
         <translation>連結候補は自動では適用されません。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="485"/>
+        <location filename="_annotations_extraction_bridge.py" line="197"/>
         <source>Pick a preset in the setup header at the top of the side panel, and use the manage button to open the [Preset Management dialog](../../../menus/main_window/dialogs/PresetListDialog.md) so you can add, edit, or remove presets.</source>
         <translation>サイドパネル上部の設定ヘッダーでプリセットを選択します。［管理］ボタンから[プリセット管理ダイアログ](../../../menus/main_window/dialogs/PresetListDialog.md)を開くと、プリセットの追加・編集・削除ができます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="543"/>
+        <location filename="_annotations_extraction_bridge.py" line="222"/>
         <source>Reference line selector</source>
         <translation>基準線選択</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="573"/>
+        <location filename="_annotations_extraction_bridge.py" line="236"/>
         <source>Reports the New-candidate analysis range represented by the dashed boundaries. Edit the value in the setup header of the Identify side panel.</source>
         <translation>破線で示す新規候補の解析範囲を表示します。値は同定サイドパネル上部の設定ヘッダーで編集します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="612"/>
+        <location filename="_annotations_extraction_bridge.py" line="249"/>
         <source>Review every region&apos;s analysis status, fit result, and next action.</source>
         <translation>各領域の解析状態、フィット結果、次の操作を確認します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="820"/>
+        <location filename="_annotations_extraction_bridge.py" line="323"/>
         <source>Switch the active candidate preset from the dropdown in the always-visible setup header.</source>
         <translation>使用するプリセットを、常時表示の設定ヘッダーのプルダウンで切り替えます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="874"/>
+        <location filename="_annotations_extraction_bridge.py" line="340"/>
         <source>Turning on Apply Instrument Resolution convolves the resolution into candidate detection in Identify mode and model calculations in Analysis Region Detail.</source>
         <translation>［装置分解能を適用］をオンにすると、同定モードの候補検出と解析の領域詳細のモデル計算に分解能の効果を畳み込みます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="878"/>
-        <source>Unavailable count</source>
-        <translation>解析不可の件数</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="880"/>
-        <source>Unlink system</source>
-        <translation>連結を解除</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="885"/>
+        <location filename="_annotations_extraction_bridge.py" line="344"/>
         <source>Use Auto Estimate in the side panel to rebuild control points from the current spectrum.</source>
         <translation>サイドパネルの［自動推定］で、現在のスペクトルから制御点を作り直します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="904"/>
+        <location filename="_annotations_extraction_bridge.py" line="352"/>
         <source>When a group heading in the temporary line list carries a warning mark, the lines overlap multiple existing regions; check the assignment in Analysis Structure after registering.</source>
         <translation>一時ライン一覧のグループ見出しに警告マークがある場合、ラインは複数の既存領域と重なっています。登録後に解析の構造編集で所属を確認してください。</translation>
     </message>
@@ -525,1246 +500,1255 @@
         <translation>**解析の構造編集パネル**: ツリービューを折りたたみながら各ラインの線種・波長範囲・赤方偏移・速度ウィンドウ・Needs バッジを確認できます。色付きインジケータはスペクトル上の帯と一致し、詳しい操作は[解析の構造編集パネル](#解析の構造編集パネル)を参照します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="71"/>
+        <location filename="_annotations_extraction_bridge.py" line="31"/>
         <source>Add selected lines to temporary list</source>
         <translation>選択した線を一時ラインに追加</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="72"/>
+        <location filename="_annotations_extraction_bridge.py" line="32"/>
         <source>Add temporary lines for the selected velocity slices; use the side panel&apos;s Register action to save them to confirmed regions.</source>
         <translation>選択した速度スライスを一時ラインに追加します。確定領域へ保存するには、サイドパネルの［登録］を使用します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="80"/>
+        <location filename="_annotations_extraction_bridge.py" line="35"/>
         <source>Adjust only the flux axis to fit the observed data in the currently visible wavelength range.</source>
         <translation>現在表示中の波長範囲にある観測データが収まるよう、フラックス軸だけを調整します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="85"/>
+        <location filename="_annotations_extraction_bridge.py" line="37"/>
         <source>Adjust the wavelength and flux ranges with the data control panel. Velocity controls depend on the active mode.</source>
         <translation>データ制御パネルで波長とフラックスの範囲を調整します。速度制御の利用可否は現在のモードによって異なります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="93"/>
+        <location filename="_annotations_extraction_bridge.py" line="39"/>
         <source>Analysis Mode</source>
         <translation>解析モード</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="98"/>
+        <location filename="_annotations_extraction_bridge.py" line="41"/>
         <source>Analysis Region Detail panel</source>
         <translation>解析の領域詳細パネル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="99"/>
+        <location filename="_annotations_extraction_bridge.py" line="42"/>
         <source>Analysis Region Detail prepares fitting conditions, runs the optimiser, and reviews one region&apos;s result.</source>
         <translation>解析の領域詳細では、1つの領域についてフィット条件を整え、解析を実行して結果を確認します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="103"/>
+        <location filename="_annotations_extraction_bridge.py" line="43"/>
         <source>Analysis Structure edits the region and line hierarchy from Overview.</source>
         <translation>解析の構造編集では、概要から領域とラインの階層を編集します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="107"/>
+        <location filename="_annotations_extraction_bridge.py" line="44"/>
         <source>Analysis Structure panel</source>
         <translation>解析の構造編集パネル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="108"/>
+        <location filename="_annotations_extraction_bridge.py" line="45"/>
         <source>Analysis review table</source>
         <translation>解析レビュー表</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="129"/>
+        <location filename="_annotations_extraction_bridge.py" line="55"/>
         <source>Back to Spectrum</source>
         <translation>スペクトルに戻る</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="135"/>
+        <location filename="_annotations_extraction_bridge.py" line="58"/>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="169"/>
+        <location filename="_annotations_extraction_bridge.py" line="70"/>
         <source>Close Project</source>
         <translation>プロジェクトを閉じる</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="170"/>
+        <location filename="_annotations_extraction_bridge.py" line="71"/>
         <source>Close the Velocity Plot and return to the standard spectrum view.</source>
         <translation>速度プロットを閉じ、標準のスペクトル表示に戻ります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="177"/>
+        <location filename="_annotations_extraction_bridge.py" line="73"/>
         <source>Compare the current region&apos;s lines on a shared velocity axis. Display range reframes every subplot and page without changing the line analysis ranges.</source>
         <oldsource>Compare the current region&apos;s lines on a shared velocity axis. Display half-width reframes every subplot and page without changing the line analysis ranges.</oldsource>
         <translation>現在の領域のラインを共通の速度軸で比較します。［表示範囲］を変更すると、ライン解析範囲を変えずにすべてのサブプロットとページの表示範囲が変わります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="182"/>
+        <location filename="_annotations_extraction_bridge.py" line="75"/>
         <source>Confirm what happens to unsaved changes before the current project is closed.</source>
         <translation>現在のプロジェクトを閉じる前に、未保存の変更をどう扱うかを確認します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="225"/>
+        <location filename="_annotations_extraction_bridge.py" line="97"/>
         <source>Discard the unsaved changes and close the project.</source>
         <translation>未保存の変更を破棄してプロジェクトを閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="226"/>
+        <location filename="_annotations_extraction_bridge.py" line="98"/>
         <source>Display</source>
         <translation>表示</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="227"/>
+        <location filename="_annotations_extraction_bridge.py" line="100"/>
         <source>Display range</source>
         <oldsource>Display half-width</oldsource>
         <translation>表示範囲</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="236"/>
+        <location filename="_annotations_extraction_bridge.py" line="104"/>
         <source>Don&apos;t Save</source>
         <translation>保存しない</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="249"/>
+        <location filename="_annotations_extraction_bridge.py" line="109"/>
         <source>Each row shows a candidate&apos;s wavelength range, σ score, and status (Unassigned, Tentative, or Registered). A single click only selects a row; double-click it or press Enter to move to the candidate position, then Shift+click the absorption center to add temporary lines.</source>
         <translation>各行に候補の波長範囲、σ値、状態（未対応・仮対応・登録済み）が表示されます。1回のクリックでは行が選択されるだけで、ダブルクリックまたはEnterキーで候補位置へ移動します。移動後に吸収中心をShift+クリックすると一時ラインが追加されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="253"/>
+        <location filename="_annotations_extraction_bridge.py" line="110"/>
         <source>Edit Analysis range [km/s] on a line or multiplet row to set the interval used for analysis.</source>
         <oldsource>Edit Analysis half-width [km/s] on a line or multiplet row to set the interval used for analysis.</oldsource>
         <translation>ラインまたは多重線行の［解析範囲 [km/s]］を編集し、解析に使用する範囲を設定します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="278"/>
+        <location filename="_annotations_extraction_bridge.py" line="118"/>
         <source>Enter the minimum and maximum within 0–50000 Å to narrow the searched wavelength band. An empty field removes the limit on that side.</source>
         <translation>0～50000 Åの範囲で最小値と最大値を入力し、検索対象の波長帯を絞り込みます。空欄にすると該当側の制限が解除されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="294"/>
+        <location filename="_annotations_extraction_bridge.py" line="122"/>
         <source>Explain that closing returns to Start mode and that the project can be reopened from File &gt; Open Project.</source>
         <translation>閉じると開始モードに戻ること、［ファイル］&gt;［プロジェクトを開く］から再び開けることを案内します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="308"/>
+        <location filename="_annotations_extraction_bridge.py" line="128"/>
         <source>Fit view to analysis ranges</source>
         <translation>解析範囲に合わせる</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="339"/>
-        <source>Identify absorption systems and assign them to line species and regions.</source>
-        <translation>吸収システムを同定し、線種と領域へ対応付けます。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="343"/>
+        <location filename="_annotations_extraction_bridge.py" line="137"/>
         <source>Identify mode focuses on reviewing detections and assigning absorption lines to species and regions.</source>
         <translation>同定モードでは、検出結果の確認と、吸収線の線種・領域への対応付けを行います。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="358"/>
+        <location filename="_annotations_extraction_bridge.py" line="143"/>
         <source>Keep the project open and leave it unchanged.</source>
         <translation>プロジェクトを開いたまま、何も変更せずに戻ります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="368"/>
+        <location filename="_annotations_extraction_bridge.py" line="150"/>
+        <source>Linked lines and lines</source>
+        <translation>連結ラインとライン</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="151"/>
         <source>Lists temporary lines grouped by the registration result. Group headings show whether the lines will create a new region or be added to an existing one; a warning mark flags overlaps with multiple existing regions.</source>
         <translation>一時ラインを登録結果ごとにグループ化して表示します。グループ見出しには、新規領域になるか既存領域へ追加されるかが表示され、複数の既存領域と重なる場合は警告マークが付きます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="372"/>
+        <location filename="_annotations_extraction_bridge.py" line="152"/>
         <source>Lists the lines scheduled for addition; select unwanted ones to remove them.</source>
         <translation>追加予定のラインを一覧表示し、不要なものを選択して削除できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="376"/>
+        <location filename="_annotations_extraction_bridge.py" line="153"/>
         <source>Lists the preset&apos;s absorption lines and shows their link-group membership in the Link column. Wavelengths, f-values, and link labels are read-only.</source>
         <translation>プリセットに含まれる吸収線を一覧表示し、［連結］列に連結グループへの所属を示します。波長、f 値、連結ラベルは読み取り専用です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="380"/>
+        <location filename="_annotations_extraction_bridge.py" line="154"/>
         <source>Load a preset JSON file and add it to the current list.</source>
         <translation>プリセットのJSONファイルを読み込み、現在の一覧へ追加します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="383"/>
+        <location filename="_annotations_extraction_bridge.py" line="155"/>
         <source>Load an existing project file.</source>
         <translation>既存のプロジェクトファイルを読み込みます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="384"/>
+        <location filename="_annotations_extraction_bridge.py" line="156"/>
         <source>Load observed flux and error FITS files to start a new project.</source>
         <translation>観測フラックスと誤差の FITS ファイルを読み込み、新規プロジェクトを開始します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="387"/>
+        <location filename="_annotations_extraction_bridge.py" line="157"/>
         <source>Loading resources can take a few seconds after changing the language.</source>
         <translation>言語変更後はリソースの読み込みに数秒要する場合があります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="395"/>
+        <location filename="_annotations_extraction_bridge.py" line="159"/>
         <source>Manage absorption-line presets and choose which lines should be identified and fitted together.</source>
         <oldsource>Manage absorption-line presets and declare which lines should be identified and fitted together.</oldsource>
         <translation>吸収線プリセットを管理し、同定とフィットで一緒に扱うラインを設定します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="399"/>
+        <location filename="_annotations_extraction_bridge.py" line="160"/>
         <source>Manage presets</source>
         <translation>プリセット管理</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="400"/>
+        <location filename="_annotations_extraction_bridge.py" line="161"/>
         <source>Mask panel</source>
         <translation>除外領域</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="402"/>
+        <location filename="_annotations_extraction_bridge.py" line="163"/>
         <source>Merge the selected regions after reviewing the impact confirmation.</source>
         <translation>影響確認の内容を確認してから、選択した領域を統合します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="405"/>
+        <location filename="_annotations_extraction_bridge.py" line="164"/>
         <source>Message Area</source>
         <translation>メッセージ欄</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="406"/>
+        <location filename="_annotations_extraction_bridge.py" line="165"/>
         <source>Mode Bar</source>
         <translation>モードバー</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="407"/>
+        <location filename="_annotations_extraction_bridge.py" line="166"/>
         <source>Mode Indicator</source>
         <translation>モードインジケーター</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="408"/>
+        <location filename="_annotations_extraction_bridge.py" line="167"/>
         <source>Mode Info Area</source>
         <translation>モード情報エリア</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="409"/>
+        <location filename="_annotations_extraction_bridge.py" line="168"/>
         <source>Mode Subtitle</source>
         <translation>モードサブタイトル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="410"/>
+        <location filename="_annotations_extraction_bridge.py" line="169"/>
         <source>More actions</source>
         <translation>その他の操作</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="411"/>
+        <location filename="_annotations_extraction_bridge.py" line="170"/>
         <source>Narrow down the candidates with filters for keyword, element, ionisation stage, and wavelength range.</source>
         <translation>キーワードや元素・イオン段階、波長範囲でフィルタを設定して候補を絞り込みます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="415"/>
+        <location filename="_annotations_extraction_bridge.py" line="171"/>
         <source>Needs optimization badge</source>
         <translation>要最適化バッジ</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="416"/>
+        <location filename="_annotations_extraction_bridge.py" line="172"/>
         <source>New-candidate range</source>
         <oldsource>New-candidate half-width</oldsource>
         <translation>新規候補の範囲</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="417"/>
+        <location filename="_annotations_extraction_bridge.py" line="173"/>
         <source>Next page</source>
         <translation>次のページ</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="418"/>
+        <location filename="_annotations_extraction_bridge.py" line="174"/>
         <source>No Control Points Yet</source>
         <translation>制御点がありません</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="419"/>
+        <location filename="_annotations_extraction_bridge.py" line="175"/>
         <source>No control points are registered. Right-click the spectrum or use the buttons to add new ones.</source>
         <translation>まだ制御点が登録されていません。スペクトル上で右クリックするか、ボタン操作で制御点を追加できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="423"/>
+        <location filename="_annotations_extraction_bridge.py" line="176"/>
         <source>No spectrum is shown in this mode. Drag and drop two FITS files (observed flux and error) or a project file (.h5) here. You can also use File &gt; Open. The data control panel is hidden in Start mode, but it appears beneath the spectrum view after you switch to another mode.</source>
         <translation>このモードではスペクトルは表示されません。ここに FITS ファイル（観測フラックスと観測誤差の2ファイル）またはプロジェクトファイル（.h5）をドラッグ＆ドロップしてください。メニューの「ファイル &gt; 開く」からも読み込めます。データ制御パネルはスタートモードでは表示されませんが、他のモードに切り替えるとスペクトルの下部に現れます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="427"/>
+        <location filename="_annotations_extraction_bridge.py" line="177"/>
         <source>No spectrum or data controls appear until data has been loaded.</source>
         <translation>データを読み込むまでスペクトルやデータ制御パネルは表示されません。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="431"/>
+        <location filename="_annotations_extraction_bridge.py" line="179"/>
         <source>Notes &amp; Caveats</source>
         <translation>注意点</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="448"/>
+        <location filename="_annotations_extraction_bridge.py" line="183"/>
         <source>Open Analysis Structure without leaving the Analysis workspace.</source>
         <translation>解析ワークスペースから離れずに構造編集を開きます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="451"/>
+        <location filename="_annotations_extraction_bridge.py" line="184"/>
         <source>Open Display in the data control panel or right-click the spectrum, or press M, to show Component profiles; each component draws its own curve in the colour of its marker and label, and this toggle is disabled outside Region Detail.</source>
         <translation>データ制御パネルの［表示］を開くか、スペクトルを右クリックするか、M キーを押すと、［コンポーネントプロファイル］を表示できます。各コンポーネントは、自身のマーカー線とラベルに合わせた色でプロファイル曲線を描画します。この項目は領域詳細以外では無効になります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="455"/>
+        <location filename="_annotations_extraction_bridge.py" line="185"/>
         <source>Open Display in the data control panel to show or hide the error spectrum.</source>
         <translation>データ制御パネルの［表示］を開き、［誤差スペクトル］の表示・非表示を切り替えます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="459"/>
+        <location filename="_annotations_extraction_bridge.py" line="186"/>
         <source>Open Observation Data</source>
         <translation>観測データを開く</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="460"/>
+        <location filename="_annotations_extraction_bridge.py" line="187"/>
         <source>Open Project</source>
         <translation>プロジェクトを開く</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="461"/>
+        <location filename="_annotations_extraction_bridge.py" line="188"/>
         <source>Open a popup with two checkable display toggles, &quot;Error spectrum&quot; (on by default) and &quot;Component profiles&quot; (off by default). Error spectrum shows or hides the error spectrum in the spectrum view and velocity subplots. Component profiles draws each absorption component&apos;s own profile curve in its identity colour, matching that component&apos;s marker line and label; it is available only in Analysis Region Detail and is disabled elsewhere with the tooltip &quot;Available in Analysis region detail&quot;. Component profiles has the shortcut M. Both toggles also appear in the spectrum view&apos;s right-click menu.</source>
         <translation>チェック可能な表示切り替え項目を2つ持つポップアップを開きます。［誤差スペクトル］（既定でオン）と［コンポーネントプロファイル］（既定でオフ）です。［誤差スペクトル］はスペクトルビューと速度サブプロットの誤差スペクトルの表示・非表示を切り替えます。［コンポーネントプロファイル］は各吸収線コンポーネントのプロファイル曲線を、そのコンポーネントのマーカー線とラベルに合わせた色で描画します。この項目は解析の領域詳細でのみ利用でき、それ以外の画面では無効になり、「解析モードの領域詳細で利用できます」というツールチップが表示されます。［コンポーネントプロファイル］のショートカットキーは M です。両方の項目はスペクトルビューの右クリックメニューにも表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="465"/>
+        <location filename="_annotations_extraction_bridge.py" line="189"/>
         <source>Open existing projects through the context bar&apos;s &quot;Open Project&quot; action.</source>
         <translation>モードバーの［プロジェクトを開く］から既存のプロジェクトを読み込みます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="469"/>
+        <location filename="_annotations_extraction_bridge.py" line="190"/>
         <source>Open region</source>
         <translation>領域を開く</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="470"/>
+        <location filename="_annotations_extraction_bridge.py" line="191"/>
         <source>Open the absorption-line database search dialog and add new absorption lines to the preset.</source>
         <translation>吸収線データベース検索ダイアログを開き、プリセットへ新しい吸収線を追加します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="474"/>
+        <location filename="_annotations_extraction_bridge.py" line="192"/>
         <source>Open the low-emphasis actions menu. Choose Clear All to empty the temporary line list.</source>
         <translation>低強調の操作メニューを開きます。［全消去］を選択すると一時ライン一覧が空になります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="479"/>
+        <location filename="_annotations_extraction_bridge.py" line="194"/>
         <source>Organise the additions in the selected list and press Add Lines to apply them to the calling preset.</source>
         <translation>選択済みリストで追加対象を整理し、ラインを追加ボタンで呼び出し元のプリセットへ反映します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="483"/>
+        <location filename="_annotations_extraction_bridge.py" line="195"/>
         <source>Page status</source>
         <translation>ページ状況</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="484"/>
+        <location filename="_annotations_extraction_bridge.py" line="196"/>
         <source>Percentile</source>
         <translation>パーセンタイル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="489"/>
+        <location filename="_annotations_extraction_bridge.py" line="198"/>
+        <source>Place the cursor over an absorption feature and press V to verify that exact position in the Velocity Plot; hold Shift first when you want to see the all-species preview before deciding. Right-clicking the spectrum and selecting [Show Velocity Plot (V)] opens the plot at the position you right-clicked.</source>
+        <translation>吸収特徴にカーソルを合わせてVを押すと、その正確な位置を速度プロットで検証できます。判断する前に全線種プレビューを確認したいときは、先にShiftを押します。スペクトルを右クリックして［速度プロットを表示 (V)］を選択すると、右クリックした位置でプロットが開きます。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="199"/>
         <source>Preset list</source>
         <translation>プリセット一覧</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="490"/>
+        <location filename="_annotations_extraction_bridge.py" line="200"/>
         <source>Preset selector</source>
         <translation>プリセット選択</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="491"/>
+        <location filename="_annotations_extraction_bridge.py" line="201"/>
         <source>Press Apply Planck2018 to reset the fields to the Planck 2018 recommended values.</source>
         <translation>Planck2018 を適用 を押すとプランク2018の推奨値にフィールドをリセットします。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="495"/>
+        <location filename="_annotations_extraction_bridge.py" line="202"/>
         <source>Press Cancel to close without changing anything.</source>
         <translation>キャンセルを押すと変更せずに閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="496"/>
+        <location filename="_annotations_extraction_bridge.py" line="203"/>
         <source>Press Cancel to keep working in the current project.</source>
         <translation>［キャンセル］を押すと、現在のプロジェクトでの作業を続けます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="497"/>
+        <location filename="_annotations_extraction_bridge.py" line="204"/>
         <source>Press Don&apos;t Save to close the project and lose the unsaved changes.</source>
         <translation>［保存しない］を押すと、未保存の変更を失ったままプロジェクトを閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="504"/>
+        <location filename="_annotations_extraction_bridge.py" line="206"/>
         <source>Press OK to apply the selected language immediately.</source>
         <translation>OK を押すと選択した言語が即時適用されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="505"/>
-        <source>Press OK to confirm the value, or Skip to keep the existing setting.</source>
-        <translation>OK で値を確定、スキップで既存設定を維持します。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="508"/>
+        <location filename="_annotations_extraction_bridge.py" line="208"/>
         <source>Press OK to save the settings and apply them to the main window.</source>
         <translation>OK を押すと設定が保存されメインウィンドウへ反映されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="511"/>
+        <location filename="_annotations_extraction_bridge.py" line="209"/>
         <source>Press OK to validate the selected files and load them into the project.</source>
         <translation>OK を押すと選択したファイルが検証され、プロジェクトへ読み込まれます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="520"/>
+        <location filename="_annotations_extraction_bridge.py" line="212"/>
         <source>Press Save to write the project to disk and then close it.</source>
         <translation>［保存］を押すと、プロジェクトを保存してから閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="523"/>
+        <location filename="_annotations_extraction_bridge.py" line="213"/>
+        <source>Press V with the cursor over an absorption feature to open the plot immediately at that exact wavelength, or right-click the spectrum and select [Show Velocity Plot (V)]. Press V again or select [Back to Spectrum] to return. Dashed boundaries show the New-candidate analysis range; Display range reframes every subplot without changing candidate data.</source>
+        <translation>吸収特徴にカーソルを合わせてVを押すか、スペクトルを右クリックして［速度プロットを表示 (V)］を選択すると、その波長でプロットが開きます。もう一度Vを押すか［スペクトルに戻る］を選択すると元の表示に戻ります。破線は新規候補の解析範囲を示し、［表示範囲］は候補データを変更せずにすべてのサブプロットを表示し直します。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="214"/>
         <source>Pressing Register saves the temporary lines to regions immediately without a confirmation step; use Undo when you need to revert a registration.</source>
         <translation>［登録］を押すと、確認ステップなしで一時ラインが即座に領域へ保存されます。登録を取り消すときは元に戻す操作を使用してください。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="527"/>
+        <location filename="_annotations_extraction_bridge.py" line="215"/>
         <source>Previous page</source>
         <translation>前のページ</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="528"/>
+        <location filename="_annotations_extraction_bridge.py" line="216"/>
         <source>Quick Actions</source>
         <translation>クイック操作</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="530"/>
+        <location filename="_annotations_extraction_bridge.py" line="218"/>
         <source>Recalculate Display range from New-candidate range. This action changes only the Velocity Plot view.</source>
         <oldsource>Recalculate Display half-width from New-candidate half-width. This action changes only the Velocity Plot view.</oldsource>
         <translation>［新規候補の範囲］から［表示範囲］を再計算します。この操作で変わるのは速度プロットの表示だけです。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="534"/>
+        <location filename="_annotations_extraction_bridge.py" line="219"/>
         <source>Recalculate Display range from the current region&apos;s line analysis ranges. This action changes only the Velocity Plot view.</source>
         <oldsource>Recalculate Display half-width from the current region&apos;s line analysis ranges. This action changes only the Velocity Plot view.</oldsource>
         <translation>現在の領域のライン解析範囲から［表示範囲］を再計算します。この操作で変わるのは速度プロットの表示だけです。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="538"/>
+        <location filename="_annotations_extraction_bridge.py" line="220"/>
         <source>Recalculates control points from the current spectrum and replaces existing points with the new estimate.</source>
         <translation>現在表示中のスペクトルから制御点を再計算し、既存の制御点を新しい推定値で置き換えます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="542"/>
+        <location filename="_annotations_extraction_bridge.py" line="221"/>
         <source>Redo</source>
         <translation>やり直し</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="559"/>
+        <location filename="_annotations_extraction_bridge.py" line="231"/>
         <source>Remove the highlighted temporary lines from the list.</source>
         <translation>選択中の一時ラインを一覧から削除します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="577"/>
+        <location filename="_annotations_extraction_bridge.py" line="237"/>
         <source>Reports the current line analysis ranges represented by dashed boundaries.</source>
         <oldsource>Reports the current line analysis half-widths represented by dashed boundaries.</oldsource>
         <translation>破線で示す現在のライン解析範囲を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="589"/>
+        <location filename="_annotations_extraction_bridge.py" line="241"/>
         <source>Restore the wavelength and flux ranges saved for the current view. If no view range is saved, show the full spectrum.</source>
         <translation>現在の表示用に保存された波長範囲とフラックス範囲へ戻します。表示範囲が保存されていない場合は、スペクトル全体を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="623"/>
+        <location filename="_annotations_extraction_bridge.py" line="252"/>
         <source>Right-click a row in the region list and choose &quot;Delete region…&quot;, or press the Delete key, to remove a region after a confirmation.</source>
         <translation>領域一覧の行を右クリックして［領域を削除…］を選ぶか、Delete キーを押すと、確認のうえで領域を削除できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="627"/>
+        <location filename="_annotations_extraction_bridge.py" line="253"/>
         <source>Right-click the spectrum to add a control point, and drag existing points to shape the continuum curve.</source>
         <translation>スペクトルを右クリックして制御点を追加し、既存の制御点をドラッグして連続光モデルを整えます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="631"/>
+        <location filename="_annotations_extraction_bridge.py" line="254"/>
         <source>Run fit</source>
         <translation>フィットを実行</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="634"/>
+        <location filename="_annotations_extraction_bridge.py" line="257"/>
         <source>Save temporary groups to regions immediately. With no selection, the label is Register all (N groups); with selected rows, it is Register selected (N groups). Registration can be undone.</source>
         <oldsource>Save temporary groups to regions immediately. With no selection, Register all shows the total group count; with selected rows, Register selected shows the selected group count. Registration can be undone.</oldsource>
         <translation>一時グループを領域へ即座に保存します。未選択時は［すべて登録 (N組)］、行の選択時は［選択を登録 (N組)］と表示されます。登録は元に戻す操作で取り消せます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="640"/>
+        <location filename="_annotations_extraction_bridge.py" line="260"/>
         <source>Save the project, then close it and return to Start mode.</source>
         <translation>プロジェクトを保存してから閉じ、開始モードに戻ります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="656"/>
+        <location filename="_annotations_extraction_bridge.py" line="265"/>
         <source>Select a row in the parameter table to emphasise that component in the spectrum view; its label reads bold and keeps the full name on the top row, while crowded neighbours shorten and alternate onto a second row.</source>
         <translation>パラメータ表の行を選択すると、そのコンポーネントがスペクトル表示で強調されます。ラベルは太字になり、上段にフルネームが表示されます。ラベルが混み合う場合は、周囲のラベルが短縮され、上下 2 段に交互に配置されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="688"/>
+        <location filename="_annotations_extraction_bridge.py" line="279"/>
         <source>Set the symmetric analysis range used by the next Shift preview and candidates added afterward. Existing temporary lines, registration grouping, and Velocity Plot Display range do not change.</source>
         <oldsource>Set the symmetric analysis half-width used by the next Shift preview and candidates added afterward. Existing temporary lines, registration grouping, and Velocity Plot Display half-width do not change.</oldsource>
         <translation>次のShiftプレビューと、これから追加する候補に使用する左右対称の解析範囲を設定します。既存の一時ライン、登録時の束ね結果、速度プロットの［表示範囲］は変更しません。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="692"/>
+        <location filename="_annotations_extraction_bridge.py" line="280"/>
         <source>Set the symmetric view range shared by every Identify Velocity Plot subplot and page. This display-only value does not change New-candidate range, temporary lines, grouping, or scientific Undo history.</source>
         <oldsource>Set the symmetric view range shared by every Identify Velocity Plot subplot and page. This display-only value does not change New-candidate half-width, temporary lines, grouping, or scientific Undo history.</oldsource>
         <translation>同定の速度プロットにあるすべてのサブプロットとページで共有する左右対称の表示範囲を設定します。この表示専用値は、新規候補の範囲、一時ライン、束ね結果、科学操作のUndo履歴を変更しません。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="696"/>
+        <location filename="_annotations_extraction_bridge.py" line="281"/>
         <source>Set the symmetric view range shared by every Velocity Plot subplot and page. This display-only value does not change line analysis ranges or scientific Undo history.</source>
         <translation>すべての速度プロットのサブプロットとページで共有する対称表示範囲を設定します。この表示専用値は、ライン解析範囲や科学的なUndo履歴を変更しません。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="718"/>
+        <location filename="_annotations_extraction_bridge.py" line="287"/>
         <source>Show the name of the project that is about to be closed.</source>
         <translation>閉じようとしているプロジェクトの名称を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="743"/>
+        <location filename="_annotations_extraction_bridge.py" line="292"/>
+        <source>Shows readiness counts, the read-only structure of the selected region, and actions to open or edit it.</source>
+        <translation>解析状態の件数、選択中の領域の読み取り専用の構造、開く／編集の操作を表示します。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="296"/>
         <source>Shows the current region and line context for the active Velocity Plot.</source>
         <translation>現在の領域と、表示中の速度プロットのラインコンテキストを示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="759"/>
+        <location filename="_annotations_extraction_bridge.py" line="298"/>
+        <source>Shows the hierarchy of confirmed regions and their lines. A single click only selects a row and does not move the spectrum view; press Enter or double-click a region or line to move the spectrum view to its range while Identify mode stays active. Right-click a region or line row to select it and choose Open region to open the region in Analysis Region Detail, or Edit region to open it in Analysis Structure; a right-click on a line row targets its parent region.</source>
+        <translation>確定領域とラインの階層を表示します。単クリックは行を選択するだけで、スペクトル表示は移動しません。領域行またはライン行を選んで Enter キーを押すか、行をダブルクリックすると、同定モードのまま、スペクトル表示が対象の波長域へ移動します。領域行またはライン行を右クリックすると、その行が選択され、［領域を開く］で解析の領域詳細が、［領域を編集］で解析の構造編集が開きます。ライン行を右クリックした場合は、親となる領域が対象になります。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="299"/>
+        <source>Shows the linked-line and line counts for the selected region. When there are six or fewer linked lines, it also shows each redshift and transition name.</source>
+        <translation>選択中の領域に含まれる連結ラインとラインの数を表示します。連結ラインが6件以下の場合は、各連結ラインの赤方偏移と遷移名も表示します。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="301"/>
         <source>Shows the target line, redshift, and observed wavelength for the active Velocity Plot.</source>
         <translation>表示中の速度プロットについて、対象ライン、赤方偏移、観測波長を示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="768"/>
+        <location filename="_annotations_extraction_bridge.py" line="304"/>
         <source>Single-column panel ordered along the identify workflow — the preset setup header, detection candidates, temporary lines with registration, and confirmed regions. Drag the grip handles between sections to resize them. See “Side Panel Details” below for control-by-control guidance.</source>
         <translation>同定ワークフローの順に、プリセットの設定ヘッダー、検出候補、一時ラインと登録、確定領域を 1 列に並べたパネルです。セクション間のグリップハンドルをドラッグすると高さを調整できます。各コントロールの説明は後述の「サイドパネルの詳細」を参照してください。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="796"/>
+        <location filename="_annotations_extraction_bridge.py" line="312"/>
         <source>Split</source>
         <translation>分割</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="798"/>
+        <location filename="_annotations_extraction_bridge.py" line="314"/>
         <source>Stale count</source>
         <translation>結果が古い件数</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="806"/>
+        <location filename="_annotations_extraction_bridge.py" line="317"/>
         <source>State that the current project has unsaved changes and ask whether to save them.</source>
         <translation>現在のプロジェクトに未保存の変更があることを示し、保存するかどうかを確認します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="830"/>
+        <location filename="_annotations_extraction_bridge.py" line="325"/>
         <source>Temporary lines</source>
         <translation>一時ライン</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="546"/>
+        <location filename="_annotations_extraction_bridge.py" line="225"/>
         <source>Region selector</source>
         <translation>領域セレクター</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="23"/>
+        <location filename="_annotations_extraction_bridge.py" line="17"/>
         <source>**Edit regions**: Rearrange lines and use the visible Structure actions or context menu to merge, split, unlink, or delete items (see [Analysis Structure](../../../operations/analysis-structure.md)). Press Back to Overview at the top of the panel to return to Analysis Overview.</source>
         <translation>**領域を編集**: ラインを移動し、構造編集のボタンまたはコンテキストメニューから統合、分割、連結解除、削除を実行します（[解析の構造編集](../../../operations/analysis-structure.md)を参照してください）。パネル上部の［概要へ戻る］を押すと解析の概要に戻ります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="43"/>
+        <location filename="_annotations_extraction_bridge.py" line="22"/>
         <source>**Velocity window**: Each line heading in the tree shows its velocity window inline (±… km/s).</source>
         <translation>**速度ウィンドウ**: ツリーの各ライン見出しに速度ウィンドウ（±… km/s）が表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="89"/>
+        <location filename="_annotations_extraction_bridge.py" line="38"/>
         <source>Adjust the ΛCDM parameters used to compute comoving distance and lookback time in the analysis.</source>
         <translation>解析で共動距離とルックバックタイムの計算に用いる ΛCDM パラメータを調整します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="128"/>
+        <location filename="_annotations_extraction_bridge.py" line="54"/>
         <source>Back to Overview</source>
         <translation>概要へ戻る</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="130"/>
+        <location filename="_annotations_extraction_bridge.py" line="56"/>
         <source>Bottom pane</source>
         <translation>下部ペイン</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="162"/>
+        <location filename="_annotations_extraction_bridge.py" line="60"/>
+        <source>Choose the display language of the application. The preview below updates to the selected language.</source>
+        <translation>アプリケーションの表示言語を選びます。下のプレビューが選んだ言語に切り替わります。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="68"/>
         <source>Click a status count in the summary panel to filter the region list.</source>
         <translation>サイドパネルの状態の件数をクリックすると、領域一覧を絞り込めます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="165"/>
+        <location filename="_annotations_extraction_bridge.py" line="69"/>
         <source>Click to expand or collapse the confirmed-region list. While collapsed, the summary shows the region count and a representative region and line.</source>
         <translation>選択すると確定領域一覧を展開・折りたたみできます。折りたたみ中の要約には、領域数と代表的な領域およびラインが表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="186"/>
+        <location filename="_annotations_extraction_bridge.py" line="76"/>
         <source>Confirmed Regions section header</source>
         <translation>確定領域セクション見出し</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="189"/>
+        <location filename="_annotations_extraction_bridge.py" line="79"/>
         <source>Continuum mode shapes the continuum curve so later analysis stays stable.</source>
         <translation>連続光モードは連続光モデルを調整し、後続の解析を安定させます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="213"/>
+        <location filename="_annotations_extraction_bridge.py" line="89"/>
         <source>Delete</source>
         <translation>削除</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="260"/>
+        <location filename="_annotations_extraction_bridge.py" line="99"/>
+        <source>Display language</source>
+        <translation>表示言語</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="112"/>
         <source>Edit region</source>
         <translation>領域を編集</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="326"/>
-        <source>Hold Shift over an absorption feature and press V while the all-species preview is visible to verify that exact position in the Velocity Plot. Without a valid preview, press V and then select the velocity origin in the spectrum.</source>
-        <translation>吸収特徴上でShiftを押し、全線種プレビューが表示されている間にVを押すと、その正確な位置を速度プロットで検証できます。有効なプレビューがない場合は、Vを押してからスペクトル上で速度起点を選択します。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="330"/>
+        <location filename="_annotations_extraction_bridge.py" line="133"/>
         <source>Hosts the component parameter table while Region Detail is open. Drag the splitter handle above it to resize.</source>
         <translation>領域詳細を開いている間、コンポーネントのパラメータテーブルを表示します。上のスプリッターハンドルをドラッグすると高さを変更できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="334"/>
+        <location filename="_annotations_extraction_bridge.py" line="134"/>
         <source>Hosts the region list below the spectrum. Drag the splitter handle above it to resize.</source>
         <translation>スペクトルの下に領域一覧を表示します。上のスプリッターハンドルをドラッグすると高さを変更できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="361"/>
+        <location filename="_annotations_extraction_bridge.py" line="136"/>
+        <source>Identify absorption lines and assign them to line species and regions.</source>
+        <translation>吸収ラインを同定し、線種と領域へ対応付けます。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="146"/>
         <source>Latest count</source>
         <translation>最新の件数</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="391"/>
+        <location filename="_annotations_extraction_bridge.py" line="158"/>
         <source>Lock or unlock parameters in the parameter table shown in the bottom pane to define the search space.</source>
         <translation>下部ペインのパラメータテーブルでパラメータを固定／解放し、探索範囲を設定します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="401"/>
+        <location filename="_annotations_extraction_bridge.py" line="162"/>
         <source>Merge</source>
         <translation>統合</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="430"/>
+        <location filename="_annotations_extraction_bridge.py" line="178"/>
         <source>Not analyzed count</source>
         <translation>未解析の件数</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="432"/>
-        <source>Number of regions that cannot be analysed yet. Click to filter the region list.</source>
-        <translation>まだ解析できない領域の数です。クリックすると領域一覧を絞り込めます。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="436"/>
+        <location filename="_annotations_extraction_bridge.py" line="180"/>
         <source>Number of regions that have not been fitted yet. Click to filter the region list.</source>
         <translation>まだフィットしていない領域の数です。クリックすると領域一覧を絞り込めます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="440"/>
+        <location filename="_annotations_extraction_bridge.py" line="181"/>
         <source>Number of regions whose fit result is outdated. Click to filter the region list.</source>
         <translation>フィット結果が古くなった領域の数です。クリックすると領域一覧を絞り込めます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="444"/>
+        <location filename="_annotations_extraction_bridge.py" line="182"/>
         <source>Number of regions whose fit result is up to date. Click to filter the region list.</source>
         <translation>フィット結果が最新の領域の数です。クリックすると領域一覧を絞り込めます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="500"/>
+        <location filename="_annotations_extraction_bridge.py" line="205"/>
         <source>Press Enter or double-click a row in the region list to open the region in Region Detail.</source>
         <translation>領域一覧の行で Enter を押すかダブルクリックすると、その領域を領域詳細で開きます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="515"/>
+        <location filename="_annotations_extraction_bridge.py" line="207"/>
+        <source>Press OK to confirm the value, or Cancel to keep the existing setting.</source>
+        <translation>［OK］で値を確定し、［キャンセル］で現在の設定を維持します。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="210"/>
         <source>Press Register all (N groups), or select rows and press Register selected (N groups), to save temporary groups immediately; the status bar reports the created or extended regions, and Undo reverts the registration.</source>
         <oldsource>Press Register all, or select rows and press Register selected, to save temporary groups immediately; the status bar reports the created or extended regions, and Undo reverts the registration.</oldsource>
         <translation>［すべて登録 (N組)］、または行を選択して［選択を登録 (N組)］を押すと、一時グループが即座に保存されます。作成・追加された領域はステータスバーに表示され、元に戻す操作で登録を取り消せます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="519"/>
+        <location filename="_annotations_extraction_bridge.py" line="211"/>
         <source>Press Run fit and adjust masks to refine residuals.</source>
         <translation>［フィットを実行］を押し、マスクを調整して残差を詰めます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="547"/>
+        <location filename="_annotations_extraction_bridge.py" line="226"/>
         <source>Register</source>
         <translation>登録</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="548"/>
+        <location filename="_annotations_extraction_bridge.py" line="227"/>
         <source>Registration result</source>
         <translation>登録結果</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="549"/>
+        <location filename="_annotations_extraction_bridge.py" line="228"/>
         <source>Remove every link group containing one of the selected rows. The lines remain in the preset.</source>
         <translation>選択行を含む連結グループをすべて解除します。ライン自体はプリセットに残ります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="556"/>
+        <location filename="_annotations_extraction_bridge.py" line="230"/>
         <source>Remove the absorption lines selected in the table from the preset.</source>
         <translation>テーブルで選択した吸収線をプリセットから削除します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="562"/>
+        <location filename="_annotations_extraction_bridge.py" line="232"/>
         <source>Remove the line species highlighted in the selected list.</source>
         <translation>選択済み一覧でハイライトしているスペクトル線種を除外します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="565"/>
+        <location filename="_annotations_extraction_bridge.py" line="233"/>
         <source>Removes every registered control point and returns the continuum to a flat baseline.</source>
         <translation>登録済みの制御点をすべて削除し、連続光をフラットな状態に戻します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="569"/>
+        <location filename="_annotations_extraction_bridge.py" line="234"/>
         <source>Rename the preset. Only custom presets can be edited.</source>
         <translation>プリセット名を変更します。カスタムプリセットのみ編集可能です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="572"/>
+        <location filename="_annotations_extraction_bridge.py" line="235"/>
         <source>Repeat the last undone action.</source>
         <translation>取り消した操作を再実行します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="581"/>
+        <location filename="_annotations_extraction_bridge.py" line="238"/>
         <source>Reports the cursor position in wavelength or velocity.</source>
         <translation>カーソル位置の波長や速度を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="584"/>
+        <location filename="_annotations_extraction_bridge.py" line="239"/>
         <source>Reset</source>
         <translation>リセット</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="585"/>
+        <location filename="_annotations_extraction_bridge.py" line="240"/>
         <source>Reset all entered filter conditions and return the search results to the initial state.</source>
         <translation>入力したフィルタ条件をすべてリセットし、検索結果を初期状態に戻します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="593"/>
+        <location filename="_annotations_extraction_bridge.py" line="242"/>
         <source>Results summary</source>
         <translation>結果サマリー</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="594"/>
+        <location filename="_annotations_extraction_bridge.py" line="243"/>
         <source>Return to Analysis Overview (Alt+Left).</source>
         <translation>解析の概要に戻ります（Alt+←）。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="595"/>
+        <location filename="_annotations_extraction_bridge.py" line="244"/>
         <source>Return to the standard spectrum view and re-enable wavelength controls.</source>
         <translation>速度プロットを閉じて通常のスペクトル表示に戻ります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="599"/>
+        <location filename="_annotations_extraction_bridge.py" line="245"/>
         <source>Revert the last action.</source>
         <translation>直前の操作を取り消します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="604"/>
+        <location filename="_annotations_extraction_bridge.py" line="247"/>
         <source>Review database-derived link suggestions and use Apply all to accept every valid suggestion.</source>
         <translation>ラインデータベースから提示された連結候補を確認し、［すべて適用］で有効な候補を一括適用します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="608"/>
+        <location filename="_annotations_extraction_bridge.py" line="248"/>
         <source>Review each control point&apos;s wavelength and flux, then edit or delete entries as needed.</source>
         <translation>登録済みの制御点を波長とフラックスで一覧し、必要に応じて編集・削除できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="615"/>
+        <location filename="_annotations_extraction_bridge.py" line="250"/>
         <source>Review the selected line&apos;s transition levels, oscillator strength, references, and other details as text.</source>
         <translation>選択したラインの遷移レベルや振動子強度、文献情報などをテキストで確認できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="619"/>
+        <location filename="_annotations_extraction_bridge.py" line="251"/>
         <source>Review the shared context bar, spectrum view, and status bar that appear in every mode.</source>
         <translation>メインウィンドウに共通するコンテキストメニューやスペクトル表示エリアの役割を概観します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="632"/>
+        <location filename="_annotations_extraction_bridge.py" line="255"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="633"/>
+        <location filename="_annotations_extraction_bridge.py" line="256"/>
         <source>Save optimization results and statistics as CSV.</source>
         <translation>最適化結果や統計値をCSV形式でエクスポートします。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="638"/>
+        <location filename="_annotations_extraction_bridge.py" line="258"/>
         <source>Save the current project state to disk.</source>
         <translation>現在の作業内容をプロジェクトファイルに保存します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="639"/>
+        <location filename="_annotations_extraction_bridge.py" line="259"/>
         <source>Save the current settings and close the dialog.</source>
         <translation>現在の設定を保存してダイアログを閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="643"/>
+        <location filename="_annotations_extraction_bridge.py" line="261"/>
         <source>Search results</source>
         <translation>検索結果一覧</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="644"/>
+        <location filename="_annotations_extraction_bridge.py" line="262"/>
         <source>Search the absorption-line database for lines and bring them into presets or Identify mode.</source>
         <translation>吸収線データベースからラインを検索し、プリセットや同定モードに取り込むためのダイアログです。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="648"/>
+        <location filename="_annotations_extraction_bridge.py" line="263"/>
         <source>Select a line in the result list and check its transition data and f-value in the detail preview on the right.</source>
         <translation>結果一覧でラインを選択し、右側の詳細プレビューで遷移情報や f 値を確認します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="660"/>
+        <location filename="_annotations_extraction_bridge.py" line="266"/>
         <source>Select the error FITS file as well if needed.</source>
         <translation>必要に応じて誤差用 FITS ファイルも選択します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="661"/>
+        <location filename="_annotations_extraction_bridge.py" line="267"/>
         <source>Select the flux FITS file with the Browse... button.</source>
         <translation>参照... ボタンからフラックス用 FITS ファイルを選択します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="662"/>
+        <location filename="_annotations_extraction_bridge.py" line="268"/>
         <source>Select two or more rows and use Link selected lines to create a link group; select a linked row and use Unlink to remove its group.</source>
         <translation>2 行以上を選択して［選択行を連結］で連結グループを作成します。連結済みの行を選択して［連結解除］を押すと、そのグループを解除します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="666"/>
+        <location filename="_annotations_extraction_bridge.py" line="269"/>
         <source>Selected Line List</source>
         <translation>選択済み線種一覧</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="667"/>
+        <location filename="_annotations_extraction_bridge.py" line="270"/>
         <source>Selected lines</source>
         <translation>選択済みライン</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="669"/>
+        <location filename="_annotations_extraction_bridge.py" line="272"/>
         <source>Selecting a preset in the left list shows its composition on the right.</source>
         <translation>左側のリストでプリセットを選ぶと右側に構成が表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="673"/>
+        <location filename="_annotations_extraction_bridge.py" line="273"/>
         <source>Selecting or clearing any member of a multiplet applies the same state to every member. When opened from preset management, an explicitly selected multiplet is also proposed as a preset link group.</source>
         <translation>マルチプレットのどのメンバーを選択または解除しても、全メンバーに同じ状態が適用されます。プリセット管理から開いた場合、明示的に選択したマルチプレットはプリセット連結グループの候補にもなります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="677"/>
+        <location filename="_annotations_extraction_bridge.py" line="274"/>
         <source>Selection area</source>
         <translation>選択エリア</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="678"/>
+        <location filename="_annotations_extraction_bridge.py" line="275"/>
         <source>Set the dark-energy density ΩΛ in the range 0.000–1.000. It feeds into the Ωk calculation.</source>
         <translation>ダークエネルギー密度 ΩΛ を 0.000 ～ 1.000 の範囲で設定します。Ωk の計算に反映されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="682"/>
+        <location filename="_annotations_extraction_bridge.py" line="276"/>
         <source>Set the instrument&apos;s spectral resolution R and choose how it is applied to model calculations.</source>
         <translation>観測装置の波長分解能 R を設定し、モデル計算への反映方法を選択します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="686"/>
+        <location filename="_annotations_extraction_bridge.py" line="277"/>
         <source>Set the lower and upper flux limits.</source>
         <translation>フラックス表示の上下限を設定します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="687"/>
+        <location filename="_annotations_extraction_bridge.py" line="278"/>
         <source>Set the minimum and maximum wavelengths shown.</source>
         <translation>表示する波長の最小値と最大値を設定します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="700"/>
+        <location filename="_annotations_extraction_bridge.py" line="282"/>
         <source>Share presets as JSON files with Import... / Export....</source>
         <translation>インポート...／エクスポート... で JSONファイルとして共有できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="703"/>
+        <location filename="_annotations_extraction_bridge.py" line="283"/>
         <source>Shift+click an absorption feature on the spectrum to add temporary lines; the temporary line list always shows how they will be grouped into regions.</source>
         <translation>スペクトル上の吸収を Shift+クリックすると一時ラインが追加されます。一時ライン一覧には、領域へどのように束ねられるかが常に表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="707"/>
+        <location filename="_annotations_extraction_bridge.py" line="284"/>
         <source>Shortcuts for estimating or resetting continuum control points without leaving the panel.</source>
         <translation>連続光の制御点を自動推定したり、既存ポイントをリセットしたりするショートカットです。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="711"/>
+        <location filename="_annotations_extraction_bridge.py" line="285"/>
         <source>Show a sample of how menus and buttons appear in the selected language.</source>
         <translation>選択した言語でメニューやボタンがどのように表示されるかをサンプル表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="721"/>
+        <location filename="_annotations_extraction_bridge.py" line="288"/>
         <source>Shown in the bottom pane while Region Detail is open. Edit component parameters and each line&apos;s Analysis range [km/s] for the selected region. Component rows leave the analysis-range cell empty. Each parameter value cell combines the shared tie label, fitted value, and uncertainty in one display; right-click a column header to show or hide columns, and drag a header to reorder columns (visibility, order, and width are remembered for next time).</source>
         <translation>領域詳細を開いている間、下部ペインに表示されます。選択した領域の成分パラメータと各ラインの［解析範囲 [km/s]］を編集します。成分行の解析範囲セルは空欄です。各パラメータ値セルには、共有ラベル、フィット値、誤差がまとめて表示されます。列見出しを右クリックすると列の表示/非表示を切り替えられ、見出しをドラッグすると列を並べ替えられます（表示状態、順序、幅は次回まで保存されます）。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="725"/>
+        <location filename="_annotations_extraction_bridge.py" line="289"/>
         <source>Shows a short description of the active mode.</source>
         <translation>選択中モードの補足説明を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="726"/>
+        <location filename="_annotations_extraction_bridge.py" line="290"/>
         <source>Shows link groups suggested from multiplets in the line database. Suggestions remain pending until applied.</source>
         <translation>ラインデータベースのマルチプレットから提案された連結グループを表示します。候補は適用するまで保留状態です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="730"/>
+        <location filename="_annotations_extraction_bridge.py" line="291"/>
         <source>Shows progress and notification messages.</source>
         <translation>進行状況や通知メッセージを表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="735"/>
+        <location filename="_annotations_extraction_bridge.py" line="293"/>
         <source>Shows supplemental context for the active mode.</source>
         <translation>モードの補足説明や状態を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="739"/>
+        <location filename="_annotations_extraction_bridge.py" line="295"/>
         <source>Shows the absorption-line candidates with wavelength, type, f-value, and more. Click a column header to change the sort order.</source>
         <translation>吸収線候補を波長、種別、f 値などとともに表示します。列ヘッダーをクリックするとソート順を切り替えられます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="747"/>
+        <location filename="_annotations_extraction_bridge.py" line="297"/>
         <source>Shows the fit status, χ² statistics, and component count for the region. A note explains the next step while fitting is unavailable.</source>
         <translation>領域のフィット状態、χ² 統計、コンポーネント数を表示します。フィットできない間は、次に行う操作を示す注記が表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="751"/>
-        <source>Shows the hierarchy of confirmed regions and their lines. A single click selects a row; press Enter or double-click a region or line to move the spectrum view to its range.</source>
-        <translation>確定領域とラインの階層を表示します。単クリックで行を選択し、Enterキーまたは領域・ラインのダブルクリックでスペクトルビューを対象範囲へ移動します。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="755"/>
+        <location filename="_annotations_extraction_bridge.py" line="300"/>
         <source>Shows the result after a successful registration. The message clears when the temporary-line workflow changes again.</source>
         <translation>登録に成功した後、その結果を表示します。一時ラインのワークフローが再び変化するとメッセージは消去されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="109"/>
+        <location filename="_annotations_extraction_bridge.py" line="46"/>
         <source>Analysis-range summary</source>
         <translation>解析範囲の要約</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="322"/>
-        <source>Hold Shift over an absorption feature and press V while the all-species preview is visible to open the plot immediately at that exact wavelength. Dashed boundaries show the New-candidate analysis range; Display range reframes every subplot without changing candidate data.</source>
-        <oldsource>Hold Shift over an absorption feature and press V while the all-species preview is visible to open the plot immediately at that exact wavelength. Dashed boundaries show the New-candidate analysis half-width; Display half-width reframes every subplot without changing candidate data.</oldsource>
-        <translation>吸収特徴上でShiftを押し、全線種プレビューが表示されている間にVを押すと、その波長でプロットが開きます。破線は新規候補の解析範囲を示し、［表示範囲］は候補データを変更せずにすべてのサブプロットを表示し直します。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="478"/>
+        <location filename="_annotations_extraction_bridge.py" line="193"/>
         <source>Open the selected region in Analysis Region Detail.</source>
         <translation>選択した領域を解析の領域詳細で開きます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="529"/>
+        <location filename="_annotations_extraction_bridge.py" line="217"/>
         <source>Readiness filter</source>
         <translation>解析状態フィルター</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="544"/>
+        <location filename="_annotations_extraction_bridge.py" line="223"/>
         <source>Region filter</source>
         <translation>領域フィルター</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="545"/>
+        <location filename="_annotations_extraction_bridge.py" line="224"/>
         <source>Region review rows</source>
         <translation>領域レビュー行</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="553"/>
+        <location filename="_annotations_extraction_bridge.py" line="229"/>
         <source>Remove only the selected scientific link while keeping the lines.</source>
         <translation>ラインを残したまま、選択した科学的な連結だけを解除します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="600"/>
+        <location filename="_annotations_extraction_bridge.py" line="246"/>
         <source>Review all regions in Overview, edit Structure, and analyze one region in Detail.</source>
         <translation>概要ですべての領域を確認し、領域構成を編集し、領域詳細で 1 つの領域を解析します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="652"/>
+        <location filename="_annotations_extraction_bridge.py" line="264"/>
         <source>Select a row for its summary; press Enter or double-click to open Region Detail.</source>
         <translation>行を選択して概要を確認します。Enterキーまたはダブルクリックで領域詳細を開きます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="668"/>
+        <location filename="_annotations_extraction_bridge.py" line="271"/>
         <source>Selected region summary</source>
         <translation>選択した領域の概要</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="715"/>
+        <location filename="_annotations_extraction_bridge.py" line="286"/>
         <source>Show all regions or limit the table to one readiness category.</source>
         <translation>すべての領域を表示するか、1つの解析状態に絞り込みます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="731"/>
-        <source>Shows review counts, selected-region reasons, read-only structure, and explicit navigation actions.</source>
-        <translation>レビュー件数、選択領域の理由、読み取り専用の構造、移動操作を表示します。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="736"/>
+        <location filename="_annotations_extraction_bridge.py" line="294"/>
         <source>Shows the absorption region currently open in Region Detail.</source>
         <translation>領域詳細で現在開いている吸収領域を表示します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="763"/>
+        <location filename="_annotations_extraction_bridge.py" line="302"/>
         <source>Side Panel</source>
         <translation>サイドパネル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="764"/>
+        <location filename="_annotations_extraction_bridge.py" line="303"/>
         <source>Side panel for maintaining the tree of absorption regions and absorption lines.</source>
         <translation>領域やラインをツリービューで整理するためのサイドパネルです。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="772"/>
+        <location filename="_annotations_extraction_bridge.py" line="305"/>
         <source>Slide the detection threshold to rebuild the hit list.</source>
         <translation>σ閾値スライダーを操作して、吸収線領域の候補一覧を更新します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="775"/>
+        <location filename="_annotations_extraction_bridge.py" line="306"/>
         <source>Specify the FITS files for the observed flux and error and load them into the project.</source>
         <translation>観測スペクトルのフラックスと誤差の FITS ファイルを指定し、プロジェクトへ読み込みます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="779"/>
+        <location filename="_annotations_extraction_bridge.py" line="307"/>
         <source>Specify the Hubble constant H₀ in the range 50.0–100.0 km/s/Mpc. Step 0.1, default 67.4.</source>
         <translation>ハッブル定数 H₀ を 50.0 ～ 100.0 km/s/Mpc の範囲で指定します。ステップ 0.1、初期値 67.4。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="783"/>
+        <location filename="_annotations_extraction_bridge.py" line="308"/>
         <source>Specify the ionisation stage for the selected element. Changing the element updates the available stages.</source>
         <translation>選択中の元素に対するイオン段階を指定します。元素を替えると利用可能な段階が更新されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="787"/>
+        <location filename="_annotations_extraction_bridge.py" line="309"/>
         <source>Specify the path of the FITS file containing the observed error. When omitted, the data is treated as having no error.</source>
         <translation>観測誤差を含む FITS ファイルのパスを指定します。未指定の場合は誤差なしとして扱います。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="791"/>
+        <location filename="_annotations_extraction_bridge.py" line="310"/>
         <source>Specify the resolution R = λ/Δλ in the range 10–100000. Up to two decimal places are accepted.</source>
         <translation>分解能 R = λ/Δλ を 10 ～ 100000 の範囲で指定します。小数点以下 2 桁まで入力できます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="795"/>
+        <location filename="_annotations_extraction_bridge.py" line="311"/>
         <source>Spectrum View</source>
         <translation>スペクトル表示パネル</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="797"/>
+        <location filename="_annotations_extraction_bridge.py" line="313"/>
         <source>Split selected lines into a new region.</source>
         <translation>選択したラインを新しい領域へ分割します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="799"/>
+        <location filename="_annotations_extraction_bridge.py" line="315"/>
         <source>Start mode is the landing screen where you load observation data or an existing project.</source>
         <translation>スタートモードはアプリ起動直後に表示され、観測データのドラッグ＆ドロップや既存プロジェクトの読み込みを促して作業を始めます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="803"/>
+        <location filename="_annotations_extraction_bridge.py" line="316"/>
         <source>Start the fit with the current configuration and update the results.</source>
         <translation>現在の設定でフィットを開始し、結果を更新します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="810"/>
+        <location filename="_annotations_extraction_bridge.py" line="318"/>
         <source>Status Bar</source>
         <translation>ステータスバー</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="811"/>
+        <location filename="_annotations_extraction_bridge.py" line="319"/>
         <source>Subplot selector</source>
-        <translation>候補ライン取り込みチェックボックス</translation>
+        <translation>一時ライン取り込みチェックボックス</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="812"/>
+        <location filename="_annotations_extraction_bridge.py" line="320"/>
         <source>Suggested links</source>
         <translation>連結候補</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="813"/>
+        <location filename="_annotations_extraction_bridge.py" line="321"/>
         <source>Supplementary panel with mode-specific controls and information.</source>
         <translation>現在のモードに関連するコントロールや詳細情報をまとめた補助パネルです。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="816"/>
+        <location filename="_annotations_extraction_bridge.py" line="322"/>
         <source>Supported FITS inputs are 1D primary HDUs (with optional WCS), binary tables containing WAVELENGTH/WAVE/LAMBDA/WL and FLUX/INTENSITY/COUNTS/DATA columns, or multi-extension files with WAVELENGTH and FLUX (and optionally ERROR/ERR/SIGMA) extensions. Files whose column or extension names do not match cannot be loaded.</source>
         <translation>対応する FITS は次のいずれかです: 1 次元プライマリ HDU（WCS 対応可）、WAVELENGTH/WAVE/LAMBDA/WL と FLUX/INTENSITY/COUNTS/DATA 列を持つバイナリテーブル、拡張名 WAVELENGTH・FLUX（任意で ERROR/ERR/SIGMA）を含むマルチ拡張。列名・拡張名が一致しない場合は読み込めません。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="824"/>
+        <location filename="_annotations_extraction_bridge.py" line="324"/>
         <source>Switch the display language of the whole application and check the wording in the preview.</source>
         <translation>アプリケーション全体の表示言語を切り替え、プレビューで表記を確認します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="828"/>
-        <source>Switch the user interface to English.</source>
-        <translation>ユーザーインターフェースを英語表示に切り替えます。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="829"/>
-        <source>Switch the user interface to Japanese.</source>
-        <translation>ユーザーインターフェースを日本語表示に切り替えます。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="831"/>
+        <location filename="_annotations_extraction_bridge.py" line="326"/>
         <source>The area that lists the selected lines. Guidance text is shown while nothing is selected.</source>
         <translation>選択済みラインの一覧を表示する領域です。未選択の間は案内テキストが表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="835"/>
+        <location filename="_annotations_extraction_bridge.py" line="327"/>
         <source>The area where the selected line species are shown.</source>
         <translation>選択済みの線種が表示される領域です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="836"/>
+        <location filename="_annotations_extraction_bridge.py" line="328"/>
         <source>The available presets. Selecting one updates the details and the state of the edit buttons.</source>
         <translation>利用可能なプリセット一覧。選択すると詳細や、編集ボタン等の状態が更新されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="840"/>
+        <location filename="_annotations_extraction_bridge.py" line="329"/>
+        <source>The confirmed regions in the side panel are the same regions that Analysis Overview lists in its region list. To delete, merge, split, or unlink one, right-click its row and choose Edit region to open Analysis Structure, then follow [Analysis Structure](../../../operations/analysis-structure.md).</source>
+        <translation>サイドパネルの確定領域は、解析概要の領域一覧に並ぶ領域と同じものです。領域の削除、統合、分割、連結解除を行うには、対象の行を右クリックして［領域を編集］を選び、解析の構造編集を開きます。手順は[解析の構造編集](../../../operations/analysis-structure.md)を参照してください。</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="330"/>
         <source>The data control panel is hidden while you stay in Start mode.</source>
         <translation>スタートモードではデータ制御パネルやスペクトルパネルが非表示です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="843"/>
+        <location filename="_annotations_extraction_bridge.py" line="331"/>
         <source>The dialog only appears while the project has unsaved changes; otherwise the project closes straight away.</source>
         <translation>このダイアログは、プロジェクトに未保存の変更がある場合にのみ表示されます。変更がなければそのまま閉じます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="847"/>
+        <location filename="_annotations_extraction_bridge.py" line="332"/>
         <source>The error file is optional, but providing it enables uncertainty-aware analysis.</source>
         <translation>誤差ファイルは任意ですが、指定すると不確かさを用いた解析が有効になります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="851"/>
+        <location filename="_annotations_extraction_bridge.py" line="333"/>
         <source>The lookback time and comoving distance columns are hidden by default; enable them from the column header&apos;s right-click menu. Both are recalculated immediately when you apply new parameters in the Cosmology Settings dialog.</source>
         <translation>ルックバックタイムと共動距離の列は既定で非表示です。列ヘッダーの右クリックメニューから表示できます。どちらもコスモロジー設定ダイアログで新しいパラメータを適用すると即座に再計算されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="855"/>
+        <location filename="_annotations_extraction_bridge.py" line="334"/>
         <source>The supported extension is .fits.</source>
         <translation>対応拡張子は .fits です。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="856"/>
+        <location filename="_annotations_extraction_bridge.py" line="335"/>
         <source>The valid range is 10–100000; values outside it show an error.</source>
         <translation>有効範囲は 10 ～ 100000 で、それ以外はエラー表示となります。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="859"/>
+        <location filename="_annotations_extraction_bridge.py" line="336"/>
         <source>The σ threshold slider and numeric input are always visible on one row and stay synchronized. The heading reports the current candidate count.</source>
         <translation>σしきい値のスライダーと数値入力は1行に常時表示され、相互に同期します。見出しには現在の候補件数が表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="863"/>
+        <location filename="_annotations_extraction_bridge.py" line="337"/>
         <source>To change a link group&apos;s members, unlink the group and then link the intended rows again.</source>
         <translation>連結グループのメンバーを変更する場合は、グループを解除してから対象行を選び直して連結します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="867"/>
+        <location filename="_annotations_extraction_bridge.py" line="338"/>
         <source>Toggle whether the subplot’s slice will be promoted into the final grouping.</source>
-        <translation>各サブプロットを候補ラインとして取り込むかどうかを選択します。</translation>
+        <translation>各サブプロットを一時ラインとして取り込むかどうかを選択します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="871"/>
+        <location filename="_annotations_extraction_bridge.py" line="339"/>
         <source>Top bar for switching modes and accessing common actions.</source>
         <translation>モードの切り替えと共通アクションをまとめた上部のバーです。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="879"/>
+        <location filename="_annotations_extraction_bridge.py" line="341"/>
         <source>Undo</source>
         <translation>元に戻す</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="881"/>
+        <location filename="_annotations_extraction_bridge.py" line="342"/>
+        <source>Unlink linked lines</source>
+        <translation>連結を解除</translation>
+    </message>
+    <message>
+        <location filename="_annotations_extraction_bridge.py" line="343"/>
         <source>Unlocking too many parameters can destabilise convergence; introduce changes gradually.</source>
         <translation>過度に多くのパラメータを解放すると収束が不安定になるため、段階的に調整してください。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="889"/>
+        <location filename="_annotations_extraction_bridge.py" line="345"/>
         <source>Use Display range in the Velocity Plot to reframe all subplots without changing the analysis interval.</source>
         <oldsource>Use Display half-width in the Velocity Plot to reframe all subplots without changing the analysis interval.</oldsource>
         <translation>速度プロットの［表示範囲］を使用し、解析範囲を変えずにすべてのサブプロットの表示範囲を変更します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="893"/>
+        <location filename="_annotations_extraction_bridge.py" line="346"/>
         <source>Use mouse wheel vertical scroll to zoom and horizontal scroll to pan.</source>
         <translation>マウスホイールの上下スクロールでズーム、左右スクロールでパン（横移動）ができます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="897"/>
+        <location filename="_annotations_extraction_bridge.py" line="347"/>
         <source>Use the context bar to switch modes and invoke shared actions.</source>
         <translation>モードバーでモードを切り替え、共通アクションを呼び出します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="900"/>
+        <location filename="_annotations_extraction_bridge.py" line="348"/>
         <source>Velocity Plot</source>
         <translation>速度プロット</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="901"/>
+        <location filename="_annotations_extraction_bridge.py" line="349"/>
         <source>Velocity plot info</source>
         <translation>速度プロット情報</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="902"/>
+        <location filename="_annotations_extraction_bridge.py" line="350"/>
         <source>Wavelength Range</source>
         <translation>波長範囲</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="903"/>
+        <location filename="_annotations_extraction_bridge.py" line="351"/>
         <source>Wavelength range</source>
         <translation>波長範囲</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="908"/>
+        <location filename="_annotations_extraction_bridge.py" line="353"/>
         <source>When checked, the instrument resolution is convolved into the analysis model. When unchecked, the value is stored but not applied.</source>
         <translation>チェックすると装置分解能を解析モデルへ畳み込みます。外すと入力値は保存されますが適用されません。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="912"/>
+        <location filename="_annotations_extraction_bridge.py" line="354"/>
         <source>When dragging FITS files, select both flux and error files together so they are paired automatically.</source>
         <translation>FITS をドラッグする場合はフラックスと誤差の 2 ファイルを同時に選択してください。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="916"/>
+        <location filename="_annotations_extraction_bridge.py" line="355"/>
         <source>When more than six slices are available, advance to the next subplot page.</source>
         <translation>7 件以上の候補がある場合に、次のサブプロットページへ移動します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="920"/>
+        <location filename="_annotations_extraction_bridge.py" line="356"/>
         <source>When more than six slices are available, move back to the earlier subplot page.</source>
         <translation>7 件以上の候補がある場合に、前のサブプロットページへ移動します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="924"/>
-        <source>When opened from Identify mode, shows the current absorption-region name and wavelength range.</source>
-        <translation>同定モードで開いた場合に、現在の吸収線領域名と波長範囲を表示します。</translation>
-    </message>
-    <message>
-        <location filename="_annotations_extraction_bridge.py" line="928"/>
+        <location filename="_annotations_extraction_bridge.py" line="357"/>
         <source>When Ωm + ΩΛ exceeds 1, Ωk shows the sign of the curvature.</source>
         <translation>Ωm + ΩΛ が 1 を超える場合は Ωk に曲率の符号が表示されます。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="931"/>
+        <location filename="_annotations_extraction_bridge.py" line="358"/>
         <source>Workspace for one selected region, including masks, component parameters, fitting, and export.</source>
         <translation>選択した1つの領域について、マスク、成分パラメータ、フィット、エクスポートを操作します。</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="935"/>
+        <location filename="_annotations_extraction_bridge.py" line="359"/>
         <source>Zoom Area</source>
         <translation>範囲ズーム</translation>
     </message>
     <message>
-        <location filename="_annotations_extraction_bridge.py" line="936"/>
+        <location filename="_annotations_extraction_bridge.py" line="360"/>
         <source>chappy User Manual</source>
         <translation>chappy ユーザーマニュアル</translation>
     </message>
@@ -2000,23 +1984,23 @@
         <translation>注意点</translation>
     </message>
     <message>
-        <location filename="../exporter.py" line="1287"/>
-        <location filename="../tutorial_guide.py" line="122"/>
+        <location filename="../exporter.py" line="1308"/>
+        <location filename="../tutorial_guide.py" line="126"/>
         <source>No.</source>
         <translation>番号</translation>
     </message>
     <message>
-        <location filename="../exporter.py" line="1288"/>
+        <location filename="../exporter.py" line="1309"/>
         <source>Item</source>
         <translation>項目</translation>
     </message>
     <message>
-        <location filename="../exporter.py" line="1290"/>
+        <location filename="../exporter.py" line="1311"/>
         <source>Description</source>
         <translation>説明</translation>
     </message>
     <message>
-        <location filename="../exporter.py" line="1293"/>
+        <location filename="../exporter.py" line="1314"/>
         <source>Shortcut</source>
         <translation>ショートカット</translation>
     </message>
@@ -2367,14 +2351,14 @@
     <message>
         <location filename="../line_database_guide.py" line="182"/>
         <location filename="../pipeline.py" line="525"/>
-        <location filename="../tutorial_guide.py" line="342"/>
+        <location filename="../tutorial_guide.py" line="359"/>
         <source>Tips and Best Practices</source>
         <translation>注意点とベストプラクティス</translation>
     </message>
     <message>
         <location filename="../line_database_guide.py" line="203"/>
         <location filename="../pipeline.py" line="528"/>
-        <location filename="../tutorial_guide.py" line="352"/>
+        <location filename="../tutorial_guide.py" line="369"/>
         <source>Related References</source>
         <translation>関連資料</translation>
     </message>
@@ -2384,125 +2368,80 @@
         <translation>| ステップ | 操作 | 期待される結果 |</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="45"/>
+        <location filename="../tutorial_guide.py" line="44"/>
         <location filename="../user_manual_manifest.py" line="423"/>
         <source>Guided Tutorial</source>
         <translation>ガイド付きチュートリアル</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="46"/>
+        <location filename="../tutorial_guide.py" line="45"/>
         <source>What the in-app guided tour teaches, how it starts, and how to run it again from the Help menu.</source>
         <translation>アプリ内のガイドツアーで学べる内容と、開始方法、［ヘルプ］メニューからの再開方法を説明します。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="52"/>
+        <location filename="../tutorial_guide.py" line="51"/>
         <source>chappy includes a guided tour: coach-mark bubbles that highlight one widget at a time and walk you through the analysis workflow on the bundled sample spectrum of quasar Q0329-385. It never touches your own data, because it opens the sample spectrum itself before it starts.</source>
         <translation>chappy には、ウィジェットを 1 つずつハイライトするコーチマーク（吹き出し）で解析の流れを案内するガイドツアーがあります。同梱されたクェーサー Q0329-385 のサンプルスペクトルを使って進み、開始前にツアー自身がそのサンプルを開くため、ご自身のデータに触れることはありません。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="60"/>
+        <location filename="../tutorial_guide.py" line="59"/>
         <source>Starting the Tour</source>
         <translation>ツアーを開始する</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="61"/>
+        <location filename="../tutorial_guide.py" line="60"/>
         <source>The tour is offered through the same [Welcome to chappy] dialog on both occasions below.</source>
         <translation>次の 2 つの場面のどちらでも、同じ［chappy へようこそ］ダイアログからツアーを開始できます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="66"/>
+        <location filename="../tutorial_guide.py" line="65"/>
         <source>On the very first launch, chappy shows the dialog automatically, once. If the bundled sample spectrum is not part of this installation, the dialog still appears but its two walkthrough buttons are disabled; you can still open your own data from [File] &gt; [Open Observation Data].</source>
         <translation>初回起動時には、このダイアログが 1 度だけ自動で表示されます。同梱のサンプルスペクトルがインストールに含まれていない場合、ダイアログは表示されますが 2 つのコースのボタンは無効になります。その場合も、［ファイル］&gt;［観測データを開く］からご自身のデータを読み込めます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="73"/>
+        <location filename="../tutorial_guide.py" line="72"/>
         <source>Afterward, select [Help] &gt; [Tutorial] to reopen the same dialog at any time and start the tour again.</source>
         <translation>2 回目以降は、［ヘルプ］&gt;［チュートリアル］を選ぶと同じダイアログをいつでも開き直し、ツアーを再開できます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="79"/>
+        <location filename="../tutorial_guide.py" line="78"/>
         <source>Choosing a walkthrough opens the sample spectrum (flux and error FITS pair, resolving power already set) before the first coach mark appears, replacing whatever project was open.</source>
         <translation>コースを選ぶと、最初のコーチマークが表示される前にサンプルスペクトル（フラックスと誤差の FITS ファイル 2 点。装置分解能は設定済み）が開き、それまで開いていたプロジェクトは置き換えられます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="86"/>
-        <source>Short Walkthrough or Full Walkthrough</source>
-        <translation>基本コースと全機能コース</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="89"/>
-        <source>The dialog offers two lengths; both start from the same first chapter.</source>
-        <translation>ダイアログでは長さの異なる 2 つのコースを選べます。どちらも同じ最初の章から始まります。</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="92"/>
+        <location filename="../tutorial_guide.py" line="94"/>
         <source>Dialog Button</source>
         <translation>ダイアログのボタン</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="93"/>
+        <location filename="../tutorial_guide.py" line="95"/>
         <source>Coverage</source>
         <translation>学べる範囲</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="94"/>
-        <location filename="../tutorial_guide.py" line="116"/>
+        <location filename="../tutorial_guide.py" line="96"/>
+        <location filename="../tutorial_guide.py" line="118"/>
         <source>Chapters</source>
         <translation>章</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="97"/>
+        <location filename="../tutorial_guide.py" line="99"/>
         <source>[Try the Essential Workflow]</source>
         <translation>［基本の流れを体験する］</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="98"/>
-        <source>The minimal loop: load data, identify one absorption system, fit it, save the project.</source>
-        <translation>最小限の流れです。データを読み込み、吸収系を 1 つ同定し、フィットして、プロジェクトを保存します。</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="106"/>
-        <source>[Explore All Features]</source>
-        <translation>［すべての機能を体験する］</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="107"/>
-        <source>Everything in the essential workflow plus building a custom preset, the velocity plot, merging regions, tying ions together, and continuum correction.</source>
-        <translation>基本コースの内容に加えて、カスタムプリセットの作成、速度プロット、領域の統合、イオン間のパラメータ共有、連続光補正まで進みます。</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="117"/>
-        <source>Chapters run in the order below. A chapter marked Full only is skipped in the essential workflow.</source>
-        <translation>章は次の順に進みます。「全機能のみ」の章は、基本コースでは省略されます。</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="123"/>
-        <location filename="../tutorial_guide.py" line="252"/>
+        <location filename="../tutorial_guide.py" line="127"/>
+        <location filename="../tutorial_guide.py" line="269"/>
         <source>Chapter</source>
         <translation>章</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="124"/>
-        <source>Included In</source>
-        <translation>対象コース</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="125"/>
+        <location filename="../tutorial_guide.py" line="128"/>
         <source>What You Learn</source>
         <translation>学べる内容</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="126"/>
-        <source>Essential and Full</source>
-        <translation>基本・全機能</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="127"/>
-        <source>Full only</source>
-        <translation>全機能のみ</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="131"/>
+        <location filename="../tutorial_guide.py" line="132"/>
         <source>Getting Started</source>
         <translation>はじめに</translation>
     </message>
@@ -2512,202 +2451,258 @@
         <translation>読み込んだスペクトルの操作方法です。ホイールとキーボードによるズームと移動、範囲ズーム、元に戻す・やり直し、波長範囲の直接入力、［自動調整］、［表示をリセット］、そしてご自身のデータを開く場所を扱います。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="143"/>
-        <source>Identifying Absorption Systems</source>
-        <translation>吸収系の同定</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="145"/>
-        <source>Selecting the built-in &quot;Metal Lines&quot; preset, choosing a reference line, marking a candidate absorption system on the spectrum, and confirming it as a region.</source>
-        <translation>組み込みプリセット「金属線」を選び、基準ラインを決めて、スペクトル上で吸収系の候補をマークし、領域として確定します。</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="154"/>
-        <location filename="../tutorial_guide.py" line="257"/>
+        <location filename="../tutorial_guide.py" line="153"/>
+        <location filename="../tutorial_guide.py" line="274"/>
         <source>Reviewing Analysis Readiness</source>
         <translation>解析状態のレビュー</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="156"/>
+        <location filename="../tutorial_guide.py" line="154"/>
         <source>Selecting the confirmed region in Analysis Overview and reading its fit readiness.</source>
         <translation>確定した領域を解析概要で選び、フィットの準備状況を読み取ります。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="164"/>
-        <location filename="../tutorial_guide.py" line="262"/>
+        <location filename="../tutorial_guide.py" line="162"/>
+        <location filename="../tutorial_guide.py" line="279"/>
         <source>Fitting a Region in Detail</source>
         <translation>領域詳細でのフィット</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="166"/>
+        <location filename="../tutorial_guide.py" line="163"/>
         <source>Opening Analysis Region Detail, adding a fit component to a line, running the optimizer, and reading the fit outcome.</source>
         <translation>解析の領域詳細を開き、ラインにフィットコンポーネントを追加して最適化を実行し、フィット結果を読み取ります。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="175"/>
+        <location filename="../tutorial_guide.py" line="197"/>
         <source>Building a Custom Preset</source>
         <translation>カスタムプリセットの作成</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="177"/>
+        <location filename="../tutorial_guide.py" line="198"/>
         <source>Creating a named preset, adding Fe II and Mg II lines to it, linking and unlinking lines into tie groups, and choosing its reference line.</source>
         <translation>名前を付けたプリセットを作成し、Fe II と Mg II のラインを追加して、ラインのリンクグループを組んだり解除したりし、基準ラインを選びます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="186"/>
-        <location filename="../tutorial_guide.py" line="267"/>
+        <location filename="../tutorial_guide.py" line="207"/>
+        <location filename="../tutorial_guide.py" line="284"/>
         <source>Identifying with the Velocity Plot</source>
         <translation>速度プロットで同定する</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="188"/>
-        <source>Selecting the custom preset, moving to a second, hidden absorption system in the sample, and using the velocity plot to identify and confirm it.</source>
-        <translation>カスタムプリセットを選び、サンプルの中に隠れたもう 1 つの吸収系へ移動して、速度プロットで同定・確定します。</translation>
-    </message>
-    <message>
-        <location filename="../tutorial_guide.py" line="197"/>
-        <location filename="../tutorial_guide.py" line="272"/>
+        <location filename="../tutorial_guide.py" line="217"/>
+        <location filename="../tutorial_guide.py" line="289"/>
         <source>Merging Regions</source>
         <translation>領域の統合</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="199"/>
+        <location filename="../tutorial_guide.py" line="218"/>
         <source>Opening Analysis Structure for two regions, merging them so one region spans more than one ion species, splitting the Mg II multiplet back out, and re-merging the regions.</source>
         <translation>解析の構造編集で 2 つの領域を開き、複数のイオン種にまたがる 1 つの領域へ統合し、Mg II マルチプレットを再び分割してから、領域を再統合します。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="211"/>
+        <location filename="../tutorial_guide.py" line="229"/>
         <source>Building three-component models for both ions, tying their main components&apos; redshift together, running a joint fit, and fixing the saturated Mg II logN before fitting again.</source>
         <translation>両方のイオンに 3 成分モデルを構築し、主成分の赤方偏移をイオン間で共有して同時フィットを実行し、飽和した Mg II の logN を固定して再フィットします。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="223"/>
+        <location filename="../tutorial_guide.py" line="240"/>
         <source>Switching to Continuum mode and running [Auto Estimate] to fit the continuum around the spectrum, adding and moving a control point, deleting a point, and undoing those edits.</source>
         <translation>連続光モードに切り替え、［自動推定］を実行してスペクトルに沿った連続光を求め、制御点の追加・移動・削除と、それらの編集の取り消しを行います。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="245"/>
+        <location filename="../tutorial_guide.py" line="262"/>
         <source>Five chapters open only after earlier chapters have left the project in the state they need. When a chapter&apos;s prerequisite is unmet, the tour shows a warning bubble instead of that chapter&apos;s first step, offering [Back] to return to the previous step or [Continue anyway] to ignore the prerequisite and start that chapter from its first step.</source>
         <translation>5 つの章は、それ以前の章によってプロジェクトが必要な状態になってから開きます。前提条件が満たされていない場合、その章の最初のステップの代わりに警告の吹き出しが表示され、［戻る］で前のステップに戻るか、［このまま続行］で前提条件を無視してその章の最初のステップから開始するかを選べます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="209"/>
-        <location filename="../tutorial_guide.py" line="277"/>
+        <location filename="../tutorial_guide.py" line="228"/>
+        <location filename="../tutorial_guide.py" line="294"/>
         <source>Tying Ions and Fitting Together</source>
         <translation>イオン間のパラメータ共有と同時フィット</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="221"/>
+        <location filename="../tutorial_guide.py" line="239"/>
         <source>Correcting the Continuum</source>
         <translation>連続光の補正</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="233"/>
+        <location filename="../tutorial_guide.py" line="172"/>
+        <location filename="../tutorial_guide.py" line="250"/>
         <source>Saving Your Work</source>
         <translation>プロジェクトの保存</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="235"/>
+        <location filename="../tutorial_guide.py" line="85"/>
+        <source>Essential Walkthrough or Advanced Walkthrough</source>
+        <translation>基本ウォークスルーまたは応用ウォークスルー</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="88"/>
+        <source>The dialog offers two separate walkthroughs. The advanced walkthrough continues from where the essential one leaves off, with no overlap between the two. Each reopens the sample spectrum and starts independently, so you can run them in separate sessions.</source>
+        <translation>ダイアログには 2 つの独立したウォークスルーがあります。応用ウォークスルーは基本ウォークスルーの続きから始まり、内容の重複はありません。どちらもサンプルスペクトルを開き直して独立に開始するため、別々のセッションで実行できます。</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="100"/>
+        <source>The minimal loop: load data, identify one absorption line, fit it, save the project.</source>
+        <translation>最小限の流れです。データを読み込み、吸収ラインを 1 本同定し、フィットして、プロジェクトを保存します。</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="107"/>
+        <source>[Continue with Advanced Topics]</source>
+        <translation>［応用編に進む］</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="108"/>
+        <source>Continuing from the essentials: building a custom preset, identifying with the velocity plot, merging and splitting regions, tying ions together in a joint fit, and continuum correction.</source>
+        <translation>基本編に続いて、カスタムプリセットの作成、速度プロットでの同定、領域の統合と分割、イオン間の同時フィット、連続光補正を扱います。</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="119"/>
+        <source>The essential and advanced walkthroughs each run their own chapters, in the order shown in the two tables below.</source>
+        <translation>基本ウォークスルーと応用ウォークスルーは、それぞれ下の 2 つの表に示す順序で固有の章を実行します。</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="124"/>
+        <source>Essential Walkthrough</source>
+        <translation>基本ウォークスルー</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="125"/>
+        <source>Advanced Walkthrough</source>
+        <translation>応用ウォークスルー</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="143"/>
+        <source>Identifying Absorption Lines</source>
+        <translation>吸収ラインの同定</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="144"/>
+        <source>Selecting the built-in &quot;Metal Lines&quot; preset, choosing a reference line, marking a candidate absorption line on the spectrum, and confirming it as a region.</source>
+        <translation>組み込みプリセット「金属線」を選び、基準ラインを決めて、スペクトル上で吸収ラインの候補をマークし、領域として確定します。</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="173"/>
         <source>Saving the project, and a recap of the load, identify, review, fit, and save loop just completed.</source>
         <translation>プロジェクトを保存し、ここまでたどった「読み込み・同定・レビュー・フィット・保存」の流れを振り返ります。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="244"/>
+        <location filename="../tutorial_guide.py" line="184"/>
+        <source>Continuing from the Essentials</source>
+        <translation>基本編からの続き</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="185"/>
+        <source>That the sample spectrum has been reopened for this walkthrough, replacing whatever project was open, and what lies ahead: building a custom preset, identifying with the velocity plot, merging and splitting regions, tying redshifts together across ions, and correcting the continuum. Completing the essential walkthrough first is recommended, though not required.</source>
+        <translation>このウォークスルー用にサンプルスペクトルが開き直され、開いていたプロジェクトが置き換わったことと、この先で扱う内容を説明します。カスタムプリセットの作成、速度プロットでの同定、領域の統合と分割、イオン間での赤方偏移の共有、連続光の補正を扱います。必須ではありませんが、先に基本ウォークスルーを完了することを推奨します。</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="208"/>
+        <source>Selecting the custom preset, moving to a second, hidden absorption line in the sample, and using the velocity plot to identify and confirm it.</source>
+        <translation>カスタムプリセットを選び、サンプルの中に隠れたもう 1 本の吸収ラインへ移動して、速度プロットで同定・確定します。</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="251"/>
+        <source>Saving the project, and a recap of the preset-building, velocity-plot identification, region-editing, cross-ion tying, and continuum-correction work just completed.</source>
+        <translation>プロジェクトを保存し、完了したプリセット作成、速度プロットでの同定、領域編集、イオン間の連結、連続光補正を振り返ります。</translation>
+    </message>
+    <message>
+        <location filename="../tutorial_guide.py" line="261"/>
         <source>Chapter Prerequisites</source>
         <translation>章の前提条件</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="253"/>
+        <location filename="../tutorial_guide.py" line="270"/>
         <source>Needs</source>
         <translation>必要な状態</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="258"/>
-        <location filename="../tutorial_guide.py" line="263"/>
+        <location filename="../tutorial_guide.py" line="275"/>
+        <location filename="../tutorial_guide.py" line="280"/>
         <source>At least one confirmed absorption region.</source>
         <translation>確定した吸収領域が 1 つ以上あること。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="268"/>
+        <location filename="../tutorial_guide.py" line="285"/>
         <source>A custom preset created in an earlier chapter.</source>
         <translation>前の章で作成したカスタムプリセットがあること。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="273"/>
+        <location filename="../tutorial_guide.py" line="290"/>
         <source>At least two confirmed absorption regions.</source>
         <translation>確定した吸収領域が 2 つ以上あること。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="278"/>
+        <location filename="../tutorial_guide.py" line="295"/>
         <source>A region that combines two or more ion species.</source>
         <translation>2 つ以上のイオン種を含む領域があること。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="282"/>
+        <location filename="../tutorial_guide.py" line="299"/>
         <source>Step Controls</source>
         <translation>ステップの操作ボタン</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="283"/>
+        <location filename="../tutorial_guide.py" line="300"/>
         <source>Every coach-mark bubble carries the same controls, alongside the step&apos;s instruction and expected result.</source>
         <translation>コーチマークの吹き出しには、そのステップの操作内容と期待される結果に加えて、どれも同じ操作ボタンが並びます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="288"/>
+        <location filename="../tutorial_guide.py" line="305"/>
         <source>Control</source>
         <translation>ボタン</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="289"/>
+        <location filename="../tutorial_guide.py" line="306"/>
         <source>Effect</source>
         <translation>動作</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="290"/>
+        <location filename="../tutorial_guide.py" line="307"/>
         <source>[{label}]</source>
         <translation>［{label}］</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="294"/>
+        <location filename="../tutorial_guide.py" line="311"/>
         <source>Advances to the next step. On a step that checks for a specific action (for example, confirming a region or linking preset lines), [Next] stays disabled and the expected-result line stays unchecked until that action is performed; performing it enables [Next] without advancing automatically, so you can read the confirmation first.</source>
         <translation>次のステップへ進みます。特定の操作を確認するステップ（領域の確定やプリセットのラインのリンクなど）では、その操作を行うまで［次へ］は無効のままで、期待される結果にもチェックが付きません。操作を行うと［次へ］が有効になりますが、自動では進まないため、確認の表示を読んでから進められます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="305"/>
+        <location filename="../tutorial_guide.py" line="322"/>
         <source>Returns to the previous step, or to the previous chapter&apos;s last step at a chapter&apos;s first step. It does not undo anything you did in the application.</source>
         <translation>前のステップに戻ります。章の最初のステップでは、前の章の最後のステップに戻ります。アプリケーション側で行った操作が取り消されることはありません。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="313"/>
+        <location filename="../tutorial_guide.py" line="330"/>
         <source>Closes the tour immediately, keeping whatever the tour has done to the project so far.</source>
         <translation>ツアーをすぐに終了します。ツアーがそれまでにプロジェクトへ加えた変更はそのまま残ります。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="321"/>
+        <location filename="../tutorial_guide.py" line="338"/>
         <source>Shown only on steps that carry background information beyond the instruction itself; expands or collapses that note in place.</source>
         <translation>操作内容だけでは分からない補足があるステップにのみ表示され、その場で補足の表示と非表示を切り替えます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="329"/>
+        <location filename="../tutorial_guide.py" line="346"/>
         <source>Ending and Restarting</source>
         <translation>終了と再開</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="331"/>
+        <location filename="../tutorial_guide.py" line="348"/>
         <source>&gt; [!NOTE]
-&gt; The tour keeps no memory of where you stopped. Whether you close it with [Exit Tour] or quit chappy, the next walkthrough you start from [Help] &gt; [Tutorial] begins again at the first chapter, [Getting Started], and reopens the sample spectrum. Switching modes yourself does not end the tour, but the widget the current step points at is no longer on screen; switch back to the mode the chapter is guiding to see the coach mark again.</source>
+&gt; The tour keeps no memory of where you stopped. Whether you close it with [Exit Tour] or quit chappy, the next walkthrough you start from [Help] &gt; [Tutorial] begins again at its own first chapter and reopens the sample spectrum. Switching modes yourself does not end the tour, but the widget the current step points at is no longer on screen; switch back to the mode the chapter is guiding to see the coach mark again.</source>
         <translation>&gt; [!NOTE]
-&gt; ツアーは中断した位置を記憶しません。［ツアーを終了］で閉じた場合も、chappy を終了した場合も、次に［ヘルプ］&gt;［チュートリアル］から始めたコースは最初の章［はじめに］からやり直しになり、サンプルスペクトルも開き直されます。自分でモードを切り替えてもツアーは終了しませんが、現在のステップが指しているウィジェットは画面から消えます。その章が案内しているモードに戻すと、コーチマークが再び表示されます。</translation>
+&gt; ツアーは中断した位置を記憶しません。［ツアーを終了］で閉じた場合も、chappy を終了した場合も、次に［ヘルプ］&gt;［チュートリアル］から始めるウォークスルーは、それぞれの最初の章からやり直しになり、サンプルスペクトルも開き直されます。自分でモードを切り替えてもツアーは終了しませんが、現在のステップが指しているウィジェットは画面から消えます。その章が案内しているモードに戻すと、コーチマークが再び表示されます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="344"/>
+        <location filename="../tutorial_guide.py" line="361"/>
         <source>&gt; [!TIP]
 &gt; The tour targets specific widgets by name. If a step&apos;s highlighted area looks empty, the window may be too narrow to show that widget; enlarge the window or reveal the collapsed panel it belongs to.</source>
         <translation>&gt; [!TIP]
 &gt; ツアーはウィジェットを名前で指し示します。ハイライトされた場所が空に見える場合は、ウィンドウが狭くてそのウィジェットが表示されていない可能性があります。ウィンドウを広げるか、そのウィジェットが含まれる折りたたまれたパネルを展開すると表示されます。</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="355"/>
+        <location filename="../tutorial_guide.py" line="372"/>
         <location filename="../user_manual_manifest.py" line="88"/>
         <source>Load Data into the Application</source>
         <translation>データを読み込む</translation>
@@ -3151,51 +3146,51 @@
     </message>
     <message>
         <location filename="../scenarios/identify.py" line="203"/>
-        <source>(Identifying on the velocity plot) Hold Shift and place the cursor over the intended absorption region, then press V while the preview is visible.</source>
-        <translation>（速度プロットでの同定）Shiftを押したまま意図した吸収領域にカーソルを合わせ、プレビューが表示されている間にVを押します。</translation>
+        <source>(Identifying on the velocity plot) Place the cursor over the intended absorption region and press V. Hold Shift beforehand when you want to confirm the all-species preview first.</source>
+        <translation>（速度プロットでの同定）意図した吸収領域にカーソルを合わせてVを押します。先に全線種プレビューを確認したいときは、あらかじめShiftを押しておきます。</translation>
     </message>
     <message>
         <location filename="../scenarios/identify.py" line="211"/>
-        <source>The velocity plot opens immediately at the exact cursor wavelength. If no valid Shift preview is active, pressing V instead asks you to click the intended origin in the spectrum. Dashed boundaries show New-candidate range. Display range initially includes those boundaries with margin; six preset species are shown per page, with arrow buttons for later pages.</source>
-        <translation>速度プロットがカーソル位置の波長で開きます。有効なShiftプレビューがない状態でVを押すと、スペクトル上で起点を選択するよう求められます。破線は［新規候補の範囲］を示します。初期の［表示範囲］には破線が余白付きで収まり、1ページにプリセットの線種が6つ表示されます。後続ページへは矢印ボタンで移動します。</translation>
+        <source>The velocity plot opens immediately at the exact cursor wavelength, whether or not the Shift preview is visible. Dashed boundaries show New-candidate range. Display range initially includes those boundaries with margin; six preset species are shown per page, with arrow buttons for later pages.</source>
+        <translation>Shiftプレビューの有無にかかわらず、速度プロットがカーソル位置の波長で開きます。破線は［新規候補の範囲］を示します。初期の［表示範囲］には破線が余白付きで収まり、1ページにプリセットの線種が6つ表示されます。後続ページへは矢印ボタンで移動します。</translation>
     </message>
     <message>
-        <location filename="../scenarios/identify.py" line="224"/>
+        <location filename="../scenarios/identify.py" line="223"/>
         <source>On the Velocity Plot, edit Display range to reframe every subplot and page. Press Fit view to analysis ranges to restore a view derived from New-candidate range.</source>
         <translation>速度プロットの［表示範囲］を編集して、すべてのサブプロットとページを表示し直します。［解析範囲に合わせる］を押すと、［新規候補の範囲］から導出した表示に戻ります。</translation>
     </message>
     <message>
-        <location filename="../scenarios/identify.py" line="232"/>
+        <location filename="../scenarios/identify.py" line="231"/>
         <source>Only the Velocity Plot view changes. New-candidate range, existing temporary lines, registration grouping, and scientific Undo history remain unchanged.</source>
         <translation>速度プロットの表示だけが変わります。新規候補の範囲、既存の一時ライン、登録時の束ね結果、科学操作のUndo履歴は変更されません。</translation>
     </message>
     <message>
-        <location filename="../scenarios/identify.py" line="242"/>
+        <location filename="../scenarios/identify.py" line="241"/>
         <source>(Identifying on the velocity plot) Click the top-left corner of the velocity plot for each species you want to identify to check it, then press Add selected lines to temporary list.</source>
         <translation>（速度プロットでの同定）同定したい各線種の速度プロット左上を選択してチェックを付け、［選択した線を一時ラインに追加］を押します。</translation>
     </message>
     <message>
-        <location filename="../scenarios/identify.py" line="250"/>
+        <location filename="../scenarios/identify.py" line="249"/>
         <source>A blue check mark selects each species, and temporary lines for the checked species are added to the Temporary Lines section. Their ranges use New-candidate range, not Display range.</source>
         <translation>青いチェックマークで線種が選択され、チェックした線種の一時ラインが［一時ライン］セクションに追加されます。追加範囲には［表示範囲］ではなく［新規候補の範囲］が使用されます。</translation>
     </message>
     <message>
-        <location filename="../scenarios/identify.py" line="260"/>
+        <location filename="../scenarios/identify.py" line="259"/>
         <source>Review the grouping shown in the Temporary Lines section. Each group heading tells you where the lines will go on registration: a new region, or an existing region named in the heading.</source>
         <translation>「一時ライン」セクションに表示される束ね結果を確認します。各グループ見出しには、登録時にラインが新規領域になるか、見出しに示された既存領域へ追加されるかが表示されます。</translation>
     </message>
     <message>
-        <location filename="../scenarios/identify.py" line="269"/>
+        <location filename="../scenarios/identify.py" line="268"/>
         <source>The grouping is re-evaluated whenever temporary lines are added or removed. A warning mark on a heading means the lines overlap multiple existing regions; check the assignment in Analysis Structure after registering.</source>
         <translation>一時ラインが追加、削除されるたびにグループ分けが再評価されます。見出しの警告マークはラインが複数の既存領域と重なることを示します。登録後に解析の構造編集で所属を確認してください。</translation>
     </message>
     <message>
-        <location filename="../scenarios/identify.py" line="280"/>
+        <location filename="../scenarios/identify.py" line="279"/>
         <source>Press Register all (N groups) to save every temporary group to the project. To register only some groups, select their rows first; the button changes to Register selected (N groups).</source>
         <translation>［すべて登録 (N組)］を押すと全一時グループがプロジェクトへ保存されます。一部の組だけを登録する場合は先に対象行を選択します。ボタンが［選択を登録 (N組)］へ変わります。</translation>
     </message>
     <message>
-        <location filename="../scenarios/identify.py" line="288"/>
+        <location filename="../scenarios/identify.py" line="287"/>
         <source>The lines are saved immediately: they leave the temporary list, appear under Confirmed Regions, and the status bar reports the created or extended regions. Undo (Ctrl+Z, ⌘Z on macOS) reverts the registration. Lines created from the same link group remain linked in the project.</source>
         <translation>ラインは即座に保存されます。一時ライン一覧から消えて「確定領域」に表示され、作成・追加された領域がステータスバーに表示されます。元に戻す（Ctrl+Z、macOS では ⌘Z）で登録を取り消せます。同じ連結グループから作成されたラインは、プロジェクト内でも連結されたままになります。</translation>
     </message>
@@ -3257,7 +3252,7 @@
     <message>
         <location filename="../line_database_guide.py" line="204"/>
         <location filename="../scenarios/start.py" line="86"/>
-        <location filename="../tutorial_guide.py" line="353"/>
+        <location filename="../tutorial_guide.py" line="370"/>
         <location filename="../user_manual_manifest.py" line="392"/>
         <source>Menu List</source>
         <translation>メニュー一覧</translation>
@@ -3368,22 +3363,17 @@
         <translation>| Escape | 操作キャンセル |</translation>
     </message>
     <message>
-        <location filename="../data/keyboard_operations.py" line="48"/>
-        <source>| V | Open at the active Shift preview; otherwise select the velocity origin |</source>
-        <translation>| V | 有効なShiftプレビュー位置で開く。ない場合は速度起点を指定 |</translation>
-    </message>
-    <message>
-        <location filename="../data/keyboard_operations.py" line="99"/>
+        <location filename="../data/keyboard_operations.py" line="95"/>
         <source>Keyboard &amp; Mouse Operations</source>
         <translation>キーボード・マウス操作</translation>
     </message>
     <message>
-        <location filename="../data/keyboard_operations.py" line="102"/>
+        <location filename="../data/keyboard_operations.py" line="98"/>
         <source>| Operation | Description |</source>
         <translation>| 操作 | 説明 |</translation>
     </message>
     <message>
-        <location filename="../data/keyboard_operations.py" line="105"/>
+        <location filename="../data/keyboard_operations.py" line="101"/>
         <source>|------|------|</source>
         <translation>|------|------|</translation>
     </message>
@@ -3508,6 +3498,11 @@
         <translation>コンポーネント追加ボタンのクリック/選択済みのラインの領域をスペクトル上での右クリック/Shift+クリックの何れかの操作でコンポーネントを追加します。</translation>
     </message>
     <message>
+        <location filename="../scenarios/analysis_detail.py" line="142"/>
+        <source>Click-added components appear at the clicked position; button-added ones appear at the line centre. A component row is added under the selected line in the parameter table.</source>
+        <translation>クリックで追加した場合はその位置に、ボタンで追加した場合はラインの中心にコンポーネントが追加されます。パラメータテーブルの選択済みのラインにコンポーネントの行が追加されます。</translation>
+    </message>
+    <message>
         <location filename="../scenarios/analysis_detail.py" line="152"/>
         <source>To adjust components while comparing several lines in velocity space, right-click the spectrum with a line selected and choose &quot;Show Velocity Plot&quot;.</source>
         <translation>複数のラインを速度空間で比較しながらコンポーネントを調整したい場合は、ラインを選択した状態でスペクトル上を右クリックし「速度プロットを表示」を選択します。</translation>
@@ -3551,11 +3546,6 @@
         <location filename="../scenarios/analysis_detail.py" line="120"/>
         <source>In the parameter table in the bottom pane, select the line to which you want to add absorption components.</source>
         <translation>下部ペインのパラメータテーブルで、吸収線コンポーネントを追加したいラインを選択します。</translation>
-    </message>
-    <message>
-        <location filename="../scenarios/analysis_detail.py" line="142"/>
-        <source>Click-added components appear at the clicked position; button-added ones appear at the system centre. A component row is added under the selected line in the parameter table.</source>
-        <translation>クリックで追加した場合はその位置に、ボタンで追加した場合はシステムの中心にコンポーネントが追加されます。パラメータテーブルの選択済みのラインにコンポーネントの行が追加されます。</translation>
     </message>
     <message>
         <location filename="../scenarios/analysis_detail.py" line="176"/>
@@ -3796,22 +3786,22 @@
 <context>
     <name>Tutorial</name>
     <message>
-        <location filename="../tutorial_guide.py" line="293"/>
+        <location filename="../tutorial_guide.py" line="310"/>
         <source>Next</source>
         <translation>次へ</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="304"/>
+        <location filename="../tutorial_guide.py" line="321"/>
         <source>Back</source>
         <translation>戻る</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="312"/>
+        <location filename="../tutorial_guide.py" line="329"/>
         <source>Exit Tour</source>
         <translation>ツアーを終了</translation>
     </message>
     <message>
-        <location filename="../tutorial_guide.py" line="320"/>
+        <location filename="../tutorial_guide.py" line="337"/>
         <source>What is this?</source>
         <translation>これは何？</translation>
     </message>

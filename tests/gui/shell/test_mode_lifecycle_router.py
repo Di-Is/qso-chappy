@@ -35,16 +35,16 @@ class _LifecycleProbe:
 
 def test_mode_lifecycle_router_activates_and_deactivates_modes() -> None:
     """Lifecycle router should move activation ownership between modes."""
-    organize = _LifecycleProbe()
+    structure = _LifecycleProbe()
     identify = _LifecycleProbe()
-    router = ModeLifecycleRouter({EditingMode.ANALYSIS: organize, EditingMode.IDENTIFY: identify})
+    router = ModeLifecycleRouter({EditingMode.ANALYSIS: structure, EditingMode.IDENTIFY: identify})
 
     router.sync_mode(EditingMode.ANALYSIS, reason="mode-changed")
     router.sync_mode(EditingMode.IDENTIFY, reason="mode-changed")
 
-    assert organize.activate_count == 1
-    assert organize.deactivate_count == 1
-    assert organize.refreshes == [
+    assert structure.activate_count == 1
+    assert structure.deactivate_count == 1
+    assert structure.refreshes == [
         ModeRefreshRequest(mode=EditingMode.ANALYSIS, reason="mode-changed")
     ]
     assert identify.activate_count == 1

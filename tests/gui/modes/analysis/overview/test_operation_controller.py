@@ -1,13 +1,13 @@
-"""Tests for organize structure-operation availability and preview routing."""
+"""Tests for structure structure-operation availability and preview routing."""
 
 from __future__ import annotations
 
-from chappy.application.organize import OrganizeOperationUseCase
+from chappy.application.structure.structure_operation_usecase import StructureOperationUseCase
 from chappy.application.structure import StructureImpactOperation
 from chappy.core.absorption.models import AbsorptionLine, AbsorptionRegion
 from chappy.core.spectroscopy_project import SpectroscopyProject
-from chappy.gui.modes.analysis.overview.adapters import OrganizeOperationAdapter
-from chappy.gui.modes.analysis.overview.operation_controller import OrganizeOperationController
+from chappy.gui.modes.analysis.overview.adapters import StructureOperationAdapter
+from chappy.gui.modes.analysis.overview.operation_controller import StructureOperationController
 
 
 def _line(line_id: str, *, linked_to: str | None = None) -> AbsorptionLine:
@@ -43,14 +43,14 @@ def _project() -> SpectroscopyProject:
     return project
 
 
-def _controller() -> OrganizeOperationController:
+def _controller() -> StructureOperationController:
     """Create the real controller/use-case boundary."""
-    return OrganizeOperationController(
-        operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase())
+    return StructureOperationController(
+        operation_adapter=StructureOperationAdapter(StructureOperationUseCase())
     )
 
 
-def test_unlink_is_available_only_for_one_materialized_line_system() -> None:
+def test_unlink_is_available_only_for_one_materialized_linked_line() -> None:
     """Mixed, independent, missing, and absent selections cannot unlink."""
     project = _project()
     controller = _controller()
@@ -63,12 +63,12 @@ def test_unlink_is_available_only_for_one_materialized_line_system() -> None:
     assert controller.can_unlink(None, [], ["blue"]) is False
 
 
-def test_unlink_preview_reports_exact_expanded_system_without_mutation() -> None:
+def test_unlink_preview_reports_exact_expanded_linked_lines_without_mutation() -> None:
     """Controller delegates to the shared typed preview and stays side-effect free."""
     project = _project()
     controller = _controller()
 
-    preview = controller.preview_unlink(project, system_ids=["blue"])
+    preview = controller.preview_unlink(project, linked_line_ids=["blue"])
 
     assert preview is not None
     assert preview.operation is StructureImpactOperation.UNLINK
@@ -81,10 +81,10 @@ def test_unlink_preview_reports_exact_expanded_system_without_mutation() -> None
 def test_independent_line_unlink_preview_is_no_change() -> None:
     """An independent line stops before confirmation or mutation routing."""
     statuses: list[str] = []
-    controller = OrganizeOperationController(
-        operation_adapter=OrganizeOperationAdapter(OrganizeOperationUseCase()),
+    controller = StructureOperationController(
+        operation_adapter=StructureOperationAdapter(StructureOperationUseCase()),
         status_callback=statuses.append,
     )
 
-    assert controller.preview_unlink(_project(), system_ids=["single"]) is None
+    assert controller.preview_unlink(_project(), linked_line_ids=["single"]) is None
     assert statuses

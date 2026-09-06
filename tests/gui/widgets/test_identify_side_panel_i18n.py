@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QApplication
 
 from chappy.gui.modes.identify.panel.panel import IdentifySidePanel
 from chappy.gui.modes.identify.panel.panel_models import (
-    CandidateLineRow,
+    TemporaryLineRow,
     CandidateRow,
     ConfirmedLineRow,
     ConfirmedRegionRow,
@@ -110,10 +110,10 @@ def test_identify_side_panel_uses_qt_source_text(qtbot: "QtBot") -> None:
             )
         ]
     )
-    panel.set_temporary_systems(
+    panel.set_temporary_lines(
         [
-            CandidateLineRow(
-                system_ids=("line-a", "line-b", "line-c"),
+            TemporaryLineRow(
+                temporary_line_ids=("line-a", "line-b", "line-c"),
                 species="Mg II",
                 lambda_start=2796.0,
                 lambda_end=2803.0,
@@ -224,10 +224,10 @@ def test_language_change_keeps_reference_and_disclosures_visible(
             )
         ]
     )
-    panel.set_temporary_systems(
+    panel.set_temporary_lines(
         [
-            CandidateLineRow(
-                system_ids=("temporary-1", "temporary-2"),
+            TemporaryLineRow(
+                temporary_line_ids=("temporary-1", "temporary-2"),
                 species="C IV",
                 lambda_start=3544.8,
                 lambda_end=3546.3,
@@ -242,9 +242,9 @@ def test_language_change_keeps_reference_and_disclosures_visible(
             ConfirmedRegionRow(
                 group_id="confirmed-1",
                 label="Region 1",
-                systems=[
+                lines=[
                     ConfirmedLineRow(
-                        system_id="confirmed-line-1",
+                        line_id="confirmed-line-1",
                         species="C IV",
                         redshift=1.292,
                         lambda_start=3544.8,

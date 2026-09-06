@@ -66,7 +66,7 @@ def test_region_settings_round_trip_and_untouched_region_stays_default() -> None
     project.set_region_optimizer_settings(region_b.region_id, 5000, 1e-6)
 
     document = project_to_document(project)
-    restored = project_from_document(document)
+    restored = project_from_document(document).project
 
     settings_a = restored.region_optimizer_settings(region_a.region_id)
     settings_b = restored.region_optimizer_settings(region_b.region_id)

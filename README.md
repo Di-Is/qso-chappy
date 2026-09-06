@@ -47,8 +47,10 @@ Python を自分でインストールする必要はありません。必要な 
 
 ## 困ったときは
 
-うまく動かないときや、使い方で迷ったときは [Issues](https://github.com/Di-Is/qso-chappy/issues) からお知らせください。
+うまく動かないときや、使い方で迷ったときは、メーリングリスト [chappy-ml@shinshu-u.ac.jp](mailto:chappy-ml@shinshu-u.ac.jp) までお知らせください。
 天文学やプログラミングの専門知識は必要ありません。「何をしようとして」「何が起きたか」を書いていただければ十分です。
+
+GitHub を使い慣れている方は、バグ報告や機能要望を [Issues](https://github.com/Di-Is/qso-chappy/issues) に出していただいても構いません。
 
 ## 開発に参加する
 

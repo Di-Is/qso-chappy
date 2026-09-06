@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from chappy.application.history import ComponentParameterState
     from chappy.core.components.base import ModelComponent
     from chappy.core.spectroscopy_project import SpectroscopyProject
-    from chappy.gui.protocols.optimize_spectrum import OptimizeSystemInfo
+    from chappy.gui.protocols.optimize_spectrum import OptimizeLineInfo
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ class AbsorberModelMutationPorts:
     """Collaborators required by absorber model mutation."""
 
     project_provider: Callable[[], SpectroscopyProject | None]
-    system_info_provider: Callable[[AbsorberComponent], OptimizeSystemInfo | None]
+    line_info_provider: Callable[[AbsorberComponent], OptimizeLineInfo | None]
     history_provider: Callable[[], AbsorberEditHistoryPort]
     plot_widget_provider: Callable[[], object | None]
     plot_refresh_callback: Callable[[], None]
@@ -216,13 +216,13 @@ class AbsorberModelMutationController:
         if not isinstance(component, AbsorberComponent):
             return None
 
-        system_info = self._ports.system_info_provider(component)
-        if system_info is None:
+        line_info = self._ports.line_info_provider(component)
+        if line_info is None:
             return RedshiftConstraintContext()
 
         return RedshiftConstraintContext(
-            rest_wavelength=system_info.get("rest_wavelength"),
-            lambda_range=system_info.get("lambda_range"),
+            rest_wavelength=line_info.get("rest_wavelength"),
+            lambda_range=line_info.get("lambda_range"),
         )
 
     def _record_parameter_history(

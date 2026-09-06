@@ -18,7 +18,7 @@ from chappy.gui.protocols.intent_types import (
     AddOptimizeComponentIntent,
     ToggleOptimizeVelocityPlotIntent,
 )
-from chappy.gui.protocols.optimize_spectrum import OptimizeCursorMode, OptimizeSystemInfo
+from chappy.gui.protocols.optimize_spectrum import OptimizeCursorMode, OptimizeLineInfo
 from chappy.presentation.interaction.interaction_contracts import (
     MaskSelectionRequest,
     OptimizeLineSelectionChange,
@@ -439,7 +439,7 @@ class OptimizeSpectrumIntegration(QObject):
 
     def get_line_info_for_component(
         self, component: AbsorberComponent | None
-    ) -> OptimizeSystemInfo | None:
+    ) -> OptimizeLineInfo | None:
         """Get line information for a component.
 
         Args:
@@ -454,7 +454,7 @@ class OptimizeSpectrumIntegration(QObject):
 
         line = self.optimize_panel.get_line_for_component(component)
         if line:
-            return OptimizeSystemInfo(
+            return OptimizeLineInfo(
                 rest_wavelength=float(line.rest_wavelength), lambda_range=line.lambda_range
             )
 

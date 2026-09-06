@@ -16,12 +16,15 @@ from chappy.application.spectrum.models import (
     RangeNavigationIntent,
     RangeNavigationRequest,
     RangeNavigationResult,
+    ResolutionUpdateResult,
     SelectRangeNavigationIntent,
     SpectrumRangeSource,
     ZoomFactorNavigationIntent,
     ZoomRectNavigationIntent,
 )
+from chappy.application.spectrum.ports import ResolutionChangeNotifier, ResolutionProjectPort
 from chappy.application.spectrum.range_usecase import RangeNavigationUseCase
+from chappy.application.spectrum.resolution_usecase import ResolutionUpdateUseCase
 
 __all__ = [
     "AbsorberEditContractError",
@@ -38,6 +41,10 @@ __all__ = [
     "RangeNavigationResult",
     "RangeNavigationUseCase",
     "RedshiftConstraintContext",
+    "ResolutionChangeNotifier",
+    "ResolutionProjectPort",
+    "ResolutionUpdateResult",
+    "ResolutionUpdateUseCase",
     "SelectRangeNavigationIntent",
     "SpectrumRangeSource",
     "ZoomFactorNavigationIntent",

@@ -21,7 +21,6 @@ class InteractionChannel(StrEnum):
     """Interaction channels recognised by the state controller."""
 
     RECT_ZOOM = "rect_zoom"
-    VELOCITY = "velocity"
     ABSORBER_DRAG = "absorber_drag"
     MASK_SELECTION = "mask_selection"
     CONTINUUM = "continuum"
@@ -43,9 +42,6 @@ class InteractionEventKind(StrEnum):
     RECT_ZOOM_UPDATE = "rect_zoom_update"
     RECT_ZOOM_COMPLETE = "rect_zoom_complete"
     RECT_ZOOM_CANCEL = "rect_zoom_cancel"
-    VELOCITY_PENDING = "velocity_pending"
-    VELOCITY_COMMIT = "velocity_commit"
-    VELOCITY_CANCEL = "velocity_cancel"
     ABSORBER_DRAG_BEGIN = "absorber_drag_begin"
     ABSORBER_DRAG_UPDATE = "absorber_drag_update"
     ABSORBER_DRAG_COMPLETE = "absorber_drag_complete"
@@ -72,14 +68,6 @@ class ContinuumOperationType(StrEnum):
     MOVE = "move"
     DELETE = "delete"
     SELECT = "select"
-
-
-@dataclass(frozen=True)
-class VelocityInteractionPayload:
-    """Typed payload for velocity interaction events."""
-
-    trigger: str | None = None
-    reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -117,8 +105,7 @@ class ContinuumPointPayload:
 
 
 type InteractionPayload = (
-    VelocityInteractionPayload
-    | AbsorberDragPayload
+    AbsorberDragPayload
     | MaskSelectionBeginPayload
     | MaskSelectionPositionPayload
     | ContinuumPointPayload
@@ -178,25 +165,6 @@ class RectZoomContext:
     current: Coordinate | None
     end: Coordinate | None
     bounds: RectZoomBounds | None
-
-
-@dataclass(frozen=True)
-class VelocityContext:
-    """Context payload attached to velocity pending interactions.
-
-    Args:
-        target_wavelength: Candidate wavelength captured when entering pending mode.
-        confirmed_wavelength: Wavelength applied when completing the interaction.
-        trigger: Textual indicator describing the source action (keyboard, mouse, etc.).
-        modifiers: Keyboard modifier mask captured at the time of the event.
-        cancel_reason: Optional textual reason recorded when the interaction is cancelled.
-    """
-
-    target_wavelength: float | None
-    confirmed_wavelength: float | None
-    trigger: str | None
-    modifiers: int | None
-    cancel_reason: str | None
 
 
 @dataclass(frozen=True)

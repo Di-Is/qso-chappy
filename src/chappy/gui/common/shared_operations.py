@@ -5,7 +5,7 @@ widget, action, and expected result) that are otherwise hand-written twice:
 once as tutorial guidance (``gui.shell.tutorial_chapters``) and once as a
 user-manual operation-table row
 (``chappy_user_manual_generator.data.keyboard_operations`` /
-``.data.organize_operations``). English source text is registered with
+``.data.analysis_structure_operations``). English source text is registered with
 ``QT_TRANSLATE_NOOP("SharedOperations", ...)`` so it is extracted into the
 main Qt catalog (``chappy_ja.ts``) alongside tutorial and menu strings; the
 manual generator reads the same catalog through its chappy-catalog
@@ -158,6 +158,13 @@ SHARED_OPERATIONS: tuple[SharedOperation, ...] = (
         expected_source=str(QT_TRANSLATE_NOOP("SharedOperations", "Add line")),
     ),
     SharedOperation(
+        op_id="identify_toggle_velocity",
+        scope=OperationScope(mode=EditingMode.IDENTIFY),
+        target_object_name="spectrumPlotContainer",
+        action_source=str(QT_TRANSLATE_NOOP("SharedOperations", "V")),
+        expected_source=str(QT_TRANSLATE_NOOP("SharedOperations", "Toggle velocity plot")),
+    ),
+    SharedOperation(
         op_id="optimize_shift_click",
         scope=OperationScope(
             mode=EditingMode.ANALYSIS,
@@ -290,7 +297,7 @@ SHARED_OPERATIONS: tuple[SharedOperation, ...] = (
             analysis_panel=AnalysisOperationPanel.STRUCTURE,
         ),
         target_object_name="analysisStructureTree",
-        action_source=str(QT_TRANSLATE_NOOP("SharedOperations", "Unlink a line system")),
+        action_source=str(QT_TRANSLATE_NOOP("SharedOperations", "Unlink linked lines")),
         expected_source=str(
             QT_TRANSLATE_NOOP("SharedOperations", "Select the linked line, then use Unlink")
         ),

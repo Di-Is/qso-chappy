@@ -139,7 +139,7 @@ class _ShellSpectrumNavigationCommands(SpectrumNavigationPort):
         self._main_window.optimize_velocity_runtime.toggle_velocity_overlay()
 
     def toggle_velocity_plot_identify(self) -> None:
-        """Toggle Identify's velocity overlay or pending selection."""
+        """Toggle Identify's velocity plot at the wavelength under the cursor."""
         self._main_window.identify_velocity_runtime.handle_mode_velocity_shortcut()
 
 
@@ -260,6 +260,9 @@ def build_shell_runtime_parts(
     identify_coordinator.open_analysis_region_requested.connect(
         main_window.handle_identify_open_analysis_region
     )
+    identify_coordinator.open_analysis_structure_requested.connect(
+        main_window.handle_identify_open_analysis_structure
+    )
     velocity_overlay_port = SpectrumVelocityOverlayPort(
         spectrum_view_provider=main_window._identify_velocity_range_view
     )
@@ -268,7 +271,7 @@ def build_shell_runtime_parts(
         workflow_provider=lambda: identify_coordinator,
         velocity_workflow_provider=main_window._identify_velocity_workflow,
         velocity_range_provider=main_window._identify_velocity_range,
-        velocity_pending_callback=main_window._toggle_identify_velocity_pending,
+        cursor_wavelength_provider=main_window._wavelength_under_cursor,
         velocity_overlay_port=velocity_overlay_port,
         wavelength_field_availability_port=main_window,
     )

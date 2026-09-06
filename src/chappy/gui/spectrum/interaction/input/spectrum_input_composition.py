@@ -17,6 +17,9 @@ from chappy.gui.spectrum.interaction.input.binding.spectrum_plot_input_binding i
 from chappy.gui.spectrum.interaction.input.controllers.absorber_drag_input_controller import (
     AbsorberDragInputController,
 )
+from chappy.gui.spectrum.interaction.input.controllers.cursor_wavelength_input_controller import (
+    CursorWavelengthInputController,
+)
 from chappy.gui.spectrum.interaction.input.controllers.mask_selection_input_controller import (
     MaskSelectionInputController,
 )
@@ -26,9 +29,6 @@ from chappy.gui.spectrum.interaction.input.controllers.pointer_input_controller 
 )
 from chappy.gui.spectrum.interaction.input.controllers.rect_zoom_input_controller import (
     RectZoomInputController,
-)
-from chappy.gui.spectrum.interaction.input.controllers.velocity_pending_input_controller import (
-    VelocityPendingInputController,
 )
 from chappy.gui.spectrum.interaction.input.controllers.velocity_shortcut_input_controller import (
     VelocityShortcutInputController,
@@ -100,9 +100,8 @@ class SpectrumInputComposition:
     rect_zoom_state_controller: InteractionChannelControllerPort
     absorber_state_controller: InteractionChannelControllerPort
     velocity_drag_adapter: VelocityDragInteractionAdapter
-    velocity_state_controller: InteractionChannelControllerPort
-    velocity_pending_input_controller: VelocityPendingInputController
     velocity_shortcut_input_controller: VelocityShortcutInputController
+    cursor_wavelength_input_controller: CursorWavelengthInputController
     mask_state_controller: InteractionChannelControllerPort
     mask_selection_input_controller: MaskSelectionInputController
     pointer_input_controller: SpectrumPointerInputController
@@ -138,12 +137,10 @@ def build_spectrum_input_composition(
         owner=absorber_drag_input_controller,
         absorber_drag_controller=controller_bundle.absorber_drag,
     )
-    velocity_pending_input_controller = VelocityPendingInputController(
-        state_controller=controller_bundle.velocity,
+    cursor_wavelength_input_controller = CursorWavelengthInputController(
         coordinate_mapper=coordinate_mapper,
         transform_provider=callbacks.transform_provider,
         plot_widget_provider=callbacks.plot_widget_provider,
-        velocity_toggle_intent_emitter=callbacks.intent_emitter,
     )
     velocity_shortcut_input_controller = VelocityShortcutInputController(
         owner=owner, mode_capabilities=callbacks.velocity_shortcut_mode_capabilities, logger=logger
@@ -155,7 +152,6 @@ def build_spectrum_input_composition(
         rect_zoom_input_controller=rect_zoom_input_controller,
         absorber_drag_input_controller=absorber_drag_input_controller,
         mask_selection_input_controller=mask_selection_input_controller,
-        velocity_pending_input_controller=velocity_pending_input_controller,
         emitters=PointerInputEmitters(
             cursor_position=callbacks.cursor_position_emitter,
             cursor_left=callbacks.cursor_left_emitter,
@@ -167,7 +163,6 @@ def build_spectrum_input_composition(
         mode_velocity_shortcut_emitter=callbacks.mode_velocity_shortcut_emitter,
         mode_click_emitter=callbacks.mode_click_emitter,
         rect_zoom_input_controller=rect_zoom_input_controller,
-        velocity_pending_input_controller=velocity_pending_input_controller,
         mask_selection_input_controller=mask_selection_input_controller,
     )
     command_executor = SpectrumInteractionCommandExecutor(port=interaction_runtime)
@@ -185,9 +180,8 @@ def build_spectrum_input_composition(
         rect_zoom_state_controller=controller_bundle.rect_zoom,
         absorber_state_controller=controller_bundle.absorber_drag,
         velocity_drag_adapter=velocity_drag_adapter,
-        velocity_state_controller=controller_bundle.velocity,
-        velocity_pending_input_controller=velocity_pending_input_controller,
         velocity_shortcut_input_controller=velocity_shortcut_input_controller,
+        cursor_wavelength_input_controller=cursor_wavelength_input_controller,
         mask_state_controller=controller_bundle.mask_selection,
         mask_selection_input_controller=mask_selection_input_controller,
         pointer_input_controller=pointer_input_controller,

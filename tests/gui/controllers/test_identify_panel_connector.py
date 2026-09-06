@@ -48,7 +48,9 @@ class _Panel:
         self.temporary_clear_requested = _Signal()
         self.registration_requested = _Signal()
         self.group_focus_requested = _Signal()
-        self.system_focus_requested = _Signal()
+        self.line_focus_requested = _Signal()
+        self.region_open_requested = _Signal()
+        self.region_structure_edit_requested = _Signal()
         self._events = events
 
     def set_sigma_threshold(self, value: float) -> None:
@@ -83,14 +85,18 @@ def _build_connector(events: list[str]) -> tuple[IdentifyPanelConnector, dict[st
                 "new_candidate_half_width_changed"
             ),
             candidate_activated_callback=lambda _candidate_id: events.append("candidate"),
-            temporary_delete_callback=lambda _system_ids: events.append("delete"),
+            temporary_delete_callback=lambda _temporary_line_ids: events.append("delete"),
             temporary_clear_callback=lambda: events.append("clear"),
             registration_requested_callback=lambda _selected_ids: events.append("register"),
             group_focus_callback=lambda _group_id, _min_wave, _max_wave: events.append(
                 "group_focus"
             ),
-            system_focus_callback=lambda _system_id, _min_wave, _max_wave: events.append(
-                "system_focus"
+            line_focus_callback=lambda _temporary_line_id, _min_wave, _max_wave: events.append(
+                "line_focus"
+            ),
+            region_open_callback=lambda _region_id: events.append("region_open"),
+            region_structure_edit_callback=lambda _region_id: events.append(
+                "region_structure_edit"
             ),
             refresh_candidates_callback=lambda: events.append("refresh_candidates"),
             refresh_workflow_callback=lambda: events.append("refresh_workflow"),

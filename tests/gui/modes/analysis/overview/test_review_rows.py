@@ -43,7 +43,6 @@ def test_builder_uses_readiness_and_pure_presenter_without_cause_inference() -> 
     assert len(rows) == 1
     assert rows[0].analysis_status is AnalysisReadiness.NOT_ANALYZED
     assert rows[0].fit_result.kind is AnalysisFitResultKind.NOT_ANALYZED
-    assert rows[0].unavailable_causes == ()
     assert summary.not_analyzed == 1
     assert summary.latest == 0
 
@@ -60,5 +59,4 @@ def test_builder_uses_readiness_and_pure_presenter_without_cause_inference() -> 
 
     assert rows[0].analysis_status is AnalysisReadiness.LATEST
     assert rows[0].fit_result.kind is AnalysisFitResultKind.NUMERICAL
-    assert rows[0].unavailable_causes == ()
     assert summary.latest == 1
