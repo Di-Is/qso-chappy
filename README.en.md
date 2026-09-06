@@ -12,8 +12,8 @@ Along the way, specific wavelengths are absorbed, leaving dark features — abso
 
 chappy is a desktop application that measures the shape of those lines to estimate how much gas
 blocked the light, and how fast and how hot that gas was.
-It is built for everyone from high-school students and citizen scientists to graduate students and
-researchers who use it daily.
+It is built for everyone from curious school students and citizen scientists to graduate students
+and researchers who use it daily.
 
 ## What you can do
 
@@ -66,6 +66,9 @@ See [CONTRIBUTING.en.md](CONTRIBUTING.en.md) for development setup and coding co
 
 MIT License — free to use, modify, and redistribute for research, education, or any other purpose.
 See [LICENSE](LICENSE) for details.
+
+The bundled sample spectrum (`sample_data/`) is the sole exception: it is licensed CC BY 4.0 by its
+upstream source. See [sample_data/README.md](sample_data/README.md) for provenance and attribution.
 
 ## Citing chappy
 
