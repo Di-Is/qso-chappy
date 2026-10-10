@@ -47,6 +47,9 @@ Or from the command prompt:
 scripts\run.cmd
 ```
 
+A security warning may appear on the first run.
+See "[3.1 If a security warning appears](#31-if-a-security-warning-appears)" for how to resolve it.
+
 **macOS:**
 
 1. Open the `scripts` folder in Finder
@@ -79,7 +82,37 @@ To register chappy in your application menu, run this once:
 
 On the first run, the required Python version and dependencies are downloaded and installed automatically.
 
-## 3. Notes for Windows (path length limit)
+## 3. Notes for Windows
+
+### 3.1 If a security warning appears
+
+**"The publisher could not be verified"**
+
+Windows records that a downloaded file came from another computer, and extracting the zip
+passes that record on to its contents. Clear it from `run.cmd`.
+
+1. Right-click `run.cmd` in the `scripts` folder and open "Properties"
+2. Tick **"Unblock"** next to "Security: This file came from another computer..." at the
+   bottom of the General tab
+3. Click "Apply", then "OK"
+4. Double-click `run.cmd` again
+
+**Blocked by Smart App Control**
+
+If that does not help, this feature is blocking the Python that chappy uses. It refuses any
+executable without a digital signature, so this is not specific to chappy.
+
+You need to turn it off to run chappy. Open "Settings > Privacy & security > Windows Security >
+App & browser control > Smart App Control settings" and select "Off".
+
+Before you do:
+
+- **Turning it back on will stop chappy from starting again.** Leave it off while you use chappy
+- Some Windows protection is weakened while it is off
+- On Windows versions older than the April 2026 update, turning it off is permanent unless you
+  reset Windows. Install pending Windows updates first
+
+### 3.2 Path length limit
 
 Windows has traditionally imposed a 260-character path length limit.
 If chappy is placed in a deeply nested folder, installing dependencies may fail.
